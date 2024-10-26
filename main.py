@@ -35,7 +35,7 @@ def make_background_transparent(path_to_image):
 
 
 ###########################################################################################
-def fill_with_random_squares(path_to_image,
+def fill_with_random_squares(path_to_image, buffer: int,
                              min_number_squares: int, max_number_squares: int,
                              min_square_width: int, max_square_width: int,
                              min_square_height: int, max_square_height: int):
@@ -48,7 +48,6 @@ def fill_with_random_squares(path_to_image,
     non_transparent_mask = (image_data[:, :, 3] > 0) & ~np.all(image_data[:, :, :3] == 255, axis=2)
     occupied_mask = np.zeros_like(non_transparent_mask, dtype=bool)
 
-    buffer = 1
     max_attempts = 1000
 
     draw = ImageDraw.Draw(image)
@@ -106,8 +105,8 @@ img_path = 'static/collage_output.jpg'
 make_background_transparent(img_path)
 
 img_transparent_path = 'static/original_with_transparent_areas.png'
-fill_with_random_squares(img_transparent_path,
-                         min_number_squares=5, max_number_squares=10,
-                         min_square_width=40, max_square_width=100,
-                         min_square_height=50, max_square_height=80)
+fill_with_random_squares(img_transparent_path, buffer=5,
+                         min_number_squares=3, max_number_squares=5,
+                         min_square_width=80, max_square_width=200,
+                         min_square_height=80, max_square_height=200)
 
