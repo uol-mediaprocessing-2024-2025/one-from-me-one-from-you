@@ -1,8 +1,8 @@
 import os
+import time
 from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import ttk
-
 
 
 def get_dominant_color(image_path):
@@ -25,22 +25,29 @@ def color_distance(color1, color2):
 
 def color_to_rainbow_index(color):
     rainbow_colors = [
-        (255, 0, 0),        # Red
-        (255, 165, 0),      # Orange
-        (255, 255, 0),      # Yellow
-        (0, 128, 0),        # Green
-        (0, 0, 255),        # Blue
-        (75, 0, 130),       # Indigo
-        (238, 130, 238)     # Violet
+        (255, 0, 0),  # Red
+        (255, 165, 0),  # Orange
+        (255, 255, 0),  # Yellow
+        (0, 128, 0),  # Green
+        (0, 0, 255),  # Blue
+        (75, 0, 130),  # Indigo
+        (238, 130, 238)  # Violet
     ]
     distances = [color_distance(color, rc) for rc in rainbow_colors]
     return distances.index(min(distances))
 
 
 def sort_images_by_rainbow(directory):
+    start_time = time.time()
+
     images = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(('png', 'jpg', 'jpeg'))]
     image_colors = [(img, get_dominant_color(img)) for img in images]
     sorted_images = sorted(image_colors, key=lambda x: color_to_rainbow_index(x[1]))
+
+    end_time = time.time()
+    processing_time = end_time - start_time
+    print(f"Processing time: {processing_time:.2f} seconds")
+
     return [img[0] for img in sorted_images]
 
 
@@ -54,7 +61,8 @@ def create_image_label(frame, image_path):
 
 
 def display_images(window, directory):
-    sorted_by_name = sorted([os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(('png', 'jpg', 'jpeg'))])
+    sorted_by_name = sorted(
+        [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(('png', 'jpg', 'jpeg'))])
     sorted_by_algorithm = sort_images_by_rainbow(directory)
 
     frame_name = ttk.LabelFrame(window, text="Sorted by Name")
