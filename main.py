@@ -101,7 +101,7 @@ def fill_with_random_squares(path_to_image, buffer: int,
 ###########################################################################################
 #---------------------------------Script starts here--------------------------------------#
 ###########################################################################################
-img_path = 'static/collage_output.jpg'
+img_path = 'src/collage_templates/fish.png'
 make_background_transparent(img_path)
 
 img_transparent_path = 'static/original_with_transparent_areas.png'
