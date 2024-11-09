@@ -82,6 +82,7 @@ def fill_with_random_squares(path_to_image, buffer: int,
             if not np.all(rect_non_transparent):
                 continue
 
+            # Check if the rectangle that should be placed, will override an existing rectangle in the image.
             rect_occupied = occupied_mask[y_start_buffer:y_end_buffer, x_start_buffer:x_end_buffer]
             if np.any(rect_occupied):
                 continue
