@@ -25,7 +25,7 @@ def sort_images_by_size(folder_path):
 
     return sorted_images
 
-folder_path = 'resources/saturation_examples'
+folder_path = '../resources/saturation_examples'
 sorted_images = sort_images_by_size(folder_path)
 
 # Remove this later

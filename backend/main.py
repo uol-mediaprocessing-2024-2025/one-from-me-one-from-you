@@ -12,7 +12,32 @@ import random
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, JSONResponse
+import io
+import processCollageTemplate
+import sortBySize, sortByColor, sortBySaturation
+import uvicorn
 ###########################################################################################
+
+app = FastAPI()
+
+# CORS middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins (adjust for production use)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+
+@app.post
 
 
 def make_background_transparent(path_to_image):
@@ -92,20 +117,19 @@ def fill_with_random_squares(path_to_image, buffer: int,
             occupied_mask[y_start_buffer:y_end_buffer, x_start_buffer:x_end_buffer] = True
 
         if not success:
-            print(f"Konnte kein Platz für ein Rechteck finden nach {max_attempts} Versuchen.")
             break
 
-    output_path = 'static/background.png'
+    output_path = '../static/background.png'
     image.save(output_path)
     image.show()
 
 ###########################################################################################
 #---------------------------------Script starts here--------------------------------------#
 ###########################################################################################
-img_path = 'src/collage_templates/fish.png'
+img_path = '../src/collage_templates/fish.png'
 make_background_transparent(img_path)
 
-img_transparent_path = 'static/original_with_transparent_areas.png'
+img_transparent_path = '../static/original_with_transparent_areas.png'
 fill_with_random_squares(img_transparent_path, buffer=5,
                          min_number_squares=3, max_number_squares=5,
                          min_square_width=80, max_square_width=200,
