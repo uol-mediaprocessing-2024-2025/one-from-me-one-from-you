@@ -9,3 +9,6 @@ with open('image.jpg','rb') as image:
     data = {'data': image}
     quality = requests.post('https://api.everypixel.com/v1/faces', files=data, auth=(client_id, client_secret)).json()
     print(quality)
+
+    age = quality['faces'][0]['age']
+    print(f"Age: {age}")
