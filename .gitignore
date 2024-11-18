@@ -92,3 +92,6 @@ Icon?
 # ---- Logs ----
 logs/
 *.log
+
+.idea/
+
