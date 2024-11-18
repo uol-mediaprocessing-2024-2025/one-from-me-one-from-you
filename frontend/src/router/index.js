@@ -11,7 +11,12 @@ const router = createRouter({
       path: '/', // Define the default path for the main view
       name: 'main',
       component: MainView
-    }
+    },
+    {
+      path: '/gallery', // Path for gallery view
+      name: 'gallery',
+      component: GalleryView
+    },
   ]
 })
 
