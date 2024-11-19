@@ -4,14 +4,14 @@
         <!-- Sidebar navigation using Vuetify's navigation drawer -->
         <v-navigation-drawer app permanent style="background-color: rgb(30, 50, 92);" class="px-2 text-white">
             <!-- Title and subtitle for the app -->
-            <v-list-item title="Simple Web-App" subtitle="Demo"></v-list-item>
+            <v-list-item title="ONE FROM ME ONE FROM YOU Web-App" subtitle="Demo"></v-list-item>
             <v-divider></v-divider>
 
             <!-- Navigation list for routing -->
             <v-list c dense>
                 <!-- Link to the main view -->
                 <v-list-item class="d-flex" prepend-icon="mdi-home" link to="/">
-                    <v-list-item-title>Main</v-list-item-title>
+                    <v-list-item-title>Collage Tool</v-list-item-title>
                 </v-list-item>
 
                 <!-- Link to the gallery view -->
