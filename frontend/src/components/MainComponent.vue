@@ -26,39 +26,31 @@ onMounted(() => {
   }));
 });
 
-// Update the preview image
 const updateCollagePreview = async (imageSrc) => {
-  // Überprüfe, ob das Bild gewechselt wurde
   if (selectedCollageShape.value !== imageSrc) {
-    // Setze das ausgewählte Bild als Vorschau
     selectedCollageShape.value = imageSrc;
     return;
   }
 
-  // Erstelle die Collage, wenn das gleiche Bild erneut ausgewählt wird
   try {
-    // FormData erstellen und das Bild hinzufügen
     const formData = new FormData();
     const imageBlob = await fetch(imageSrc).then((res) => res.blob());
     formData.append("image", imageBlob);
+    formData.append("number_images", quantity.value);
+    formData.append("buffer", spacing.value);
 
-    // Zusätzliche Parameter hinzufügen
-    formData.append("number_images", quantity.value); // Anzahl der Fotos
-    formData.append("buffer", spacing.value);        // Abstand zwischen Elementen
-
-    // Sende die Anfrage an das Backend
     const response = await fetch("http://localhost:8000/collage-selected", {
       method: "POST",
       body: formData,
     });
 
-    // Verarbeite die Antwort
     if (response.ok) {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-
-      // Setze die generierte Collage als Vorschau
       selectedCollageShape.value = url;
+
+      // Analysiere und erstelle Hotspots direkt in der Map
+      createClickableAreas(url);
     } else {
       console.error("Fehler beim Erstellen der Collage:", response.statusText);
     }
@@ -66,6 +58,114 @@ const updateCollagePreview = async (imageSrc) => {
     console.error("Ein Fehler ist aufgetreten:", error);
   }
 };
+
+const createClickableAreas = (collageUrl) => {
+  const img = new Image();
+  img.src = collageUrl;
+  img.crossOrigin = "Anonymous";
+
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const whiteFields = [];
+
+    // Suche nach weißen Bereichen
+    for (let y = 0; y < img.height; y++) {
+      for (let x = 0; x < img.width; x++) {
+        const index = (y * img.width + x) * 4;
+        const r = imageData.data[index];
+        const g = imageData.data[index + 1];
+        const b = imageData.data[index + 2];
+        const a = imageData.data[index + 3];
+
+        if (r === 255 && g === 255 && b === 255 && a === 255) {
+          whiteFields.push({ x, y });
+        }
+      }
+    }
+
+    // Gruppiere und erstelle `<area>`-Elemente
+    const uniqueFields = groupWhiteFields(whiteFields, img.width, img.height);
+    renderImageMap(uniqueFields, collageUrl);
+  };
+};
+
+
+const groupWhiteFields = (whiteFields, width, height) => {
+  const uniqueFields = [];
+
+  // Gruppiere basierend auf Pixeln zu Rechtecken
+  // (Eine vereinfachte Version der Flood-Fill-Methode)
+  whiteFields.forEach((field) => {
+    if (!uniqueFields.some((rect) => field.x >= rect.minX && field.x <= rect.maxX && field.y >= rect.minY && field.y <= rect.maxY)) {
+      uniqueFields.push({
+        minX: field.x,
+        minY: field.y,
+        maxX: field.x + 50, // Breite des Feldes (anpassbar)
+        maxY: field.y + 50, // Höhe des Feldes (anpassbar)
+      });
+    }
+  });
+
+  return uniqueFields;
+};
+
+const renderImageMap = (fields, collageUrl) => {
+  const collageContainer = document.querySelector(".collage-container");
+  collageContainer.innerHTML = ""; // Entferne alte Inhalte
+
+  // Erstelle das Bild mit einer Map
+  const img = document.createElement("img");
+  img.src = collageUrl;
+  img.useMap = "#collageMap";
+  collageContainer.appendChild(img);
+
+  const map = document.createElement("map");
+  map.name = "collageMap";
+
+  fields.forEach((field, index) => {
+    const area = document.createElement("area");
+    area.shape = "rect";
+    area.coords = `${field.minX},${field.minY},${field.maxX},${field.maxY}`;
+    area.href = "#"; // Platzhalter
+    area.onclick = (e) => {
+      e.preventDefault();
+      handleUploadClick(index);
+    };
+    map.appendChild(area);
+  });
+
+  collageContainer.appendChild(map);
+};
+
+const handleUploadClick = (index) => {
+  // Trigger den Upload für das entsprechende Feld
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        console.log(`Bild für Feld ${index} hochgeladen:`, event.target.result);
+        // Speichere oder verarbeite das Bild für das entsprechende Feld
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Öffne den Dateiauswahl-Dialog
+  input.click();
+};
+
 
 
 
