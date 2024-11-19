@@ -34,13 +34,11 @@ def sort_images_by_rainbow(directory):
     images = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(('png', 'jpg', 'jpeg'))]
     image_colors = [(img, get_dominant_color(img)) for img in images]
     sorted_images = sorted(image_colors, key=lambda x: color_to_rainbow_index(x[1]))
-    return [img[0] for img in sorted_images]
+    return sorted_images
 
-def print_sorted_images(directory):
-    sorted_images = sort_images_by_rainbow(directory)
-    for image in sorted_images:
-        print(image)
 # Example usage
 if __name__ == "__main__":
     directory = 'resources'
-    print_sorted_images(directory)
+    sorted_images = sort_images_by_rainbow(directory)
+    for image, color in sorted_images:
+        print(f"{image}: {color}")

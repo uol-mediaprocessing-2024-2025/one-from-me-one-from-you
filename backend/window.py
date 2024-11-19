@@ -1,30 +1,13 @@
 import os
-import random
 import time
 import tkinter as tk
 from tkinter import ttk
-from PIL import Image, ImageTk, ImageStat
-import requests
-
-client_id = os.getenv('CLIENT_ID_ENV')
-client_secret = os.getenv('CLIENT_SECRET_ENV')
-
-def get_contrast(image_path):
-    image = Image.open(image_path).convert('L')
-    stat = ImageStat.Stat(image)
-    contrast = stat.stddev[0]
-    return contrast
-
-def get_saturation(image_path):
-    image = Image.open(image_path).convert('RGB')
-    stat = ImageStat.Stat(image)
-    r, g, b = stat.mean
-    saturation = (max(r, g, b) - min(r, g, b)) / 255
-    return saturation
-
-def get_size(image_path):
-    image = Image.open(image_path)
-    return image.size[0] * image.size[1]
+from PIL import Image, ImageTk
+from sortByRandom import shuffle_images as get_random
+from sortBySaturation import get_saturation_of_image as get_saturation
+from sortBySize import get_image_size as get_size
+from sortByColor import sort_images_by_rainbow as get_color
+from sortByContrast import get_contrast
 
 def load_images(directory):
     return [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(('png', 'jpg', 'jpeg'))]
@@ -66,10 +49,12 @@ def main():
     button_frame.pack()
 
     ttk.Button(button_frame, text="Unsorted", command=lambda: display_images(images, frame)).pack(side=tk.LEFT)
+    ttk.Button(button_frame, text="Sort by Color", command=lambda: display_images([img for img, _ in get_color(directory)], frame)).pack(side=tk.LEFT)
     ttk.Button(button_frame, text="Sort by Contrast", command=lambda: sort_and_display(get_contrast)).pack(side=tk.LEFT)
     ttk.Button(button_frame, text="Sort by Saturation", command=lambda: sort_and_display(get_saturation)).pack(side=tk.LEFT)
     ttk.Button(button_frame, text="Sort by Size", command=lambda: sort_and_display(get_size)).pack(side=tk.LEFT)
-    ttk.Button(button_frame, text="Sort by Random", command=lambda: sort_and_display(lambda x: random.random())).pack(side=tk.LEFT)
+    ttk.Button(button_frame, text="Sort by Random", command=lambda: display_images(get_random(directory), frame)).pack(side=tk.LEFT)
+    ttk.Button(button_frame, text="Sort by Rainbow", command=lambda: display_images([img for img, _ in get_color(directory)], frame)).pack(side=tk.LEFT)
 
     root.mainloop()
 
