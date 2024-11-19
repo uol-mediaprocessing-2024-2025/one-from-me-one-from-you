@@ -16,7 +16,7 @@ def get_image_age(image_path):
             return None
 
 def main():
-    image_directory = 'resources'
+    image_directory = 'backend/resources'
     image_paths = [os.path.join(image_directory, f) for f in os.listdir(image_directory) if f.endswith(('png', 'jpg', 'jpeg'))]
 
     images_with_ages = []
@@ -32,3 +32,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
