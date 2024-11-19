@@ -13,15 +13,16 @@ def get_saturation_of_image(image_path):
     average_saturation = np.mean(saturation) / 255
     return average_saturation
 
-def process_all_images(directory):
+def sort_images_by_saturation(directory):
     supported_extensions = ('.jpg', '.jpeg', '.png')
+    images = [os.path.join(directory, f) for f in os.listdir(directory) if f.lower().endswith(supported_extensions)]
+    image_saturations = [(img, get_saturation_of_image(img)) for img in images]
+    image_saturations = [img for img in image_saturations if img[1] is not None]
+    sorted_images = sorted(image_saturations, key=lambda x: x[1], reverse=True)
+    return sorted_images
 
-    for filename in os.listdir(directory):
-        if filename.lower().endswith(supported_extensions):
-            image_path = os.path.join(directory, filename)
-            saturation_value = get_saturation_of_image(image_path)
-            if saturation_value is not None:
-                print(f"{filename}: Average Saturation = {saturation_value:.2f}")
-
+# Example usage
 image_directory = 'resources/saturation_examples/'
-process_all_images(image_directory)
+sorted_images = sort_images_by_saturation(image_directory)
+for image, saturation in sorted_images:
+    print(f"{image}: Average Saturation = {saturation:.2f}")

@@ -14,13 +14,11 @@ def sort_images_by_size(folder_path):
         if filename.lower().endswith(supported_formats):
             image_path = os.path.join(folder_path, filename)
             try:
-                # Get the image size
                 size = get_image_size(image_path)
                 image_sizes.append((filename, size))
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
 
-    # Sort the images by size (smallest to largest)
     sorted_images = sorted(image_sizes, key=lambda x: x[1])
 
     return sorted_images
