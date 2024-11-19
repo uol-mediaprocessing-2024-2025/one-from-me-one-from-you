@@ -27,10 +27,11 @@ onMounted(() => {
 });
 
 const updateCollagePreview = async (imageSrc) => {
-  if (selectedCollageShape.value !== imageSrc) {
-    selectedCollageShape.value = imageSrc;
+  if (selectedCollageShape.value === imageSrc) {
+    console.log("Shape bereits ausgewählt.");
     return;
   }
+  selectedCollageShape.value = imageSrc;
 
   try {
     const formData = new FormData();
@@ -49,7 +50,6 @@ const updateCollagePreview = async (imageSrc) => {
       const url = URL.createObjectURL(blob);
       selectedCollageShape.value = url;
 
-      // Analysiere und erstelle Hotspots direkt in der Map
       createClickableAreas(url);
     } else {
       console.error("Fehler beim Erstellen der Collage:", response.statusText);
@@ -75,7 +75,7 @@ const createClickableAreas = (collageUrl) => {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const whiteFields = [];
 
-    // Suche nach weißen Bereichen
+    // Searching for white spaces
     for (let y = 0; y < img.height; y++) {
       for (let x = 0; x < img.width; x++) {
         const index = (y * img.width + x) * 4;
@@ -90,7 +90,7 @@ const createClickableAreas = (collageUrl) => {
       }
     }
 
-    // Gruppiere und erstelle `<area>`-Elemente
+    // Creating area elements
     const uniqueFields = groupWhiteFields(whiteFields, img.width, img.height);
     renderImageMap(uniqueFields, collageUrl);
   };
@@ -99,16 +99,14 @@ const createClickableAreas = (collageUrl) => {
 
 const groupWhiteFields = (whiteFields, width, height) => {
   const uniqueFields = [];
-
-  // Gruppiere basierend auf Pixeln zu Rechtecken
-  // (Eine vereinfachte Version der Flood-Fill-Methode)
+  // Simplified flood-fill
   whiteFields.forEach((field) => {
     if (!uniqueFields.some((rect) => field.x >= rect.minX && field.x <= rect.maxX && field.y >= rect.minY && field.y <= rect.maxY)) {
       uniqueFields.push({
         minX: field.x,
         minY: field.y,
-        maxX: field.x + 50, // Breite des Feldes (anpassbar)
-        maxY: field.y + 50, // Höhe des Feldes (anpassbar)
+        maxX: field.x + 50,
+        maxY: field.y + 50,
       });
     }
   });
@@ -118,12 +116,21 @@ const groupWhiteFields = (whiteFields, width, height) => {
 
 const renderImageMap = (fields, collageUrl) => {
   const collageContainer = document.querySelector(".collage-container");
-  collageContainer.innerHTML = ""; // Entferne alte Inhalte
 
-  // Erstelle das Bild mit einer Map
+  if (!collageContainer) {
+    console.error("Fehler: .collage-container existiert nicht im DOM.");
+    return;
+  }
+
+  collageContainer.innerHTML = "";
+
+  // Creating a map
   const img = document.createElement("img");
   img.src = collageUrl;
   img.useMap = "#collageMap";
+  img.style.maxWidth = "100%";
+  img.style.maxHeight = "100%";
+  img.style.display = "block";
   collageContainer.appendChild(img);
 
   const map = document.createElement("map");
@@ -133,7 +140,7 @@ const renderImageMap = (fields, collageUrl) => {
     const area = document.createElement("area");
     area.shape = "rect";
     area.coords = `${field.minX},${field.minY},${field.maxX},${field.maxY}`;
-    area.href = "#"; // Platzhalter
+    area.href = "#"; // Placeholder value
     area.onclick = (e) => {
       e.preventDefault();
       handleUploadClick(index);
@@ -145,7 +152,6 @@ const renderImageMap = (fields, collageUrl) => {
 };
 
 const handleUploadClick = (index) => {
-  // Trigger den Upload für das entsprechende Feld
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
@@ -156,20 +162,16 @@ const handleUploadClick = (index) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         console.log(`Bild für Feld ${index} hochgeladen:`, event.target.result);
-        // Speichere oder verarbeite das Bild für das entsprechende Feld
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Öffne den Dateiauswahl-Dialog
   input.click();
 };
 
 
 
-
-// Handle photo upload
 const handlePhotoUpload = (event) => {
   const files = event.target.files;
   uploadedPhotos.value = [];
@@ -190,9 +192,11 @@ const handlePhotoUpload = (event) => {
     <!-- Collage Preview -->
     <div class="collage-preview">
       <div class="collage-shape">
+        <div class="collage-container">
         <img :src="selectedCollageShape" alt="Collage Preview" />
         <p>[Image is used as the collage later on]</p>
         <v-btn @click="updateCollagePreview(selectedCollageShape, quantity, spacing)">Select</v-btn>
+          </div>
       </div>
     </div>
 
@@ -360,4 +364,22 @@ header h1 {
   border: 2px solid #ccc;
   border-radius: 5px;
 }
+
+.collage-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+.collage-container img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.collage-container map area {
+  cursor: pointer;
+}
+
 </style>
