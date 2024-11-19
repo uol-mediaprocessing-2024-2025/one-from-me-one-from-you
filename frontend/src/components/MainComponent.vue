@@ -27,9 +27,47 @@ onMounted(() => {
 });
 
 // Update the preview image
-const updateCollagePreview = (imageSrc) => {
-  selectedCollageShape.value = imageSrc;
+const updateCollagePreview = async (imageSrc) => {
+  // Überprüfe, ob das Bild gewechselt wurde
+  if (selectedCollageShape.value !== imageSrc) {
+    // Setze das ausgewählte Bild als Vorschau
+    selectedCollageShape.value = imageSrc;
+    return;
+  }
+
+  // Erstelle die Collage, wenn das gleiche Bild erneut ausgewählt wird
+  try {
+    // FormData erstellen und das Bild hinzufügen
+    const formData = new FormData();
+    const imageBlob = await fetch(imageSrc).then((res) => res.blob());
+    formData.append("image", imageBlob);
+
+    // Zusätzliche Parameter hinzufügen
+    formData.append("number_images", quantity.value); // Anzahl der Fotos
+    formData.append("buffer", spacing.value);        // Abstand zwischen Elementen
+
+    // Sende die Anfrage an das Backend
+    const response = await fetch("http://localhost:8000/collage-selected", {
+      method: "POST",
+      body: formData,
+    });
+
+    // Verarbeite die Antwort
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Setze die generierte Collage als Vorschau
+      selectedCollageShape.value = url;
+    } else {
+      console.error("Fehler beim Erstellen der Collage:", response.statusText);
+    }
+  } catch (error) {
+    console.error("Ein Fehler ist aufgetreten:", error);
+  }
 };
+
+
 
 // Handle photo upload
 const handlePhotoUpload = (event) => {
@@ -54,6 +92,7 @@ const handlePhotoUpload = (event) => {
       <div class="collage-shape">
         <img :src="selectedCollageShape" alt="Collage Preview" />
         <p>[Image is used as the collage later on]</p>
+        <v-btn @click="updateCollagePreview(selectedCollageShape, quantity, spacing)">Select</v-btn>
       </div>
     </div>
 
@@ -65,7 +104,7 @@ const handlePhotoUpload = (event) => {
           type="range"
           id="quantity"
           min="1"
-          max="100"
+          max="10"
           v-model="quantity"
         />
         <label for="spacing">Spacing</label>
