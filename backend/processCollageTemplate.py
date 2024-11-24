@@ -12,12 +12,6 @@ import random
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
-from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
-import io
-import sortBySize, sortByColor, sortBySaturation
-import uvicorn
 
 ###########################################################################################
 
