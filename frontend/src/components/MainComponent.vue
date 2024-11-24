@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import axios from "axios";
 
 const uploadedPhotos = ref([]); // Stores uploaded photos
 const collageShapes = ref([]); // Stores collage shape options
@@ -32,145 +33,7 @@ const updateCollagePreview = async (imageSrc) => {
     return;
   }
   selectedCollageShape.value = imageSrc;
-
-  try {
-    const formData = new FormData();
-    const imageBlob = await fetch(imageSrc).then((res) => res.blob());
-    formData.append("image", imageBlob);
-    formData.append("number_images", quantity.value);
-    formData.append("buffer", spacing.value);
-
-    const response = await fetch("http://localhost:8000/collage-selected", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (response.ok) {
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      selectedCollageShape.value = url;
-
-      createClickableAreas(url);
-    } else {
-      console.error("Fehler beim Erstellen der Collage:", response.statusText);
-    }
-  } catch (error) {
-    console.error("Ein Fehler ist aufgetreten:", error);
-  }
-};
-
-const createClickableAreas = (collageUrl) => {
-  const img = new Image();
-  img.src = collageUrl;
-  img.crossOrigin = "Anonymous";
-
-  img.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const whiteFields = [];
-
-    // Searching for white spaces
-    for (let y = 0; y < img.height; y++) {
-      for (let x = 0; x < img.width; x++) {
-        const index = (y * img.width + x) * 4;
-        const r = imageData.data[index];
-        const g = imageData.data[index + 1];
-        const b = imageData.data[index + 2];
-        const a = imageData.data[index + 3];
-
-        if (r === 255 && g === 255 && b === 255 && a === 255) {
-          whiteFields.push({ x, y });
-        }
-      }
-    }
-
-    // Creating area elements
-    const uniqueFields = groupWhiteFields(whiteFields, img.width, img.height);
-    renderImageMap(uniqueFields, collageUrl);
-  };
-};
-
-
-const groupWhiteFields = (whiteFields, width, height) => {
-  const uniqueFields = [];
-  // Simplified flood-fill
-  whiteFields.forEach((field) => {
-    if (!uniqueFields.some((rect) => field.x >= rect.minX && field.x <= rect.maxX && field.y >= rect.minY && field.y <= rect.maxY)) {
-      uniqueFields.push({
-        minX: field.x,
-        minY: field.y,
-        maxX: field.x + 50,
-        maxY: field.y + 50,
-      });
-    }
-  });
-
-  return uniqueFields;
-};
-
-const renderImageMap = (fields, collageUrl) => {
-  const collageContainer = document.querySelector(".collage-container");
-
-  if (!collageContainer) {
-    console.error("Fehler: .collage-container existiert nicht im DOM.");
-    return;
-  }
-
-  collageContainer.innerHTML = "";
-
-  // Creating a map
-  const img = document.createElement("img");
-  img.src = collageUrl;
-  img.useMap = "#collageMap";
-  img.style.maxWidth = "100%";
-  img.style.maxHeight = "100%";
-  img.style.display = "block";
-  collageContainer.appendChild(img);
-
-  const map = document.createElement("map");
-  map.name = "collageMap";
-
-  fields.forEach((field, index) => {
-    const area = document.createElement("area");
-    area.shape = "rect";
-    area.coords = `${field.minX},${field.minY},${field.maxX},${field.maxY}`;
-    area.href = "#"; // Placeholder value
-    area.onclick = (e) => {
-      e.preventDefault();
-      handleUploadClick(index);
-    };
-    map.appendChild(area);
-  });
-
-  collageContainer.appendChild(map);
-};
-
-const handleUploadClick = (index) => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
-
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        console.log(`Bild für Feld ${index} hochgeladen:`, event.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  input.click();
-};
-
-
+}
 
 const handlePhotoUpload = (event) => {
   const files = event.target.files;
@@ -185,6 +48,124 @@ const handlePhotoUpload = (event) => {
     }
   });
 };
+
+
+
+// Reaktive Daten
+const areas = ref([]); // Liste der Bereiche
+const areaIDs = ref([]); // Vergebene Area-IDs
+const currentMaxID = ref(-1); // Start-ID
+const selectedAreaId = ref(null); // Aktuell ausgewählte Area-ID
+
+// Neue Area-ID generieren
+const generateNewAreaID = () => {
+  currentMaxID.value += 1;
+  areaIDs.value.push(currentMaxID.value);
+  return currentMaxID.value;
+};
+
+// Neue Area zur Liste hinzufügen
+const addNewImageArea = (newAreaID, event) => {
+  const newArea = {
+    id: newAreaID,
+    x: event.offsetX + 277,
+    y: event.offsetY + 21,
+  };
+  areas.value.push(newArea);
+  console.log("Neue Bereichsdetails:", newArea);
+  return newAreaID;
+};
+
+// Funktion: Bildauswahlfenster öffnen und Bild platzieren
+const openImageSelectorAndPlaceImage = async (areaID) => {
+  const area = areas.value.find((area) => area.id === areaID);
+  if (!area) {
+    console.error(`Keine Area mit ID ${areaID} gefunden.`);
+    return;
+  }
+
+  const { x, y } = area;
+
+  // Modal erstellen
+  const modal = document.createElement("div");
+  modal.id = "imageSelectorModal";
+  modal.style.position = "fixed";
+  modal.style.top = "50%";
+  modal.style.left = "50%";
+  modal.style.transform = "translate(-50%, -50%)";
+  modal.style.zIndex = "1000";
+  modal.style.padding = "20px";
+  modal.style.backgroundColor = "#fff";
+  modal.style.border = "1px solid #ccc";
+  modal.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
+  modal.innerHTML = `
+    <h3>Wählen Sie ein Bild aus</h3>
+    <input type="file" id="imageFileInput" accept="image/*" />
+    <button id="confirmImageSelectionButton">Bild platzieren</button>
+    <button id="cancelImageSelectionButton">Abbrechen</button>
+  `;
+  document.body.appendChild(modal);
+
+  // Event-Listener für Bild platzieren
+  document.getElementById("confirmImageSelectionButton").addEventListener("click", () => {
+    const imageInput = document.getElementById("imageFileInput");
+    const file = imageInput.files[0];
+    if (!file) {
+      alert("Bitte wählen Sie ein Bild aus.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const collage = document.getElementById("collage-container");
+      const img = document.createElement("img");
+      img.src = event.target.result;
+      img.style.position = "absolute";
+      img.style.left = `${x}px`;
+      img.style.top = `${y}px`;
+      img.style.maxWidth = "100px";
+      img.style.maxHeight = "100px";
+      collage.appendChild(img);
+    };
+    console.log(`Bild platziert bei ${x} und ${y}.`)
+    reader.readAsDataURL(file);
+    document.body.removeChild(modal);
+  });
+
+  // Event-Listener für Abbrechen
+  document.getElementById("cancelImageSelectionButton").addEventListener("click", () => {
+    document.body.removeChild(modal);
+  });
+};
+
+// Funktion: Klick auf die Collage behandeln
+const handleCollageClick = (event) => {
+  console.log("Collage clicked at: ", event.offsetX + 277, event.offsetY + 21);
+  const area_id = generateNewAreaID();
+  addNewImageArea(area_id, event);
+  openImageSelectorAndPlaceImage(area_id);
+};
+
+// Collage aktualisieren
+const updateCollageWithPlacement = async () => {
+  try {
+    const response = await axios.get("http://localhost:8000/get_collage");
+    const collageImage = document.getElementById("collageImage");
+    collageImage.src = response.data.updated_collage_url;
+    console.log("Collage aktualisiert.");
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren der Collage:", error);
+  }
+};
+
+// onMounted-Hook
+onMounted(() => {
+  console.log("Komponente wurde gemountet.");
+});
+
+
+
+
 </script>
 
 <template>
@@ -192,12 +173,12 @@ const handlePhotoUpload = (event) => {
     <!-- Collage Preview -->
     <div class="collage-preview">
       <div class="collage-shape">
-        <div class="collage-container">
-        <img :src="selectedCollageShape" alt="Collage Preview" />
+        <div id="collage-container" @click="handleCollageClick($event)">
+        <img :src="selectedCollageShape" alt="Collage Preview"/>
+        </div>
         <p>[Image is used as the collage later on]</p>
-        <v-btn @click="updateCollagePreview(selectedCollageShape, quantity, spacing)">Select</v-btn>
-          </div>
-      </div>
+        <v-btn>Select</v-btn>
+        </div>
     </div>
 
     <div class="settings-panel">
