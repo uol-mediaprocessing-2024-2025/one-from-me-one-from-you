@@ -29,7 +29,7 @@ onMounted(() => {
 
 const updateCollagePreview = async (imageSrc) => {
   if (selectedCollageShape.value === imageSrc) {
-    console.log("Shape bereits ausgewählt.");
+    console.log("Shape already selected.");
     return;
   }
   selectedCollageShape.value = imageSrc;
@@ -50,43 +50,41 @@ const handlePhotoUpload = (event) => {
 };
 
 
+const areas = ref([]);
+const areaIDs = ref([]);
+const currentMaxID = ref(-1);
 
-// Reaktive Daten
-const areas = ref([]); // Liste der Bereiche
-const areaIDs = ref([]); // Vergebene Area-IDs
-const currentMaxID = ref(-1); // Start-ID
-const selectedAreaId = ref(null); // Aktuell ausgewählte Area-ID
 
-// Neue Area-ID generieren
 const generateNewAreaID = () => {
   currentMaxID.value += 1;
   areaIDs.value.push(currentMaxID.value);
   return currentMaxID.value;
 };
 
-// Neue Area zur Liste hinzufügen
+// Creating image areas for later editing
 const addNewImageArea = (newAreaID, event) => {
   const newArea = {
     id: newAreaID,
-    x: event.offsetX + 277,
-    y: event.offsetY + 21,
+    x: event.offsetX,
+    y: event.offsetY,
   };
   areas.value.push(newArea);
-  console.log("Neue Bereichsdetails:", newArea);
+  console.log("New area:", newArea);
   return newAreaID;
 };
 
-// Funktion: Bildauswahlfenster öffnen und Bild platzieren
+
 const openImageSelectorAndPlaceImage = async (areaID) => {
   const area = areas.value.find((area) => area.id === areaID);
   if (!area) {
-    console.error(`Keine Area mit ID ${areaID} gefunden.`);
+    console.error(`No area found: ${areaID}.`);
     return;
   }
-
   const { x, y } = area;
+  const sidebar = document.querySelector('.v-navigation-drawer__content'); //Getting sidebar (from App.vue)
+  const sidebarWidth = sidebar ? sidebar.offsetWidth : 0; // Fallback
 
-  // Modal erstellen
+  // Creating a modal to select and confirm image placement.
   const modal = document.createElement("div");
   modal.id = "imageSelectorModal";
   modal.style.position = "fixed";
@@ -99,19 +97,18 @@ const openImageSelectorAndPlaceImage = async (areaID) => {
   modal.style.border = "1px solid #ccc";
   modal.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
   modal.innerHTML = `
-    <h3>Wählen Sie ein Bild aus</h3>
-    <input type="file" id="imageFileInput" accept="image/*" />
-    <button id="confirmImageSelectionButton">Bild platzieren</button>
-    <button id="cancelImageSelectionButton">Abbrechen</button>
-  `;
+  <h3 style="color: #555555;">Select image</h3>
+  <input type="file" id="imageFileInput" accept="image/*" style="color: black"/>
+  <button id="confirmImageSelectionButton" style="background-color: #42b883; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px;">Place</button>
+  <button id="cancelImageSelectionButton" style="background-color: #ff0000; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px;">Cancel</button>
+`;
   document.body.appendChild(modal);
 
-  // Event-Listener für Bild platzieren
   document.getElementById("confirmImageSelectionButton").addEventListener("click", () => {
     const imageInput = document.getElementById("imageFileInput");
     const file = imageInput.files[0];
     if (!file) {
-      alert("Bitte wählen Sie ein Bild aus.");
+      alert("Select an image.");
       return;
     }
 
@@ -121,50 +118,39 @@ const openImageSelectorAndPlaceImage = async (areaID) => {
       const img = document.createElement("img");
       img.src = event.target.result;
       img.style.position = "absolute";
-      img.style.left = `${x}px`;
-      img.style.top = `${y}px`;
       img.style.maxWidth = "100px";
       img.style.maxHeight = "100px";
-      collage.appendChild(img);
+
+      img.onload = () => {
+        const imageWidth = img.offsetWidth;
+        const imageHeight = img.offsetHeight;
+        img.style.left = `${x - imageWidth / 2}px`;
+        img.style.top = `${y - imageHeight / 2}px`;
+        collage.appendChild(img);
+      };
     };
-    console.log(`Bild platziert bei ${x} und ${y}.`)
+    console.log(`Image placed at ${x - sidebarWidth}, ${y}.`);
     reader.readAsDataURL(file);
     document.body.removeChild(modal);
   });
 
-  // Event-Listener für Abbrechen
   document.getElementById("cancelImageSelectionButton").addEventListener("click", () => {
     document.body.removeChild(modal);
   });
 };
 
-// Funktion: Klick auf die Collage behandeln
+
+// Function that handles placing images on collage, takes the mouse click event to track it's coords
 const handleCollageClick = (event) => {
-  console.log("Collage clicked at: ", event.offsetX + 277, event.offsetY + 21);
+  console.log("Collage clicked at: ", event.pageX, event.pageY);
   const area_id = generateNewAreaID();
   addNewImageArea(area_id, event);
   openImageSelectorAndPlaceImage(area_id);
 };
 
-// Collage aktualisieren
-const updateCollageWithPlacement = async () => {
-  try {
-    const response = await axios.get("http://localhost:8000/get_collage");
-    const collageImage = document.getElementById("collageImage");
-    collageImage.src = response.data.updated_collage_url;
-    console.log("Collage aktualisiert.");
-  } catch (error) {
-    console.error("Fehler beim Aktualisieren der Collage:", error);
-  }
-};
-
-// onMounted-Hook
 onMounted(() => {
-  console.log("Komponente wurde gemountet.");
+  console.log("Component mounted.");
 });
-
-
-
 
 </script>
 
@@ -177,7 +163,6 @@ onMounted(() => {
         <img :src="selectedCollageShape" alt="Collage Preview"/>
         </div>
         <p>[Image is used as the collage later on]</p>
-        <v-btn>Select</v-btn>
         </div>
     </div>
 
@@ -325,7 +310,6 @@ header h1 {
 .collage-preview img {
   width: 300px;
   height: auto;
-  border: 2px solid #ccc;
 }
 
 .shapes img {
@@ -346,11 +330,13 @@ header h1 {
   border-radius: 5px;
 }
 
-.collage-container {
+#collage-container {
   position: relative;
   width: 100%;
   height: auto;
   overflow: hidden;
+  border: 2px solid #ccc;
+  border-radius: 5px;
 }
 
 .collage-container img {
