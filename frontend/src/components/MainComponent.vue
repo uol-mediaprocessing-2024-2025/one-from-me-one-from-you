@@ -1,7 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from "axios";
-import HeartGridComponent from './HeartGridComponent.vue'; // Import HeartGridComponent
+import HeartGridComponent from './HeartGridComponent.vue';
+import RectangleGridComponent from './RectangleGridComponent.vue';
+import StarGridComponent from "@/components/StarGridComponent.vue";
 
 const uploadedPhotos = ref([]); // Stores uploaded photos
 const collageShapes = ref([]); // Stores collage shape options
@@ -36,8 +38,24 @@ const updateCollagePreview = async (imageSrc) => {
   selectedCollageShape.value = imageSrc;
   if (imageSrc.includes('heart.png')) {
     isHeartGridVisible.value = true;
-  } else {
+    isRectangleGridVisible.value = false;
+    isStarGridVisible.value = false;
+  }
+  else if(imageSrc.includes('rectangle.png')){
+    isRectangleGridVisible.value = true;
     isHeartGridVisible.value = false;
+    isStarGridVisible.value = false;
+    }
+  else if(imageSrc.includes('star.png')){
+    isStarGridVisible.value = true;
+    isRectangleGridVisible.value = false;
+    isHeartGridVisible.value = false;
+    }
+  else {
+    isHeartGridVisible.value = false;
+    isRectangleGridVisible.value = false;
+    isStarGridVisible.value = false;
+
   }
 };
 
@@ -144,9 +162,14 @@ const openImageSelectorAndPlaceImage = async (areaID) => {
   });
 };
 
-const isHeartGridVisible = ref(false); // Visibility state for HeartGridComponent
+//TODO: Replace with broader vars upon full grid replacement.
+const isHeartGridVisible = ref(false);
+const isRectangleGridVisible = ref(false);
+const isStarGridVisible = ref(false);
+
 
 // Function that handles placing images on collage, takes the mouse click event to track it's coords
+// TODO: Remove upon full Grid replacement
 const handleCollageClick = (event) => {
   if(!isHeartGridVisible.value) {
     console.log("Collage clicked at: ", event.pageX, event.pageY);
@@ -187,11 +210,13 @@ onMounted(() => {
     <!-- Collage Preview -->
     <div class="collage-preview">
       <div class="collage-shape">
-        <div id="collage-container" @click="handleCollageClick($event)" v-if="!isHeartGridVisible">
+        <div id="collage-container" @click="handleCollageClick($event)" v-if="!isHeartGridVisible && !isRectangleGridVisible && !isStarGridVisible">
           <img :src="selectedCollageShape" alt="Collage Preview"/>
         </div>
-         <!-- HeartGridComponent -->
+         <!-- Shape components -->
         <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container"/>
+        <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container"/>
+        <RectangleGridComponent v-if="isStarGridVisible" class="star-grid-container"/>
         </div>
     </div>
 
