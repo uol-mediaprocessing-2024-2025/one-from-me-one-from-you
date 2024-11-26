@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from "axios";
+import HeartGridComponent from './HeartGridComponent.vue'; // Import HeartGridComponent
 
 const uploadedPhotos = ref([]); // Stores uploaded photos
 const collageShapes = ref([]); // Stores collage shape options
@@ -29,11 +30,16 @@ onMounted(() => {
 
 const updateCollagePreview = async (imageSrc) => {
   if (selectedCollageShape.value === imageSrc) {
-    console.log("Shape already selected.");
+    console.log('Shape already selected.');
     return;
   }
   selectedCollageShape.value = imageSrc;
-}
+  if (imageSrc.includes('heart.png')) {
+    isHeartGridVisible.value = true;
+  } else {
+    isHeartGridVisible.value = false;
+  }
+};
 
 const handlePhotoUpload = (event) => {
   const files = event.target.files;
@@ -82,7 +88,6 @@ const openImageSelectorAndPlaceImage = async (areaID) => {
   }
   const { x, y } = area;
   const sidebar = document.querySelector('.v-navigation-drawer__content'); //Getting sidebar (from App.vue)
-  const sidebarWidth = sidebar ? sidebar.offsetWidth : 0; // Fallback
 
   // Creating a modal to select and confirm image placement.
   const modal = document.createElement("div");
@@ -129,7 +134,7 @@ const openImageSelectorAndPlaceImage = async (areaID) => {
         collage.appendChild(img);
       };
     };
-    console.log(`Image placed at ${x - sidebarWidth}, ${y}.`);
+    console.log(`Image placed at ${x}, ${y}.`);
     reader.readAsDataURL(file);
     document.body.removeChild(modal);
   });
@@ -139,17 +144,40 @@ const openImageSelectorAndPlaceImage = async (areaID) => {
   });
 };
 
+const isHeartGridVisible = ref(false); // Visibility state for HeartGridComponent
 
 // Function that handles placing images on collage, takes the mouse click event to track it's coords
 const handleCollageClick = (event) => {
-  console.log("Collage clicked at: ", event.pageX, event.pageY);
-  const area_id = generateNewAreaID();
-  addNewImageArea(area_id, event);
-  openImageSelectorAndPlaceImage(area_id);
+  if(!isHeartGridVisible.value) {
+    console.log("Collage clicked at: ", event.pageX, event.pageY);
+    const area_id = generateNewAreaID();
+    addNewImageArea(area_id, event);
+    openImageSelectorAndPlaceImage(area_id);
+  }
 };
 
 onMounted(() => {
   console.log("Component mounted.");
+});
+
+
+
+onMounted(() => {
+  const collageTemplatesPath = 'collage_templates/';
+  const shapeFiles = [
+    'heart.png',
+    'star.png',
+    'hexagon.png',
+    'cloud.png',
+    'fish.png',
+    'leaf.png',
+    'rectangle.png',
+    'triangle.png',
+  ];
+  collageShapes.value = shapeFiles.map((fileName) => ({
+    src: `${collageTemplatesPath}${fileName}`,
+    alt: fileName.split('.')[0],
+  }));
 });
 
 </script>
@@ -159,10 +187,11 @@ onMounted(() => {
     <!-- Collage Preview -->
     <div class="collage-preview">
       <div class="collage-shape">
-        <div id="collage-container" @click="handleCollageClick($event)">
-        <img :src="selectedCollageShape" alt="Collage Preview"/>
+        <div id="collage-container" @click="handleCollageClick($event)" v-if="!isHeartGridVisible">
+          <img :src="selectedCollageShape" alt="Collage Preview"/>
         </div>
-        <p>[Image is used as the collage later on]</p>
+         <!-- HeartGridComponent -->
+        <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container"/>
         </div>
     </div>
 
