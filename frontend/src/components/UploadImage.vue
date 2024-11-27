@@ -20,23 +20,31 @@ const uploadImage = async () => {
   if (!store.photoBlobs.length) return; // Ensure there are files to upload
 
   try {
-    for (const blob of store.photoBlobs) {
-      const formData = new FormData();
-      formData.append('file', blob); // Attach the blob to the form data
+    const formData = new FormData();
 
-      // Send the request to the server
-      const response = await axios.post(`${store.apiUrl}/saveImage`, formData, {
-        responseType: 'blob', // Expect binary data (blob) as a response
-      });
+    // Append all blobs to the formData
+    store.photoBlobs.forEach((blob, index) => {
+      // Generate a filename with extension, or use the original blob name if available
+      const fileExtension = blob.type.split('/')[1];  // Extract the file extension from the MIME type
+      const filename = `image_${index + 1}.${fileExtension}`; // Create a unique filename with the extension
 
-      if (response.status === 200) {
-        const { message, file_path } = response.data;
+      formData.append('files', blob, filename); // Append the blob with the generated filename
+    });
 
-        console.log('Image uploaded successfully:', message);
-        console.log('Saved at:', file_path);
-      } else {
-        console.error('Unexpected response:', response);
-      }
+    // Send the request to the server with all files in one request
+    const response = await axios.post(`${store.apiUrl}/saveImages`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Set the correct header for file upload
+      },
+    });
+
+    if (response.status === 200) {
+      const { message, file_paths } = response.data;
+
+      console.log('Images uploaded successfully:', message);
+      console.log('Saved at:', file_paths);
+    } else {
+      console.error('Unexpected response:', response);
     }
   } catch (error) {
     console.error('Failed to upload images:', error);

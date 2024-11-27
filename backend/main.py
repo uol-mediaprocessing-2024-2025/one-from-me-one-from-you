@@ -31,20 +31,28 @@ class Base64Image(BaseModel):
     filename: str  # The filename to save
     content: str   # The base64-encoded content
 
-@app.post("/saveImage")
-async def saveImage(file: UploadFile = File(...)):
+@app.post("/saveImages")
+async def saveImages(files: list[UploadFile] = File(...)):
     try:
-        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        saved_files = []  # List to store paths of successfully saved files
 
-        # Open a file in write-binary mode and save the uploaded content
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        for file in files:
+            file_path = os.path.join(UPLOAD_DIR, file.filename)
 
-        return {"message": "Image saved successfully", "file_path": file_path}
+            # Save each uploaded file
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+            saved_files.append(file_path)  # Add saved file path to the list
+
+        return {
+            "message": "Images saved successfully",
+            "file_paths": saved_files
+        }
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"message": "Failed to process image", "error": str(e)},
+            content={"message": "Failed to process images", "error": str(e)},
         )
 
 @app.get("/ping")
