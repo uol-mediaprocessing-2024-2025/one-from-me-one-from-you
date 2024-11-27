@@ -1,36 +1,50 @@
 <script setup>
 import { onMounted, ref } from 'vue'; // Import lifecycle hook and ref from Vue
 import { store } from '../store'; // Import the global store to access shared state
+import axios from 'axios';
 
 // Reactive reference to hold the list of images and the modal state
 const images = ref([]);
 const selectedImage = ref(null); // Track the currently selected image
 const isModalOpen = ref(false); // Track whether the modal is open
 
-// onMounted lifecycle hook to fetch images when the component is mounted
-onMounted(() => {
-  images.value = store.photoUrls;
+onMounted(async () => {
+  try {
+    const response = await axios.get(`${store.apiUrl}/getImages`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Check if the response is successful and contains image files
+    if (response.status === 200 && Array.isArray(response.data.image_files)) {
+      images.value = response.data.image_files.map(image => {
+        const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
+        console.log("Image URL:", fullUrl); // Debugging URL
+        return fullUrl;
+      });
+    } else {
+      console.error("No images found:", response.data.message);
+    }
+  } catch (error) {
+    console.error("Error fetching images:", error);
+  }
 });
 
-// Function to handle image click and set the selected image for the modal
 const handleImageClick = (imageSrc) => {
-  selectedImage.value = imageSrc; // Set the selected image
-  isModalOpen.value = true; // Open the modal
+  selectedImage.value = imageSrc;
+  isModalOpen.value = true;
 };
 
-// Function to close the modal
 const closeModal = () => {
-  isModalOpen.value = false; // Close the modal
-  selectedImage.value = null; // Clear the selected image
+  isModalOpen.value = false;
+  selectedImage.value = null;
 };
 </script>
 
 <template>
-  <!-- Gallery container -->
   <div class="gallery px-4 py-4">
-    <!-- Vuetify grid to organize images -->
     <v-row dense>
-      <!-- Loop through the images array and display each image -->
       <v-col
         v-for="(imgSrc, index) in images"
         :key="index"
@@ -41,14 +55,13 @@ const closeModal = () => {
         lg="3"
         xl="2"
       >
-        <!-- Display each image with Vuetify's v-img component -->
+
         <v-img
           :src="imgSrc"
           aspect-ratio="1.67"
           class="mb-4 clickable-image"
           @click="handleImageClick(imgSrc)"
         >
-          <!-- Show a loading spinner while the image is loading -->
           <template v-slot:placeholder>
             <v-row align="center" class="fill-height ma-0" justify="center">
               <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
@@ -59,7 +72,6 @@ const closeModal = () => {
     </v-row>
   </div>
 
-  <!-- Modal for Enlarged Image -->
   <v-dialog v-model="isModalOpen" max-width="90vw">
     <v-card>
       <v-img :src="selectedImage" class="enlarged-image" contain />
@@ -75,18 +87,6 @@ const closeModal = () => {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-}
-
-.v-img {
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform 0.3s ease-in-out;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.v-img:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 .enlarged-image {

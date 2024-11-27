@@ -2,10 +2,10 @@ from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import base64
+from fastapi.staticfiles import StaticFiles
 
 import shutil
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import JSONResponse
 import uvicorn
 from io import BytesIO
 import os
@@ -13,6 +13,8 @@ import os
 import processCollageTemplate as proc
 
 app = FastAPI()
+
+app.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")
 
 # CORS middleware configuration
 app.add_middleware(
@@ -54,6 +56,23 @@ async def saveImages(files: list[UploadFile] = File(...)):
             status_code=500,
             content={"message": "Failed to process images", "error": str(e)},
         )
+
+@app.get("/getImages")
+async def get_images():
+    try:
+        image_files = []
+        for file_name in os.listdir(UPLOAD_DIR):
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+            if os.path.isfile(file_path) and file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                image_files.append(file_name)
+
+        if not image_files:
+            return JSONResponse(status_code=404, content={"message": "No images found"})
+
+        return {"image_files": image_files}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": "Failed to retrieve images", "error": str(e)})
+
 
 @app.get("/ping")
 def ping():
