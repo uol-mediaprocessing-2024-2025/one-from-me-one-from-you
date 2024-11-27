@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from "axios";
+import { store } from '../store';
 import HeartGridComponent from './HeartGridComponent.vue';
 import RectangleGridComponent from './RectangleGridComponent.vue';
 import StarGridComponent from "@/components/StarGridComponent.vue";
-
+import UploadImage from "@/components/UploadImage.vue";
 const uploadedPhotos = ref([]); // Stores uploaded photos
+
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
 const quantity = ref(50); // Range for number of photos
@@ -243,8 +245,10 @@ onMounted(() => {
         />
         <label for="spacing">Spacing</label>
         <input type="range" id="spacing" min="0" max="50" v-model="spacing" />
+        <!-- Debug Remove -->
         <button @click="callPing">Ping Backend</button>
         <p>{{ responseMessage }}</p>
+        <!-- Debug Remove -->
       </section>
 
       <!-- Sorting Options -->
@@ -333,25 +337,10 @@ onMounted(() => {
         </div>
       </section>
     </div>
+  </div>
 
-    <div class="photo-selection">
-      <h2>Photos</h2>
-      <input
-        type="file"
-        id="upload"
-        multiple
-        accept="image/*"
-        @change="handlePhotoUpload"
-      />
-      <div class="photo-gallery">
-        <img
-          v-for="photo in uploadedPhotos"
-          :key="photo"
-          :src="photo"
-          alt="Uploaded Photo"
-        />
-      </div>
-    </div>
+  <div>
+    <UploadImage/>
   </div>
 </template>
 
