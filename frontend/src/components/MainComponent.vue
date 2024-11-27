@@ -59,6 +59,16 @@ const updateCollagePreview = async (imageSrc) => {
   }
 };
 
+const responseMessage = ref('');
+const callPing = async () => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/ping');
+    responseMessage.value = response.data.message;
+  } catch {
+    responseMessage.value = 'Failed to connect';
+  }
+};
+
 const handlePhotoUpload = (event) => {
   const files = event.target.files;
   uploadedPhotos.value = [];
@@ -233,6 +243,8 @@ onMounted(() => {
         />
         <label for="spacing">Spacing</label>
         <input type="range" id="spacing" min="0" max="50" v-model="spacing" />
+        <button @click="callPing">Ping Backend</button>
+        <p>{{ responseMessage }}</p>
       </section>
 
       <!-- Sorting Options -->
