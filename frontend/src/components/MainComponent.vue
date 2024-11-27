@@ -216,7 +216,7 @@ onMounted(() => {
          <!-- Shape components -->
         <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container"/>
         <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container"/>
-        <RectangleGridComponent v-if="isStarGridVisible" class="star-grid-container"/>
+        <StarGridComponent v-if="isStarGridVisible" class="star-grid-container"/>
         </div>
     </div>
 
