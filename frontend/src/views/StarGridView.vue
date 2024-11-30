@@ -1,5 +1,5 @@
 <script setup>
-import StarGridComponent from '../components/StarGridComponent.vue'
+import StarGridComponent from '../components/gridComponents/StarGridComponent.vue'
 </script>
 
 <template>

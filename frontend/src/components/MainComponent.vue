@@ -2,9 +2,15 @@
 import { ref, onMounted } from 'vue';
 import axios from "axios";
 import { store } from '../store';
-import HeartGridComponent from './HeartGridComponent.vue';
-import RectangleGridComponent from './RectangleGridComponent.vue';
-import StarGridComponent from "@/components/StarGridComponent.vue";
+import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
+import RectangleGridComponent from './gridComponents/RectangleGridComponent.vue';
+import StarGridComponent from "@/components/gridComponents/StarGridComponent.vue";
+import HexagonGridComponent from "@/components/gridComponents/StarGridComponent.vue";
+import CloudGridComponent from "@/components/gridComponents/StarGridComponent.vue";
+import FishGridComponent from "@/components/gridComponents/StarGridComponent.vue";
+import LeafGridComponent from "@/components/gridComponents/StarGridComponent.vue";
+import TrinagleGridComponent from "@/components/gridComponents/StarGridComponent.vue";
+
 import UploadImage from "@/components/UploadImage.vue";
 const uploadedPhotos = ref([]); // Stores uploaded photos
 
@@ -38,28 +44,10 @@ const updateCollagePreview = async (imageSrc) => {
     return;
   }
   selectedCollageShape.value = imageSrc;
-  if (imageSrc.includes('heart.png')) {
-    isHeartGridVisible.value = true;
-    isRectangleGridVisible.value = false;
-    isStarGridVisible.value = false;
-  }
-  else if(imageSrc.includes('rectangle.png')){
-    isRectangleGridVisible.value = true;
-    isHeartGridVisible.value = false;
-    isStarGridVisible.value = false;
-    }
-  else if(imageSrc.includes('star.png')){
-    isStarGridVisible.value = true;
-    isRectangleGridVisible.value = false;
-    isHeartGridVisible.value = false;
-    }
-  else {
-    isHeartGridVisible.value = false;
-    isRectangleGridVisible.value = false;
-    isStarGridVisible.value = false;
-
-  }
+  const fileName = imageSrc.split('/').pop();
+  setOtherGridsInvisible(fileName)
 };
+
 
 const responseMessage = ref('');
 const callPing = async () => {
@@ -71,124 +59,35 @@ const callPing = async () => {
   }
 };
 
-const handlePhotoUpload = (event) => {
-  const files = event.target.files;
-  uploadedPhotos.value = [];
-  Array.from(files).forEach((file) => {
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        uploadedPhotos.value.push(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-};
 
 
-const areas = ref([]);
-const areaIDs = ref([]);
-const currentMaxID = ref(-1);
-
-
-const generateNewAreaID = () => {
-  currentMaxID.value += 1;
-  areaIDs.value.push(currentMaxID.value);
-  return currentMaxID.value;
-};
-
-// Creating image areas for later editing
-const addNewImageArea = (newAreaID, event) => {
-  const newArea = {
-    id: newAreaID,
-    x: event.offsetX,
-    y: event.offsetY,
-  };
-  areas.value.push(newArea);
-  console.log("New area:", newArea);
-  return newAreaID;
-};
-
-
-const openImageSelectorAndPlaceImage = async (areaID) => {
-  const area = areas.value.find((area) => area.id === areaID);
-  if (!area) {
-    console.error(`No area found: ${areaID}.`);
-    return;
-  }
-  const { x, y } = area;
-  const sidebar = document.querySelector('.v-navigation-drawer__content'); //Getting sidebar (from App.vue)
-
-  // Creating a modal to select and confirm image placement.
-  const modal = document.createElement("div");
-  modal.id = "imageSelectorModal";
-  modal.style.position = "fixed";
-  modal.style.top = "50%";
-  modal.style.left = "50%";
-  modal.style.transform = "translate(-50%, -50%)";
-  modal.style.zIndex = "1000";
-  modal.style.padding = "20px";
-  modal.style.backgroundColor = "#fff";
-  modal.style.border = "1px solid #ccc";
-  modal.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
-  modal.innerHTML = `
-  <h3 style="color: #555555;">Select image</h3>
-  <input type="file" id="imageFileInput" accept="image/*" style="color: black"/>
-  <button id="confirmImageSelectionButton" style="background-color: #42b883; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px;">Place</button>
-  <button id="cancelImageSelectionButton" style="background-color: #ff0000; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px;">Cancel</button>
-`;
-  document.body.appendChild(modal);
-
-  document.getElementById("confirmImageSelectionButton").addEventListener("click", () => {
-    const imageInput = document.getElementById("imageFileInput");
-    const file = imageInput.files[0];
-    if (!file) {
-      alert("Select an image.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      const collage = document.getElementById("collage-container");
-      const img = document.createElement("img");
-      img.src = event.target.result;
-      img.style.position = "absolute";
-      img.style.maxWidth = "100px";
-      img.style.maxHeight = "100px";
-
-      img.onload = () => {
-        const imageWidth = img.offsetWidth;
-        const imageHeight = img.offsetHeight;
-        img.style.left = `${x - imageWidth / 2}px`;
-        img.style.top = `${y - imageHeight / 2}px`;
-        collage.appendChild(img);
-      };
-    };
-    console.log(`Image placed at ${x}, ${y}.`);
-    reader.readAsDataURL(file);
-    document.body.removeChild(modal);
-  });
-
-  document.getElementById("cancelImageSelectionButton").addEventListener("click", () => {
-    document.body.removeChild(modal);
-  });
-};
-
-//TODO: Replace with broader vars upon full grid replacement.
 const isHeartGridVisible = ref(false);
 const isRectangleGridVisible = ref(false);
 const isStarGridVisible = ref(false);
+const isHexagonGridVisible = ref(false);
+const isCloudGridVisible = ref(false);
+const isFishGridVisible = ref(false);
+const isLeafGridVisible = ref(false);
+const isTriangleGridVisible = ref(false);
 
+const setOtherGridsInvisible = (grid) => {
+  isHeartGridVisible.value = false;
+  isRectangleGridVisible.value = false;
+  isStarGridVisible.value = false;
+  isHexagonGridVisible.value = false;
+  isCloudGridVisible.value = false;
+  isFishGridVisible.value = false;
+  isLeafGridVisible.value = false;
+  isTriangleGridVisible.value = false;
 
-// Function that handles placing images on collage, takes the mouse click event to track it's coords
-// TODO: Remove upon full Grid replacement
-const handleCollageClick = (event) => {
-  if(!isHeartGridVisible.value) {
-    console.log("Collage clicked at: ", event.pageX, event.pageY);
-    const area_id = generateNewAreaID();
-    addNewImageArea(area_id, event);
-    openImageSelectorAndPlaceImage(area_id);
-  }
+  if (grid === "heart.png") isHeartGridVisible.value = true;
+  if (grid === "rectangle.png") isRectangleGridVisible.value = true;
+  if (grid === "star.png") isStarGridVisible.value = true;
+  if (grid === "hexagon.png") isHexagonGridVisible.value = true;
+  if (grid === "cloud.png") isCloudGridVisible.value = true;
+  if (grid === "fish.png") isFishGridVisible.value = true;
+  if (grid === "leaf.pnh") isLeafGridVisible.value = true;
+  if (grid === "triangle.png") isTriangleGridVisible.value = true;
 };
 
 onMounted(() => {
