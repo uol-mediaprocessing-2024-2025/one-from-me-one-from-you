@@ -4,29 +4,38 @@ import { store } from '../store';
 import { ref } from 'vue';
 
 const successMessage = ref('');
+const previewImages = ref([]);
 
 const handleImageUpload = (event) => {
+  console.log('handleImageUpload');
   const files = event.target.files;
   if (files && files.length > 0) {
+    successMessage.value = '';
     for (const file of files) {
       const imageUrl = URL.createObjectURL(file);
+      previewImages.value.push({ url: imageUrl, blob: file });
       store.photoUrls.push(imageUrl);
       store.photoBlobs.push(file);
     }
   }
 };
 
+const removePreviewImage = (index) => {
+  console.log('Removing image at index:', index);
+  previewImages.value.splice(index, 1);
+};
+
 const uploadImage = async () => {
-  if (!store.photoBlobs.length)
-    return;
+  console.log('uploadImage');
+  if (!previewImages.value.length) return;
 
   try {
     const formData = new FormData();
 
-    store.photoBlobs.forEach((blob, index) => {
-      const fileExtension = blob.type.split('/')[1];
+    previewImages.value.forEach((item, index) => {
+      const fileExtension = item.blob.type.split('/')[1];
       const filename = `image_${index + 1}.${fileExtension}`;
-      formData.append('files', blob, filename);
+      formData.append('files', item.blob, filename);
     });
 
     const response = await axios.post(`${store.apiUrl}/saveImages`, formData, {
@@ -42,6 +51,7 @@ const uploadImage = async () => {
       console.log('Saved at:', file_paths);
 
       successMessage.value = 'Images uploaded successfully!';
+      previewImages.value = [];
     } else {
       console.error('Unexpected response:', response);
     }
@@ -53,17 +63,18 @@ const uploadImage = async () => {
 
 <template>
   <div class="upload-container">
-
+    <!-- Success Message -->
     <div v-if="successMessage" class="success-message">
       <p>{{ successMessage }}</p>
     </div>
 
     <!-- Image Preview -->
-    <div v-if="store.photoUrls.length && !successMessage" class="image-preview-gallery">
+    <div v-if="previewImages.length" class="image-preview-gallery">
       <h3>Preview Images:</h3>
       <div class="gallery">
-        <div v-for="(url, index) in store.photoUrls" :key="index" class="gallery-item">
-          <img :src="url" alt="Preview Image" />
+        <div v-for="(item, index) in previewImages" :key="index" class="gallery-item">
+          <img :src="item.url" alt="Preview Image" />
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
         </div>
       </div>
     </div>
@@ -84,7 +95,7 @@ const uploadImage = async () => {
       <button
         @click="uploadImage"
         class="upload-image-button"
-        :disabled="!store.photoBlobs.length">
+        :disabled="!previewImages.length">
         Upload Images
       </button>
     </div>
@@ -137,6 +148,24 @@ const uploadImage = async () => {
 
 .gallery-item {
   flex: 0 0 auto;
+  position: relative;
+}
+
+.remove-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-button:hover {
+  background-color: darkred;
 }
 
 .gallery-item img {
