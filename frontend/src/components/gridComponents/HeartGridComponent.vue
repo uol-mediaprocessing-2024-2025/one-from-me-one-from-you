@@ -38,8 +38,6 @@
   </div>
 </template>
 
-
-
 <script>
 import { store } from "../../store.js"; // Importing image store
 

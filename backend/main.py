@@ -1,13 +1,13 @@
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
+import uuid
 
 import shutil
 from fastapi.responses import JSONResponse
 import uvicorn
-from io import BytesIO
 import os
 
 import processCollageTemplate as proc
@@ -25,9 +25,12 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Directory to store uploaded images
 UPLOAD_DIR = Path("uploaded_images")
-UPLOAD_DIR.mkdir(exist_ok=True)  # Ensure the directory exists
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+for file in UPLOAD_DIR.iterdir():
+    if file.is_file():
+        file.unlink()
 
 class Base64Image(BaseModel):
     filename: str  # The filename to save
@@ -36,16 +39,17 @@ class Base64Image(BaseModel):
 @app.post("/saveImages")
 async def saveImages(files: list[UploadFile] = File(...)):
     try:
-        saved_files = []  # List to store paths of successfully saved files
+        saved_files = []
 
         for file in files:
-            file_path = os.path.join(UPLOAD_DIR, file.filename)
+            file_extension = file.filename.split('.')[-1]
+            random_filename = f"{uuid.uuid4()}.{file_extension}"
+            file_path = os.path.join(UPLOAD_DIR, random_filename)
 
-            # Save each uploaded file
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-            saved_files.append(file_path)  # Add saved file path to the list
+            saved_files.append(file_path)
 
         return {
             "message": "Images saved successfully",
@@ -76,10 +80,6 @@ async def get_images():
 
 @app.get("/ping")
 def ping():
-    """
-    A simple endpoint to test if the server is running.
-    Returns a JSON response with a message.
-    """
     return {"message": "pong"}
 
 if __name__ == "__main__":
