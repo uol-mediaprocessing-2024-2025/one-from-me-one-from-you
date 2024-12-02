@@ -87,7 +87,7 @@ const setOtherGridsInvisible = (grid) => {
   if (grid === "hexagon.png") isHexagonGridVisible.value = true;
   if (grid === "cloud.png") isCloudGridVisible.value = true;
   if (grid === "fish.png") isFishGridVisible.value = true;
-  if (grid === "leaf.pnh") isLeafGridVisible.value = true;
+  if (grid === "leaf.png") isLeafGridVisible.value = true;
   if (grid === "triangle.png") isTriangleGridVisible.value = true;
 };
 
