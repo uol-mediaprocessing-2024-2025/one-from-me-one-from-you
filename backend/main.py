@@ -1,5 +1,5 @@
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
@@ -8,8 +8,9 @@ import shutil
 from fastapi.responses import JSONResponse
 import uvicorn
 import os
+import json
 
-import processCollageTemplate as proc
+
 
 app = FastAPI()
 
@@ -83,6 +84,13 @@ async def get_images():
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
+
+
+@app.post("/positions")
+async def receive_positions(positions: str = Form(...)):
+    parsed_positions = json.loads(positions)
+    print("Received positions with file names:", parsed_positions)
+    return {"message": "Data received successfully"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

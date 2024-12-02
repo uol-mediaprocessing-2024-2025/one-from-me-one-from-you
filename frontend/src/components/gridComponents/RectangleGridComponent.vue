@@ -10,6 +10,7 @@
         @dragover.prevent
         @drop="onDrop(index)"
       >
+
         <!-- Show image if selected -->
         <label v-if="!item.src" class="upload-label" @click="openImageSelection(index)">
           + Select Image
@@ -17,6 +18,7 @@
         <img v-else :src="item.src" alt="Bild" />
       </div>
     </div>
+
 
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
@@ -36,6 +38,9 @@
       </div>
     </div>
   </div>
+
+   <v-btn @click="extractGridPositions">
+          Send to backend </v-btn>
 </template>
 
 
@@ -78,17 +83,53 @@ export default {
       this.selectedIndex = index;
       this.showModal = true;
     },
+
     async selectImage(image) {
-  if (this.selectedIndex !== null) {
-    const scaledImage = await this.scaleImage(image);
-    this.items[this.selectedIndex] = { src: scaledImage };
-    this.showModal = false;
-    this.selectedIndex = null;
-  }
+    if (this.selectedIndex !== null) {
+        const scaledImage = await this.scaleImage(image);
+        const fileName = image.split('/').pop();
+        this.items[this.selectedIndex] = { src: scaledImage, fileName: fileName };
+        this.showModal = false;
+        this.selectedIndex = null;
+    }
 }
-
-
     ,
+
+    async extractGridPositions() {
+    const gridContainer = document.querySelector('.rectangle-grid');
+    const gridItems = document.querySelectorAll('.grid-item');
+    const containerRect = gridContainer.getBoundingClientRect();
+    const positions = [];
+
+    //Starting at top left
+    gridItems.forEach((item, index) => {
+        const itemRect = item.getBoundingClientRect();
+        const positionData = {
+            id: index + 1,
+            top: itemRect.top - containerRect.top,
+            left: itemRect.left - containerRect.left,
+            fileName: this.items[index].fileName || null,
+        };
+
+        positions.push(positionData);
+    });
+
+    const formData = new FormData();
+    formData.append('positions', JSON.stringify(positions));
+
+    try {
+        const response = await fetch('http://127.0.0.1:8000/positions', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        console.log('Response from backend:', result);
+    } catch (error) {
+        console.error('Error sending grid with file names:', error);
+    }
+}
+,
     closeModal() {
       this.showModal = false;
       this.selectedIndex = null;
