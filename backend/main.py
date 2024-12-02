@@ -28,7 +28,7 @@ app.mount("/uploaded_images", StaticFiles(directory=str(UPLOAD_DIR)), name="uplo
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173"],  # Replace with the origin of your Vue.js app
+    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],  # Include both localhost and 127.0.0.1
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allow all headers
