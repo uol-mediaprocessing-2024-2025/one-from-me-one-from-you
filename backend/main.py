@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 import uuid
-
 import shutil
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -14,7 +13,17 @@ import processCollageTemplate as proc
 
 app = FastAPI()
 
-app.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")
+# Ensure the 'uploaded_images' directory exists before mounting
+UPLOAD_DIR = Path("uploaded_images")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+# Clean up any existing files in the directory (optional)
+for file in UPLOAD_DIR.iterdir():
+    if file.is_file():
+        file.unlink()
+
+# Mount static files
+app.mount("/uploaded_images", StaticFiles(directory=str(UPLOAD_DIR)), name="uploaded_images")
 
 # CORS middleware configuration
 app.add_middleware(
@@ -24,13 +33,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allow all headers
 )
-
-UPLOAD_DIR = Path("uploaded_images")
-UPLOAD_DIR.mkdir(exist_ok=True)
-
-for file in UPLOAD_DIR.iterdir():
-    if file.is_file():
-        file.unlink()
 
 class Base64Image(BaseModel):
     filename: str  # The filename to save
