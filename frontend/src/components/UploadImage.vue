@@ -1,40 +1,46 @@
 <script setup>
-import { ref } from 'vue';
 import axios from 'axios';
-import { store } from '../store'; // Import shared store to manage global state
+import { store } from '../store';
+import { ref } from 'vue';
+
+const successMessage = ref('');
+const previewImages = ref([]);
 
 const handleImageUpload = (event) => {
   console.log('handleImageUpload');
-  const files = event.target.files; // FileList object containing all selected files
+  const files = event.target.files;
   if (files && files.length > 0) {
+    successMessage.value = '';
     for (const file of files) {
-      const imageUrl = URL.createObjectURL(file); // Generate a preview URL for each file
-      store.photoUrls.push(imageUrl); // Store the preview URL in the global store
-      store.photoBlobs.push(file); // Store the file object (Blob) in the global store
+      const imageUrl = URL.createObjectURL(file);
+      previewImages.value.push({ url: imageUrl, blob: file });
+      store.photoUrls.push(imageUrl);
+      store.photoBlobs.push(file);
     }
   }
 };
 
+const removePreviewImage = (index) => {
+  console.log('Removing image at index:', index);
+  previewImages.value.splice(index, 1);
+};
+
 const uploadImage = async () => {
   console.log('uploadImage');
-  if (!store.photoBlobs.length) return; // Ensure there are files to upload
+  if (!previewImages.value.length) return;
 
   try {
     const formData = new FormData();
 
-    // Append all blobs to the formData
-    store.photoBlobs.forEach((blob, index) => {
-      // Generate a filename with extension, or use the original blob name if available
-      const fileExtension = blob.type.split('/')[1];  // Extract the file extension from the MIME type
-      const filename = `image_${index + 1}.${fileExtension}`; // Create a unique filename with the extension
-
-      formData.append('files', blob, filename); // Append the blob with the generated filename
+    previewImages.value.forEach((item, index) => {
+      const fileExtension = item.blob.type.split('/')[1];
+      const filename = `image_${index + 1}.${fileExtension}`;
+      formData.append('files', item.blob, filename);
     });
 
-    // Send the request to the server with all files in one request
     const response = await axios.post(`${store.apiUrl}/saveImages`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data', // Set the correct header for file upload
+        'Content-Type': 'multipart/form-data',
       },
     });
 
@@ -43,6 +49,9 @@ const uploadImage = async () => {
 
       console.log('Images uploaded successfully:', message);
       console.log('Saved at:', file_paths);
+
+      successMessage.value = 'Images uploaded successfully!';
+      previewImages.value = [];
     } else {
       console.error('Unexpected response:', response);
     }
@@ -50,18 +59,22 @@ const uploadImage = async () => {
     console.error('Failed to upload images:', error);
   }
 };
-
-
 </script>
 
 <template>
   <div class="upload-container">
+    <!-- Success Message -->
+    <div v-if="successMessage" class="success-message">
+      <p>{{ successMessage }}</p>
+    </div>
+
     <!-- Image Preview -->
-    <div v-if="store.photoUrls.length" class="image-preview-gallery">
-      <h3>Uploaded Images:</h3>
+    <div v-if="previewImages.length" class="image-preview-gallery">
+      <h3>Preview Images:</h3>
       <div class="gallery">
-        <div v-for="(url, index) in store.photoUrls" :key="index" class="gallery-item">
-          <img :src="url" alt="Preview Image" />
+        <div v-for="(item, index) in previewImages" :key="index" class="gallery-item">
+          <img :src="item.url" alt="Preview Image" />
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
         </div>
       </div>
     </div>
@@ -79,11 +92,10 @@ const uploadImage = async () => {
         style="display: none;"
         multiple
       />
-
       <button
         @click="uploadImage"
         class="upload-image-button"
-        :disabled="!store.photoBlobs.length">
+        :disabled="!previewImages.length">
         Upload Images
       </button>
     </div>
@@ -91,17 +103,16 @@ const uploadImage = async () => {
 </template>
 
 <style scoped>
+
+.success-message {
+  color: green;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
 .upload-container {
   margin: 20px auto;
   text-align: center;
-}
-
-.image-preview img {
-  max-width: 300px;
-  margin: 10px auto;
-  display: block;
-  border: 1px solid #ccc;
-  border-radius: 5px;
 }
 
 .upload-actions {
@@ -126,6 +137,35 @@ const uploadImage = async () => {
 .upload-image-button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+.gallery {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.gallery-item {
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.remove-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-button:hover {
+  background-color: darkred;
 }
 
 .gallery-item img {
