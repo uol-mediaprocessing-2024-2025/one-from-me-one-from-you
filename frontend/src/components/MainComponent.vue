@@ -5,11 +5,11 @@ import { store } from '../store';
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
 import RectangleGridComponent from './gridComponents/RectangleGridComponent.vue';
 import StarGridComponent from "@/components/gridComponents/StarGridComponent.vue";
-import HexagonGridComponent from "@/components/gridComponents/StarGridComponent.vue";
-import CloudGridComponent from "@/components/gridComponents/StarGridComponent.vue";
-import FishGridComponent from "@/components/gridComponents/StarGridComponent.vue";
-import LeafGridComponent from "@/components/gridComponents/StarGridComponent.vue";
-import TrinagleGridComponent from "@/components/gridComponents/StarGridComponent.vue";
+import HexagonGridComponent from "@/components/gridComponents/HexagonGridComponent.vue";
+import CloudGridComponent from "@/components/gridComponents/CloudGridComponent.vue";
+import FishGridComponent from "@/components/gridComponents/FishGridComponent.vue";
+import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue";
+import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
 import UploadImage from "@/components/UploadImage.vue";
 const uploadedPhotos = ref([]); // Stores uploaded photos
@@ -71,6 +71,7 @@ const isLeafGridVisible = ref(false);
 const isTriangleGridVisible = ref(false);
 
 const setOtherGridsInvisible = (grid) => {
+  console.log(grid)
   isHeartGridVisible.value = false;
   isRectangleGridVisible.value = false;
   isStarGridVisible.value = false;
@@ -92,11 +93,6 @@ const setOtherGridsInvisible = (grid) => {
 
 onMounted(() => {
   console.log("Component mounted.");
-});
-
-
-
-onMounted(() => {
   const collageTemplatesPath = 'collage_templates/';
   const shapeFiles = [
     'heart.png',
@@ -121,29 +117,23 @@ onMounted(() => {
     <!-- Collage Preview -->
     <div class="collage-preview">
       <div class="collage-shape">
-        <div id="collage-container" @click="handleCollageClick($event)" v-if="!isHeartGridVisible && !isRectangleGridVisible && !isStarGridVisible">
-          <img :src="selectedCollageShape" alt="Collage Preview"/>
-        </div>
          <!-- Shape components -->
         <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container"/>
         <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container"/>
         <StarGridComponent v-if="isStarGridVisible" class="star-grid-container"/>
+        <CloudGridComponent v-if="isCloudGridVisible" class="cloud-grid-container"/>
+        <HexagonGridComponent v-if="isHexagonGridVisible" class="hexagon-grid-container"/>
+        <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container"/>
+        <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container"/>
+        <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container"/>
+
         </div>
     </div>
 
     <div class="settings-panel">
       <section class="settings">
         <h2>Settings</h2>
-        <label for="quantity">Number of Photos</label>
-        <input
-          type="range"
-          id="quantity"
-          min="1"
-          max="10"
-          v-model="quantity"
-        />
-        <label for="spacing">Spacing</label>
-        <input type="range" id="spacing" min="0" max="50" v-model="spacing" />
+
         <!-- Debug Remove -->
         <button @click="callPing">Ping Backend</button>
         <p>{{ responseMessage }}</p>
@@ -152,7 +142,7 @@ onMounted(() => {
 
       <!-- Sorting Options -->
       <section class="sorting-options">
-        <h2>Sort Photos By</h2>
+        <h2>Collage options</h2>
         <ul>
           <li>
             <label>
@@ -162,7 +152,7 @@ onMounted(() => {
                 value="contrast"
                 v-model="sortingOption"
               />
-              Contrast
+              Same face
             </label>
           </li>
           <li>
@@ -173,7 +163,7 @@ onMounted(() => {
                 value="size"
                 v-model="sortingOption"
               />
-              Size
+              Similarity
             </label>
           </li>
           <li>
@@ -184,7 +174,7 @@ onMounted(() => {
                 value="harmoniousColors"
                 v-model="sortingOption"
               />
-              Harmonious Colors
+
             </label>
           </li>
           <li>
@@ -195,7 +185,7 @@ onMounted(() => {
                 value="saturation"
                 v-model="sortingOption"
               />
-              Saturation
+
             </label>
           </li>
           <li>
@@ -217,7 +207,7 @@ onMounted(() => {
                 value="random"
                 v-model="sortingOption"
               />
-              Random
+
             </label>
           </li>
         </ul>
