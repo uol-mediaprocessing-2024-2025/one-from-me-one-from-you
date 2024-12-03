@@ -1,13 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'; // Import ref and lifecycle hooks
+import { ref } from 'vue'; // Import ref and lifecycle hooks
 import axios from 'axios'; // Axios for API requests
 import { store } from './store.js'; // Import the reactive store
 
 const images = ref([]);
 
-onMounted(async () => {
+async function fetchAndStoreImages() {
   try {
-    // Fetch image data from the backend
     const response = await axios.get(`${store.apiUrl}/getImages`, {
       headers: {
         'Content-Type': 'application/json',
@@ -19,12 +18,17 @@ onMounted(async () => {
       store.photoUrls = [];
       store.photoBlobs = [];
 
-      // Populate the store with new image URLs
-      response.data.image_files.forEach(image => {
+      // Populate the store with new image URLs and blobs
+      for (const image of response.data.image_files) {
         const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
-        store.photoUrls.push(fullUrl); // Add URL to photoUrls
-        console.log("Image URL added to store:", fullUrl);
-      });
+        store.photoUrls.push(fullUrl);
+
+        // Fetch the image as a blob
+        const blobResponse = await axios.get(fullUrl, { responseType: 'blob' });
+        store.photoBlobs.push(blobResponse.data);
+
+        console.log("Image URL and blob added to store:", fullUrl);
+      }
 
       // Optionally update the local state for this component
       images.value = [...store.photoUrls];
@@ -34,7 +38,7 @@ onMounted(async () => {
   } catch (error) {
     console.error("Error fetching images:", error);
   }
-});
+}
 </script>
 
 <template>
