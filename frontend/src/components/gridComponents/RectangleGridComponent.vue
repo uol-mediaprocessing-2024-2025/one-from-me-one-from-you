@@ -3,6 +3,11 @@ import { store } from "@/store.js";
 import axios from "axios";
 import { ref, reactive } from "vue";
 import { fetchAndStoreImages } from '@/controller/SynchronizeImages.js';
+import { defineProps, useAttrs} from 'vue';
+
+// To supress vue warnings
+defineProps([]);
+const attrs = useAttrs();
 
 // Reactive variables
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
@@ -119,7 +124,7 @@ async function extractGridPositions() {
 
 <template>
   <div class="rectangle-grid-container">
-    <div class="rectangle-grid">
+    <div class="rectangle-grid" v-bind="attrs">
       <div
         v-for="(item, index) in items"
         :key="index"

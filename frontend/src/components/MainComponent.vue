@@ -69,7 +69,7 @@ const isLeafGridVisible = ref(false);
 const isTriangleGridVisible = ref(false);
 
 const setOtherGridsInvisible = (grid) => {
-  console.log(grid)
+  console.log(grid);
   isHeartGridVisible.value = false;
   isRectangleGridVisible.value = false;
   isStarGridVisible.value = false;
