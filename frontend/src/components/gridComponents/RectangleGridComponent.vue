@@ -26,7 +26,7 @@
         <h3>Select an Image</h3>
         <div class="image-list">
           <div
-            v-for="(image, i) in uploadedImages"
+            v-for="(image, i) in images"
             :key="i"
             class="image-item"
             @click="selectImage(image)"
@@ -41,35 +41,49 @@
 
    <v-btn @click="extractGridPositions">
           Send to backend </v-btn>
+
+   <v-btn @click="synchroniseBackend">
+          Synchronise </v-btn>
+
 </template>
 
 
 
 <script>
-import { store } from "@/store.js"; // Importing image store
+import { store } from "@/store.js";
+import axios from "axios";
+import {onMounted, ref} from "vue"; // Importing image store
 
-async function loadImages() {
-    try {
-        const response = await fetch(`${store.apiUrl}/getImages`);
-        console.log('Response:', response);
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Data received:', data);
+const images = ref([]);
 
-            if (data.image_files && Array.isArray(data.image_files)) {
-                store.photoUrls = data.image_files.map(file => `${store.apiUrl}/${file}`);
-            } else {
-                console.error('Unexpected response structure:', data);
-            }
-        } else {
-            console.error('Failed to load images:', response.status, response.statusText);
-        }
-    } catch (error) {
-        console.error('Error loading images:', error);
+onMounted(async () => {
+  console.log("COMPONENT MOUNTED")
+  try {
+    const response = await axios.get(`${store.apiUrl}/getImages`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Check if the response is successful and contains image files
+    if (response.status === 200 && Array.isArray(response.data.image_files)) {
+      images.value = response.data.image_files.map(image => {
+        const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
+        console.log("Image URL:", fullUrl); // Debugging URL
+        return fullUrl;
+      });
+      console.log(images);
+    } else {
+      console.error("No images found:", response.data.message);
     }
-}
+  } catch (error) {
+    console.error("Error fetching images:", error);
+  }
+});
+
 export default {
+
   name: "RectangleGrid",
   data() {
     return {
@@ -80,12 +94,8 @@ export default {
       twoDArray: [], // Speichert das zweidimensionale Array
     };
   },
-  computed: {
-    uploadedImages() {
-      return store.photoUrls;
-    },
-  },
   methods: {
+
     initializeGridPositions() {
       const gridContainer = document.querySelector(".rectangle-grid");
       const containerRect = gridContainer.getBoundingClientRect();
@@ -132,6 +142,32 @@ export default {
       this.selectedIndex = index;
       this.showModal = true;
     },
+
+    async synchroniseBackend(){
+      try {
+    const response = await axios.get(`${store.apiUrl}/getImages`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Check if the response is successful and contains image files
+    if (response.status === 200 && Array.isArray(response.data.image_files)) {
+      images.value = response.data.image_files.map(image => {
+        const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
+        console.log("Image URL:", fullUrl); // Debugging URL
+        return fullUrl;
+      });
+      console.log(images);
+    } else {
+      console.error("No images found:", response.data.message);
+    }
+  } catch (error) {
+    console.error("Error fetching images:", error);
+  }
+},
+
+
     async selectImage(image) {
       if (this.selectedIndex !== null) {
         const scaledImage = await this.scaleImage(image);
@@ -143,9 +179,11 @@ export default {
         this.showModal = false;
         this.selectedIndex = null;
       }
-      await loadImages();
     },
+
+
     async extractGridPositions() {
+      console.log(images)
       const gridContainer = document.querySelector(".rectangle-grid");
       const gridItems = document.querySelectorAll(".grid-item");
       const containerRect = gridContainer.getBoundingClientRect();
@@ -178,10 +216,14 @@ export default {
         console.error("Error sending grid with file names:", error);
       }
     },
+
+
     closeModal() {
       this.showModal = false;
       this.selectedIndex = null;
     },
+
+
     scaleImage(imageUrl) {
       return new Promise((resolve) => {
         const img = new Image();
@@ -196,11 +238,11 @@ export default {
         img.src = imageUrl;
       });
     },
-  },
-  mounted() {
-    this.initializeGridPositions();
-  },
-};
+  }
+}
+
+
+
 </script>
 
 
