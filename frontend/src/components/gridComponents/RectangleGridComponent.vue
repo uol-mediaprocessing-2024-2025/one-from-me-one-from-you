@@ -1,15 +1,129 @@
+<script setup>
+import { store } from "@/store.js";
+import axios from "axios";
+import { ref, reactive } from "vue";
+import { fetchAndStoreImages } from '@/controller/SynchronizeImages.js';
+
+// Reactive variables
+const items = reactive(Array(35).fill({ src: null, fileName: null }));
+const showModal = ref(false);
+const selectedIndex = ref(null);
+const twoDArray = ref([]);
+
+function openImageSelection(index) {
+  fetchAndStoreImages();
+  selectedIndex.value = index;
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  selectedIndex.value = null;
+}
+
+async function selectImage(image) {
+  console.log("selectImage");
+  if (selectedIndex.value !== null) {
+    const scaledImage = await scaleImage(image);
+    const fileName = image.split("/").pop();
+    items[selectedIndex.value] = {
+      src: scaledImage,
+      fileName: fileName,
+    };
+  closeModal();
+  }
+}
+
+function scaleImage(imageUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 50;
+      canvas.height = 50;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, 50, 50);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = (err) => {
+      reject(new Error(`Failed to load image: ${err.message}`));
+    };
+    img.src = imageUrl;
+  });
+}
+
+function initializeGridPositions() {
+  const gridContainer = document.querySelector(".rectangle-grid");
+  const containerRect = gridContainer.getBoundingClientRect();
+
+  const rows = 5;
+  const cols = 7;
+
+  const initialGrid = [];
+  let id = 1;
+
+  for (let row = 0; row < rows; row++) {
+    const rowArray = [];
+    for (let col = 0; col < cols; col++) {
+      const emptySlot = {
+        id: id++,
+        top: row * 50,
+        left: col * 50,
+        fileName: null,
+      };
+      rowArray.push(emptySlot);
+    }
+    initialGrid.push(rowArray);
+  }
+
+  twoDArray.value = initialGrid;
+  console.log("Initialized 2D Array:", twoDArray.value);
+}
+
+async function extractGridPositions() {
+  const gridContainer = document.querySelector(".rectangle-grid");
+  const gridItems = document.querySelectorAll(".grid-item");
+  const containerRect = gridContainer.getBoundingClientRect();
+  const positions = [];
+
+  gridItems.forEach((item, index) => {
+    const itemRect = item.getBoundingClientRect();
+    const positionData = {
+      id: index + 1,
+      top: itemRect.top - containerRect.top,
+      left: itemRect.left - containerRect.left,
+      fileName: items[index].fileName || null,
+    };
+
+    positions.push(positionData);
+  });
+
+  const formData = new FormData();
+  formData.append("positions", JSON.stringify(positions));
+
+  try {
+    const response = await fetch(`${store.apiUrl}/positions`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+    console.log("Response from backend:", result);
+  } catch (error) {
+    console.error("Error sending grid with file names:", error);
+  }
+}
+
+</script>
+
 <template>
   <div class="rectangle-grid-container">
     <div class="rectangle-grid">
       <div
         v-for="(item, index) in items"
         :key="index"
-        class="grid-item"
-        draggable="true"
-        @dragstart="onDragStart(index)"
-        @dragover.prevent
-        @drop="onDrop(index)"
-      >
+        class="grid-item">
 
         <!-- Show image if selected -->
         <label v-if="!item.src" class="upload-label" @click="openImageSelection(index)">
@@ -19,18 +133,16 @@
       </div>
     </div>
 
-
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
       <div class="modal-content">
         <h3>Select an Image</h3>
         <div class="image-list">
           <div
-            v-for="(image, i) in images"
+            v-for="(image, i) in store.photoUrls"
             :key="i"
             class="image-item"
-            @click="selectImage(image)"
-          >
+            @click="selectImage(image)">
             <img :src="image" alt="Uploaded Image" />
           </div>
         </div>
@@ -39,213 +151,9 @@
     </div>
   </div>
 
-   <v-btn @click="extractGridPositions">
-          Send to backend </v-btn>
-
-   <v-btn @click="synchroniseBackend">
-          Synchronise </v-btn>
+  <v-btn @click="extractGridPositions">Send to backend </v-btn>
 
 </template>
-
-
-
-<script>
-import { store } from "@/store.js";
-import axios from "axios";
-import {onMounted, ref} from "vue"; // Importing image store
-
-
-const images = ref([]);
-
-onMounted(async () => {
-  console.log("COMPONENT MOUNTED")
-  try {
-    const response = await axios.get(`${store.apiUrl}/getImages`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Check if the response is successful and contains image files
-    if (response.status === 200 && Array.isArray(response.data.image_files)) {
-      images.value = response.data.image_files.map(image => {
-        const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
-        console.log("Image URL:", fullUrl); // Debugging URL
-        return fullUrl;
-      });
-      console.log(images);
-    } else {
-      console.error("No images found:", response.data.message);
-    }
-  } catch (error) {
-    console.error("Error fetching images:", error);
-  }
-});
-
-export default {
-
-  name: "RectangleGrid",
-  data() {
-    return {
-      items: Array(35).fill({ src: null, fileName: null }),
-      draggedItemIndex: null,
-      showModal: false,
-      selectedIndex: null,
-      twoDArray: [], // Speichert das zweidimensionale Array
-    };
-  },
-  methods: {
-
-    initializeGridPositions() {
-      const gridContainer = document.querySelector(".rectangle-grid");
-      const containerRect = gridContainer.getBoundingClientRect();
-
-      // Anzahl der Reihen und Spalten definieren
-      const rows = 5;
-      const cols = 7;
-
-      const initialGrid = [];
-      let id = 1;
-
-      for (let row = 0; row < rows; row++) {
-        const rowArray = [];
-        for (let col = 0; col < cols; col++) {
-          // Erstelle leere Slots mit ID und Koordinaten
-          const emptySlot = {
-            id: id++,
-            top: row * 50,
-            left: col * 50,
-            fileName: null,
-          };
-          rowArray.push(emptySlot);
-        }
-        initialGrid.push(rowArray);
-      }
-
-      this.twoDArray = initialGrid;
-      console.log("Initialized 2D Array:", this.twoDArray);
-    },
-    onDragStart(index) {
-      this.draggedItemIndex = index;
-    },
-    onDrop(index) {
-      if (this.draggedItemIndex !== null && !this.items[index].src) {
-        const draggedItem = this.items[this.draggedItemIndex];
-        this.items.splice(this.draggedItemIndex, 1);
-        this.items.splice(index, 0, draggedItem);
-        this.draggedItemIndex = null;
-      } else {
-        console.log("Slot is already occupied!");
-      }
-    },
-    openImageSelection(index) {
-      this.selectedIndex = index;
-      this.showModal = true;
-    },
-
-    async synchroniseBackend(){
-      try {
-    const response = await axios.get(`${store.apiUrl}/getImages`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Check if the response is successful and contains image files
-    if (response.status === 200 && Array.isArray(response.data.image_files)) {
-      images.value = response.data.image_files.map(image => {
-        const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
-        console.log("Image URL:", fullUrl); // Debugging URL
-        return fullUrl;
-      });
-      console.log(images);
-    } else {
-      console.error("No images found:", response.data.message);
-    }
-  } catch (error) {
-    console.error("Error fetching images:", error);
-  }
-},
-
-
-    async selectImage(image) {
-      if (this.selectedIndex !== null) {
-        const scaledImage = await this.scaleImage(image);
-        const fileName = image.split("/").pop();
-        this.items[this.selectedIndex] = {
-          src: scaledImage,
-          fileName: fileName,
-        };
-        this.showModal = false;
-        this.selectedIndex = null;
-      }
-    },
-
-
-    async extractGridPositions() {
-      console.log(images)
-      const gridContainer = document.querySelector(".rectangle-grid");
-      const gridItems = document.querySelectorAll(".grid-item");
-      const containerRect = gridContainer.getBoundingClientRect();
-      const positions = [];
-
-      gridItems.forEach((item, index) => {
-        const itemRect = item.getBoundingClientRect();
-        const positionData = {
-          id: index + 1,
-          top: itemRect.top - containerRect.top,
-          left: itemRect.left - containerRect.left,
-          fileName: this.items[index].fileName || null,
-        };
-
-        positions.push(positionData);
-      });
-
-      const formData = new FormData();
-      formData.append("positions", JSON.stringify(positions));
-
-      try {
-        const response = await fetch(`${store.apiUrl}/positions`, {
-          method: "POST",
-          body: formData,
-        });
-
-        const result = await response.json();
-        console.log("Response from backend:", result);
-      } catch (error) {
-        console.error("Error sending grid with file names:", error);
-      }
-    },
-
-
-    closeModal() {
-      this.showModal = false;
-      this.selectedIndex = null;
-    },
-
-
-    scaleImage(imageUrl) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = 50;
-          canvas.height = 50;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, 50, 50);
-          resolve(canvas.toDataURL("image/jpeg", 0.8));
-        };
-        img.src = imageUrl;
-      });
-    },
-  }
-}
-
-
-
-</script>
-
-
 
 <style scoped>
 .rectangle-grid-container {
@@ -319,8 +227,6 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .grid-item:nth-child(33) { top: 20%; left: 70%; }
 .grid-item:nth-child(34) { top: 30%; left: 70%; }
 .grid-item:nth-child(35) { top: 40%; left: 70%; }
-
-
 
 .upload-label {
   display: flex;

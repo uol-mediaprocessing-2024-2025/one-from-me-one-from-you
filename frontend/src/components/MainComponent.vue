@@ -59,8 +59,6 @@ const callPing = async () => {
   }
 };
 
-
-
 const isHeartGridVisible = ref(false);
 const isRectangleGridVisible = ref(false);
 const isStarGridVisible = ref(false);
