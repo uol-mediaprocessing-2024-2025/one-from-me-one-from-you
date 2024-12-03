@@ -166,28 +166,7 @@ onMounted(() => {
           </li>
           <li>
             <label>
-              <input
-                type="radio"
-                name="sort"
-                value="harmoniousColors"
-                v-model="sortingOption"
-              />
 
-            </label>
-          </li>
-          <li>
-            <label>
-              <input
-                type="radio"
-                name="sort"
-                value="saturation"
-                v-model="sortingOption"
-              />
-
-            </label>
-          </li>
-          <li>
-            <label>
               <input
                 type="radio"
                 name="sort"
@@ -195,17 +174,6 @@ onMounted(() => {
                 v-model="sortingOption"
               />
               Style
-            </label>
-          </li>
-          <li>
-            <label>
-              <input
-                type="radio"
-                name="sort"
-                value="random"
-                v-model="sortingOption"
-              />
-
             </label>
           </li>
         </ul>

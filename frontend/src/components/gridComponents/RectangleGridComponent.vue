@@ -13,7 +13,6 @@ const attrs = useAttrs();
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
-const twoDArray = ref([]);
 
 function openImageSelection(index) {
   fetchAndStoreImages();
@@ -58,39 +57,12 @@ function scaleImage(imageUrl) {
   });
 }
 
-function initializeGridPositions() {
-  const gridContainer = document.querySelector(".rectangle-grid");
-  const containerRect = gridContainer.getBoundingClientRect();
-
-  const rows = 5;
-  const cols = 7;
-
-  const initialGrid = [];
-  let id = 1;
-
-  for (let row = 0; row < rows; row++) {
-    const rowArray = [];
-    for (let col = 0; col < cols; col++) {
-      const emptySlot = {
-        id: id++,
-        top: row * 50,
-        left: col * 50,
-        fileName: null,
-      };
-      rowArray.push(emptySlot);
-    }
-    initialGrid.push(rowArray);
-  }
-
-  twoDArray.value = initialGrid;
-  console.log("Initialized 2D Array:", twoDArray.value);
-}
 
 async function extractGridPositions() {
   const gridContainer = document.querySelector(".rectangle-grid");
   const gridItems = document.querySelectorAll(".grid-item");
   const containerRect = gridContainer.getBoundingClientRect();
-  const positions = [];
+  let positions = [];
 
   gridItems.forEach((item, index) => {
     const itemRect = item.getBoundingClientRect();
@@ -102,6 +74,14 @@ async function extractGridPositions() {
     };
 
     positions.push(positionData);
+  });
+
+    // Sorting, starting at top left
+  positions.sort((a, b) => {
+    if (a.left === b.left) {
+      return a.top - b.top;
+    }
+    return a.left - b.left;
   });
 
   const formData = new FormData();
@@ -197,41 +177,42 @@ async function extractGridPositions() {
 box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 }
 
-.grid-item:nth-child(1) { top: 0%; left: 10%; }
-.grid-item:nth-child(2) { top: 10%; left: 10%; }
-.grid-item:nth-child(3) { top: 20%; left: 10%; }
-.grid-item:nth-child(4) { top: 30%; left: 10%; }
-.grid-item:nth-child(5) { top: 40%; left: 10%; }
-.grid-item:nth-child(6) { top: 0%; left: 20%; }
-.grid-item:nth-child(7) { top: 10%; left: 20%; }
-.grid-item:nth-child(8) { top: 20%; left: 20%; }
-.grid-item:nth-child(9) { top: 30%; left: 20%; }
-.grid-item:nth-child(10) { top: 40%; left: 20%; }
-.grid-item:nth-child(11) { top: 0%; left: 30%; }
-.grid-item:nth-child(12) { top: 10%; left: 30%; }
-.grid-item:nth-child(13) { top: 20%; left: 30%; }
-.grid-item:nth-child(14) { top: 30%; left: 30%; }
-.grid-item:nth-child(15) { top: 40%; left: 30%; }
-.grid-item:nth-child(16) { top: 0%; left: 40%; }
-.grid-item:nth-child(17) { top: 10%; left: 40%; }
-.grid-item:nth-child(18) { top: 20%; left: 40%; }
-.grid-item:nth-child(19) { top: 30%; left: 40%; }
-.grid-item:nth-child(20) { top: 40%; left: 40%; }
-.grid-item:nth-child(21) { top: 0%; left: 50%; }
-.grid-item:nth-child(22) { top: 10%; left: 50%; }
-.grid-item:nth-child(23) { top: 20%; left: 50%; }
-.grid-item:nth-child(24) { top: 30%; left: 50%; }
-.grid-item:nth-child(25) { top: 40%; left: 50%; }
-.grid-item:nth-child(26) { top: 0%; left: 60%; }
-.grid-item:nth-child(27) { top: 10%; left: 60%; }
-.grid-item:nth-child(28) { top: 20%; left: 60%; }
-.grid-item:nth-child(29) { top: 30%; left: 60%; }
-.grid-item:nth-child(30) { top: 40%; left: 60%; }
-.grid-item:nth-child(31) { top: 0%; left: 70%; }
-.grid-item:nth-child(32) { top: 10%; left: 70%; }
-.grid-item:nth-child(33) { top: 20%; left: 70%; }
-.grid-item:nth-child(34) { top: 30%; left: 70%; }
-.grid-item:nth-child(35) { top: 40%; left: 70%; }
+.grid-item:nth-child(1) { top: 20%; left: 10%; }
+.grid-item:nth-child(2) { top: 30%; left: 10%; }
+.grid-item:nth-child(3) { top: 40%; left: 10%; }
+.grid-item:nth-child(4) { top: 50%; left: 10%; }
+.grid-item:nth-child(5) { top: 60%; left: 10%; }
+.grid-item:nth-child(6) { top: 20%; left: 20%; }
+.grid-item:nth-child(7) { top: 30%; left: 20%; }
+.grid-item:nth-child(8) { top: 40%; left: 20%; }
+.grid-item:nth-child(9) { top: 50%; left: 20%; }
+.grid-item:nth-child(10) { top: 60%; left: 20%; }
+.grid-item:nth-child(11) { top: 20%; left: 30%; }
+.grid-item:nth-child(12) { top: 30%; left: 30%; }
+.grid-item:nth-child(13) { top: 40%; left: 30%; }
+.grid-item:nth-child(14) { top: 50%; left: 30%; }
+.grid-item:nth-child(15) { top: 60%; left: 30%; }
+.grid-item:nth-child(16) { top: 20%; left: 40%; }
+.grid-item:nth-child(17) { top: 30%; left: 40%; }
+.grid-item:nth-child(18) { top: 40%; left: 40%; }
+.grid-item:nth-child(19) { top: 50%; left: 40%; }
+.grid-item:nth-child(20) { top: 60%; left: 40%; }
+.grid-item:nth-child(21) { top: 20%; left: 50%; }
+.grid-item:nth-child(22) { top: 30%; left: 50%; }
+.grid-item:nth-child(23) { top: 40%; left: 50%; }
+.grid-item:nth-child(24) { top: 50%; left: 50%; }
+.grid-item:nth-child(25) { top: 60%; left: 50%; }
+.grid-item:nth-child(26) { top: 20%; left: 60%; }
+.grid-item:nth-child(27) { top: 30%; left: 60%; }
+.grid-item:nth-child(28) { top: 40%; left: 60%; }
+.grid-item:nth-child(29) { top: 50%; left: 60%; }
+.grid-item:nth-child(30) { top: 60%; left: 60%; }
+.grid-item:nth-child(31) { top: 20%; left: 70%; }
+.grid-item:nth-child(32) { top: 30%; left: 70%; }
+.grid-item:nth-child(33) { top: 40%; left: 70%; }
+.grid-item:nth-child(34) { top: 50%; left: 70%; }
+.grid-item:nth-child(35) { top: 60%; left: 70%; }
+
 
 .upload-label {
   display: flex;
