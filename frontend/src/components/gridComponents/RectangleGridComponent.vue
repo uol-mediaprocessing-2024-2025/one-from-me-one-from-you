@@ -46,16 +46,38 @@
 
 
 <script>
-import { store } from "../../store.js"; // Importing image store
+import { store } from "@/store.js"; // Importing image store
 
+async function loadImages() {
+    try {
+        const response = await fetch(`${store.apiUrl}/getImages`);
+        console.log('Response:', response);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Data received:', data);
+
+            if (data.image_files && Array.isArray(data.image_files)) {
+                store.photoUrls = data.image_files.map(file => `${store.apiUrl}/${file}`);
+            } else {
+                console.error('Unexpected response structure:', data);
+            }
+        } else {
+            console.error('Failed to load images:', response.status, response.statusText);
+        }
+    } catch (error) {
+        console.error('Error loading images:', error);
+    }
+}
 export default {
   name: "RectangleGrid",
   data() {
     return {
-      items: Array(35).fill({ src: null }),
+      items: Array(35).fill({ src: null, fileName: null }),
       draggedItemIndex: null,
       showModal: false,
       selectedIndex: null,
+      twoDArray: [], // Speichert das zweidimensionale Array
     };
   },
   computed: {
@@ -64,93 +86,121 @@ export default {
     },
   },
   methods: {
+    initializeGridPositions() {
+      const gridContainer = document.querySelector(".rectangle-grid");
+      const containerRect = gridContainer.getBoundingClientRect();
+
+      // Anzahl der Reihen und Spalten definieren
+      const rows = 5;
+      const cols = 7;
+
+      const initialGrid = [];
+      let id = 1;
+
+      for (let row = 0; row < rows; row++) {
+        const rowArray = [];
+        for (let col = 0; col < cols; col++) {
+          // Erstelle leere Slots mit ID und Koordinaten
+          const emptySlot = {
+            id: id++,
+            top: row * 50,
+            left: col * 50,
+            fileName: null,
+          };
+          rowArray.push(emptySlot);
+        }
+        initialGrid.push(rowArray);
+      }
+
+      this.twoDArray = initialGrid;
+      console.log("Initialized 2D Array:", this.twoDArray);
+    },
     onDragStart(index) {
       this.draggedItemIndex = index;
     },
-
-    onDrop(index) { // Reacting to image drop, either placing or preventing placement
-    if (this.draggedItemIndex !== null && !this.items[index].src) {
-    const draggedItem = this.items[this.draggedItemIndex];
-    this.items.splice(this.draggedItemIndex, 1);
-    this.items.splice(index, 0, draggedItem);
-    this.draggedItemIndex = null;
-  } else {
-    console.log("Slot is already occupied!");
-  }
-}
-,
+    onDrop(index) {
+      if (this.draggedItemIndex !== null && !this.items[index].src) {
+        const draggedItem = this.items[this.draggedItemIndex];
+        this.items.splice(this.draggedItemIndex, 1);
+        this.items.splice(index, 0, draggedItem);
+        this.draggedItemIndex = null;
+      } else {
+        console.log("Slot is already occupied!");
+      }
+    },
     openImageSelection(index) {
       this.selectedIndex = index;
       this.showModal = true;
     },
-
     async selectImage(image) {
-    if (this.selectedIndex !== null) {
+      if (this.selectedIndex !== null) {
         const scaledImage = await this.scaleImage(image);
-        const fileName = image.split('/').pop();
-        this.items[this.selectedIndex] = { src: scaledImage, fileName: fileName };
+        const fileName = image.split("/").pop();
+        this.items[this.selectedIndex] = {
+          src: scaledImage,
+          fileName: fileName,
+        };
         this.showModal = false;
         this.selectedIndex = null;
-    }
-}
-    ,
-
+      }
+      await loadImages();
+    },
     async extractGridPositions() {
-    const gridContainer = document.querySelector('.rectangle-grid');
-    const gridItems = document.querySelectorAll('.grid-item');
-    const containerRect = gridContainer.getBoundingClientRect();
-    const positions = [];
+      const gridContainer = document.querySelector(".rectangle-grid");
+      const gridItems = document.querySelectorAll(".grid-item");
+      const containerRect = gridContainer.getBoundingClientRect();
+      const positions = [];
 
-    //Starting at top left
-    gridItems.forEach((item, index) => {
+      gridItems.forEach((item, index) => {
         const itemRect = item.getBoundingClientRect();
         const positionData = {
-            id: index + 1,
-            top: itemRect.top - containerRect.top,
-            left: itemRect.left - containerRect.left,
-            fileName: this.items[index].fileName || null,
+          id: index + 1,
+          top: itemRect.top - containerRect.top,
+          left: itemRect.left - containerRect.left,
+          fileName: this.items[index].fileName || null,
         };
 
         positions.push(positionData);
-    });
+      });
 
-    const formData = new FormData();
-    formData.append('positions', JSON.stringify(positions));
+      const formData = new FormData();
+      formData.append("positions", JSON.stringify(positions));
 
-    try {
-        const response = await fetch('http://127.0.0.1:8000/positions', {
-            method: 'POST',
-            body: formData,
+      try {
+        const response = await fetch(`${store.apiUrl}/positions`, {
+          method: "POST",
+          body: formData,
         });
 
         const result = await response.json();
-        console.log('Response from backend:', result);
-    } catch (error) {
-        console.error('Error sending grid with file names:', error);
-    }
-}
-,
+        console.log("Response from backend:", result);
+      } catch (error) {
+        console.error("Error sending grid with file names:", error);
+      }
+    },
     closeModal() {
       this.showModal = false;
       this.selectedIndex = null;
     },
     scaleImage(imageUrl) {
       return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 50;
-        canvas.height = 50;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, 50, 50);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      img.src = imageUrl;
-    });
-    }
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 50;
+          canvas.height = 50;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, 50, 50);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        };
+        img.src = imageUrl;
+      });
+    },
+  },
+  mounted() {
+    this.initializeGridPositions();
   },
 };
-
 </script>
 
 
