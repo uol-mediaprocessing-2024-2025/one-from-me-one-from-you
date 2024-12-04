@@ -16,11 +16,10 @@ onMounted(async () => {
       },
     });
 
-    // Check if the response is successful and contains image files
     if (response.status === 200 && Array.isArray(response.data.image_files)) {
       images.value = response.data.image_files.map(image => {
         const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
-        console.log("Image URL:", fullUrl); // Debugging URL
+        console.log("Image URL:", fullUrl);
         return fullUrl;
       });
     } else {

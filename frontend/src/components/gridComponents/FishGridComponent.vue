@@ -1,15 +1,115 @@
+<script setup>
+import { store } from "@/store.js";
+import axios from "axios";
+import { ref, reactive } from "vue";
+import { fetchAndStoreImages } from '@/controller/SynchronizeImages.js';
+import { defineProps, useAttrs} from 'vue';
+
+// To supress vue warnings
+defineProps([]);
+const attrs = useAttrs();
+
+// Reactive variables
+const items = reactive(Array(35).fill({ src: null, fileName: null }));
+const showModal = ref(false);
+const selectedIndex = ref(null);
+
+function openImageSelection(index) {
+  fetchAndStoreImages();
+  selectedIndex.value = index;
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  selectedIndex.value = null;
+}
+
+async function selectImage(image) {
+  console.log("selectImage");
+  if (selectedIndex.value !== null) {
+    const scaledImage = await scaleImage(image);
+    const fileName = image.split("/").pop();
+    items[selectedIndex.value] = {
+      src: scaledImage,
+      fileName: fileName,
+    };
+  closeModal();
+  }
+}
+
+function scaleImage(imageUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 50;
+      canvas.height = 50;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, 50, 50);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = (err) => {
+      reject(new Error(`Failed to load image: ${err.message}`));
+    };
+    img.src = imageUrl;
+  });
+}
+
+
+async function extractGridPositions() {
+  const gridContainer = document.querySelector(".rectangle-grid");
+  const gridItems = document.querySelectorAll(".grid-item");
+  const containerRect = gridContainer.getBoundingClientRect();
+  let positions = [];
+
+  gridItems.forEach((item, index) => {
+    const itemRect = item.getBoundingClientRect();
+    const positionData = {
+      id: index + 1,
+      top: itemRect.top - containerRect.top,
+      left: itemRect.left - containerRect.left,
+      fileName: items[index].fileName || null,
+    };
+
+    positions.push(positionData);
+  });
+
+    // Sorting, starting at top left
+  positions.sort((a, b) => {
+    if (a.left === b.left) {
+      return a.top - b.top;
+    }
+    return a.left - b.left;
+  });
+
+  const formData = new FormData();
+  formData.append("positions", JSON.stringify(positions));
+
+  try {
+    const response = await fetch(`${store.apiUrl}/positions`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+    console.log("Response from backend:", result);
+  } catch (error) {
+    console.error("Error sending grid with file names:", error);
+  }
+}
+
+</script>
+
 <template>
   <div class="rectangle-grid-container">
-    <div class="rectangle-grid">
+    <div class="rectangle-grid" v-bind="attrs">
       <div
         v-for="(item, index) in items"
         :key="index"
-        class="grid-item"
-        draggable="true"
-        @dragstart="onDragStart(index)"
-        @dragover.prevent
-        @drop="onDrop(index)"
-      >
+        class="grid-item">
+
         <!-- Show image if selected -->
         <label v-if="!item.src" class="upload-label" @click="openImageSelection(index)">
           + Select Image
@@ -24,11 +124,10 @@
         <h3>Select an Image</h3>
         <div class="image-list">
           <div
-            v-for="(image, i) in uploadedImages"
+            v-for="(image, i) in store.photoUrls"
             :key="i"
             class="image-item"
-            @click="selectImage(image)"
-          >
+            @click="selectImage(image)">
             <img :src="image" alt="Uploaded Image" />
           </div>
         </div>
@@ -36,83 +135,10 @@
       </div>
     </div>
   </div>
+
+  <v-btn @click="extractGridPositions">Send to backend </v-btn>
+
 </template>
-
-
-
-<script>
-import { store } from "../../store.js"; // Importing image store
-
-export default {
-  name: "RectangleGrid",
-  data() {
-    return {
-      items: Array(35).fill({ src: null }),
-      draggedItemIndex: null,
-      showModal: false,
-      selectedIndex: null,
-    };
-  },
-  computed: {
-    uploadedImages() {
-      return store.photoUrls;
-    },
-  },
-  methods: {
-    onDragStart(index) {
-      this.draggedItemIndex = index;
-    },
-
-    onDrop(index) { // Reacting to image drop, either placing or preventing placement
-    if (this.draggedItemIndex !== null && !this.items[index].src) {
-    const draggedItem = this.items[this.draggedItemIndex];
-    this.items.splice(this.draggedItemIndex, 1);
-    this.items.splice(index, 0, draggedItem);
-    this.draggedItemIndex = null;
-  } else {
-    console.log("Slot is already occupied!");
-  }
-}
-,
-    openImageSelection(index) {
-      this.selectedIndex = index;
-      this.showModal = true;
-    },
-    async selectImage(image) {
-  if (this.selectedIndex !== null) {
-    const scaledImage = await this.scaleImage(image);
-    this.items[this.selectedIndex] = { src: scaledImage };
-    this.showModal = false;
-    this.selectedIndex = null;
-  }
-}
-
-
-    ,
-    closeModal() {
-      this.showModal = false;
-      this.selectedIndex = null;
-    },
-    scaleImage(imageUrl) {
-      return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 50;
-        canvas.height = 50;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, 50, 50);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      img.src = imageUrl;
-    });
-    }
-  },
-};
-
-</script>
-
-
 
 <style scoped>
 .rectangle-grid-container {
@@ -150,22 +176,6 @@ export default {
   -webkit-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 }
-
-.grid-item:nth-child(1) { top: 10%; left: 50% }
-.grid-item:nth-child(2) { top: 5%; left: 50%; }
-.grid-item:nth-child(3) { top: 0%; left: 50%; }
-.grid-item:nth-child(4) { top: 5%; left: 50%; }
-.grid-item:nth-child(5) { top: 10%; left: 50%; }
-.grid-item:nth-child(6) { top: 20%; left: 50%; }
-.grid-item:nth-child(6) { top: 20%; left: 50%; }
-
-
-
-
-
-
-
-
 
 .upload-label {
   display: flex;
@@ -240,5 +250,59 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .modal-content button:hover {
   background-color: #0056b3;
 }
+
+.grid-item:nth-child(1) { top: 20%; left: 50%; }
+.grid-item:nth-child(2) { top: 30%; left: 50%; }
+.grid-item:nth-child(3) { top: 40%; left: 50%; }
+.grid-item:nth-child(4) { top: 50%; left: 50%; }
+.grid-item:nth-child(5) { top: 60%; left: 50%; }
+
+.grid-item:nth-child(6) { top: 25%; left: 60%; }
+.grid-item:nth-child(7) { top: 35%; left: 60%; }
+.grid-item:nth-child(8) { top: 45%; left: 60%; }
+.grid-item:nth-child(9) { top: 55%; left: 60%; }
+
+.grid-item:nth-child(10) { top: 30%; left: 70%; }
+.grid-item:nth-child(11) { top: 40%; left: 70%; }
+.grid-item:nth-child(12) { top: 50%; left: 70%; }
+
+.grid-item:nth-child(13) { top: 40%; left: 80%; }
+
+.grid-item:nth-child(14) { top: 25%; left: 40%; }
+.grid-item:nth-child(15) { top: 35%; left: 40%; }
+.grid-item:nth-child(16) { top: 45%; left: 40%; }
+.grid-item:nth-child(17) { top: 55%; left: 40%; }
+
+.grid-item:nth-child(18) { top: 30%; left: 30%; }
+.grid-item:nth-child(19) { top: 40%; left: 30%; }
+.grid-item:nth-child(20) { top: 50%; left: 30%; }
+
+.grid-item:nth-child(20) { top: 10%; left: 50%; }
+.grid-item:nth-child(21) { top: 70%; left: 50%; }
+
+.grid-item:nth-child(22) { top: 15%; left: 60%; }
+.grid-item:nth-child(23) { top: 65%; left: 60%; }
+
+.grid-item:nth-child(24) { top: 20%; left: 70%; }
+.grid-item:nth-child(25) { top: 60%; left: 70%; }
+
+.grid-item:nth-child(26) { top: 30%; left: 80%; }
+.grid-item:nth-child(27) { top: 50%; left: 80%; }
+
+.grid-item:nth-child(28) { top: 40%; left: 90%; }
+
+.grid-item:nth-child(29) { top: 50%; left: 30%; }
+
+.grid-item:nth-child(30) { top: 60%; left: 10%; }
+.grid-item:nth-child(31) { top: 50%; left: 20%; }
+.grid-item:nth-child(32) { top: 60%; left: 20%; }
+
+.grid-item:nth-child(33) { top: 30%; left: 20%; }
+.grid-item:nth-child(34) { top: 20%; left: 20%; }
+.grid-item:nth-child(35) { top: 20%; left: 10%; }
+
+
+
+
 
 </style>

@@ -4,13 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 import uuid
+import hashlib
+from typing import List
+
 import shutil
 from fastapi.responses import JSONResponse
 import uvicorn
 import os
 import json
-
-
 
 app = FastAPI()
 
@@ -29,18 +30,23 @@ app.mount("/uploaded_images", StaticFiles(directory=str(UPLOAD_DIR)), name="uplo
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],  # Include both localhost and 127.0.0.1
+    allow_origins=["*"],  # Include both localhost and 127.0.0.1
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allow all headers
 )
 
+
+for file in UPLOAD_DIR.iterdir():
+    if file.is_file():
+        file.unlink()
+
 class Base64Image(BaseModel):
-    filename: str  # The filename to save
-    content: str   # The base64-encoded content
+    filename: str
+    content: str
 
 @app.post("/saveImages")
-async def saveImages(files: list[UploadFile] = File(...)):
+async def saveImages(files: List[UploadFile] = File(...)):
     try:
         saved_files = []
 

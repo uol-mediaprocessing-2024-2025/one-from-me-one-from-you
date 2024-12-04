@@ -59,8 +59,6 @@ const callPing = async () => {
   }
 };
 
-
-
 const isHeartGridVisible = ref(false);
 const isRectangleGridVisible = ref(false);
 const isStarGridVisible = ref(false);
@@ -71,7 +69,7 @@ const isLeafGridVisible = ref(false);
 const isTriangleGridVisible = ref(false);
 
 const setOtherGridsInvisible = (grid) => {
-  console.log(grid)
+  console.log(grid);
   isHeartGridVisible.value = false;
   isRectangleGridVisible.value = false;
   isStarGridVisible.value = false;
@@ -168,28 +166,7 @@ onMounted(() => {
           </li>
           <li>
             <label>
-              <input
-                type="radio"
-                name="sort"
-                value="harmoniousColors"
-                v-model="sortingOption"
-              />
 
-            </label>
-          </li>
-          <li>
-            <label>
-              <input
-                type="radio"
-                name="sort"
-                value="saturation"
-                v-model="sortingOption"
-              />
-
-            </label>
-          </li>
-          <li>
-            <label>
               <input
                 type="radio"
                 name="sort"
@@ -197,17 +174,6 @@ onMounted(() => {
                 v-model="sortingOption"
               />
               Style
-            </label>
-          </li>
-          <li>
-            <label>
-              <input
-                type="radio"
-                name="sort"
-                value="random"
-                v-model="sortingOption"
-              />
-
             </label>
           </li>
         </ul>
