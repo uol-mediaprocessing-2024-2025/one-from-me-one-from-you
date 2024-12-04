@@ -3,7 +3,7 @@ import { store } from "@/store.js";
 import axios from "axios";
 import { ref, reactive } from "vue";
 import { fetchAndStoreImages } from '@/controller/SynchronizeImages.js';
-import { defineProps, useAttrs} from 'vue';
+import {useAttrs} from 'vue';
 
 // To supress vue warnings
 defineProps([]);

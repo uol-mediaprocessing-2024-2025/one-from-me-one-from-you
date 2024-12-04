@@ -251,36 +251,35 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
   background-color: #0056b3;
 }
 
-.grid-item:nth-child(1) { top: 5%; left: 85%; }
-.grid-item:nth-child(2) { top: 15%; left: 72%; }
+.grid-item:nth-child(1) { top: 5%; left: 90%; }
+.grid-item:nth-child(2) { top: 15%; left: 70%; }
 .grid-item:nth-child(3) { top: 20%; left: 60%; }
 .grid-item:nth-child(4) { top: 25%; left: 50%; }
 .grid-item:nth-child(5) { top: 30%; left: 40%; }
 
-.grid-item:nth-child(6) { top: 15%; left: 82.5%; }
+.grid-item:nth-child(6) { top: 15%; left: 90%; }
 .grid-item:nth-child(7) { top: 25%; left: 80%; }
 .grid-item:nth-child(8) { top: 25%; left: 70%; }
 .grid-item:nth-child(9) { top: 50%; left: 70%; }
 
 .grid-item:nth-child(10) { top: 32.5%; left: 30%; }
-.grid-item:nth-child(11) { top: 30%; left: 20%; }
+.grid-item:nth-child(11) { top: 32.5%; left: 20%; }
 
-.grid-item:nth-child(12) { top: 32.5%; left: 10%; }
+.grid-item:nth-child(12) { top: 37.5%; left: 10%; }
+.grid-item:nth-child(13) { top: 47.5%; left: 10%; }
+.grid-item:nth-child(14) { top: 57.5%; left: 10%; }
 
-.grid-item:nth-child(13) { top: 42.5%; left: 5%; }
-.grid-item:nth-child(14) { top: 52.5%; left: 5%; }
+.grid-item:nth-child(15) { top: 42%; left: 20%; }
+.grid-item:nth-child(16) { top: 52%; left: 20%; }
 
-.grid-item:nth-child(15) { top: 42%; left: 15%; }
-.grid-item:nth-child(16) { top: 52%; left: 15%; }
+.grid-item:nth-child(17) { top: 62%; left: 30%; }
+.grid-item:nth-child(18) { top: 42%; left: 30%; }
+.grid-item:nth-child(19) { top: 52%; left: 30%; }
 
-.grid-item:nth-child(17) { top: 62%; left: 27%; }
-.grid-item:nth-child(18) { top: 42%; left: 27%; }
-.grid-item:nth-child(19) { top: 52%; left: 27%; }
+.grid-item:nth-child(20) { top: 62%; left: 20%; }
 
-.grid-item:nth-child(20) { top: 62%; left: 15%; }
-
-.grid-item:nth-child(21) { top: 52%; left: 39%; }
-.grid-item:nth-child(22) { top: 42%; left: 39%; }
+.grid-item:nth-child(21) { top: 52%; left: 40%; }
+.grid-item:nth-child(22) { top: 42%; left: 40%; }
 
 .grid-item:nth-child(23) { top: 32%; left: 60%; }
 .grid-item:nth-child(24) { top: 35%; left: 50%; }
@@ -297,8 +296,8 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .grid-item:nth-child(31) { top: 40%; left: 70%; }
 
 .grid-item:nth-child(32) { top: 50%; left: 60%; }
-.grid-item:nth-child(33) { top: 90%; left: 25%; }
-.grid-item:nth-child(34) { top: 45%; left: 80%; }
+.grid-item:nth-child(33) { top: 90%; left: 20%; }
+.grid-item:nth-child(34) { top: 15%; left: 80%; }
 .grid-item:nth-child(35) { top: 35%; left: 80%; }
 
 
