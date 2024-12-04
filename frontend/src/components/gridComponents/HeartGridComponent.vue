@@ -10,7 +10,7 @@ defineProps([]);
 const attrs = useAttrs();
 
 // Reactive variables
-const items = reactive(Array(35).fill({ src: null, fileName: null }));
+const items = reactive(Array(34).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
 
@@ -251,42 +251,48 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
   background-color: #0056b3;
 }
 
-.grid-item:nth-child(1) { top: 10%; left: 50%; }
-.grid-item:nth-child(2) { top: 5%; left: 40%; }
-.grid-item:nth-child(3) { top: 0%; left: 30%; }
-.grid-item:nth-child(4) { top: 5%; left: 20%; }
-.grid-item:nth-child(5) { top: 10%; left: 10%; }
-.grid-item:nth-child(6) { top: 20%; left: 12%; }
-.grid-item:nth-child(7) { top: 30%; left: 14%; }
-.grid-item:nth-child(8) { top: 40%; left: 22%; }
-.grid-item:nth-child(9) { top: 50%; left: 30%; }
-.grid-item:nth-child(10) { top: 60%; left: 40%; }
-.grid-item:nth-child(11) { top: 70%; left: 50%; }
-.grid-item:nth-child(12) { top: 10%; left: 50%; }
-.grid-item:nth-child(13) { top: 5%; left: 60%; }
-.grid-item:nth-child(14) { top: 0%; left: 70%; }
-.grid-item:nth-child(15) { top: 5%; left: 80%; }
-.grid-item:nth-child(16) { top: 10%; left: 90%; }
-.grid-item:nth-child(17) { top: 20%; left: 88%; }
-.grid-item:nth-child(18) { top: 30%; left: 86%; }
-.grid-item:nth-child(19) { top: 40%; left: 78%; }
-.grid-item:nth-child(20) { top: 50%; left: 70%; }
-.grid-item:nth-child(21) { top: 60%; left: 60%; }
-.grid-item:nth-child(22) { top: 70%; left: 50%; }
-.grid-item:nth-child(23) { top: 0%; left: 70%; }
-.grid-item:nth-child(24) { top: 25%; left: 30%; }
-.grid-item:nth-child(25) { top: 15%; left: 22%; }
-.grid-item:nth-child(26) { top: 15%; left: 35%; }
-.grid-item:nth-child(27) { top: 15%; left: 62%; }
-.grid-item:nth-child(28) { top: 15%; left: 75%; }
-.grid-item:nth-child(29) { top: 22%; left: 50%; }
-.grid-item:nth-child(30) { top: 35%; left: 50%; }
-.grid-item:nth-child(31) { top: 49%; left: 50%; }
-.grid-item:nth-child(32) { top: 40%; left: 78%; }
-.grid-item:nth-child(33) { top: 40%; left: 35%; }
-.grid-item:nth-child(34) { top: 38%; left: 62%; }
-.grid-item:nth-child(35) { top: 27%; left: 69%; }
+.grid-item:nth-child(1) { top: 70%; left: 50%; }
+.grid-item:nth-child(2) { top: 30%; left: 50%; }
+.grid-item:nth-child(3) { top: 40%; left: 50%; }
+.grid-item:nth-child(4) { top: 50%; left: 50%; }
+.grid-item:nth-child(5) { top: 60%; left: 50%; }
 
+.grid-item:nth-child(6) { top: 20%; left: 40%; }
+.grid-item:nth-child(7) { top: 30%; left: 40%; }
+.grid-item:nth-child(8) { top: 40%; left: 40%; }
+.grid-item:nth-child(9) { top: 50%; left: 40%; }
+.grid-item:nth-child(10){ top: 60%; left: 40%; }
+
+.grid-item:nth-child(12) { top: 20%; left: 60%; }
+.grid-item:nth-child(13) { top: 30%; left: 60%; }
+.grid-item:nth-child(14) { top: 40%; left: 60%; }
+.grid-item:nth-child(15) { top: 50%; left: 60%; }
+.grid-item:nth-child(16) { top: 60%; left: 60%; }
+
+.grid-item:nth-child(17) { top: 20%; left: 30%; }
+.grid-item:nth-child(18) { top: 30%; left: 30%; }
+.grid-item:nth-child(19) { top: 40%; left: 30%; }
+.grid-item:nth-child(20) { top: 50%; left: 30%; }
+.grid-item:nth-child(21) { top: 10%; left: 30%; }
+
+.grid-item:nth-child(22) { top: 20%; left: 70%; }
+.grid-item:nth-child(23) { top: 30%; left: 70%; }
+.grid-item:nth-child(24) { top: 40%; left: 70%; }
+.grid-item:nth-child(25) { top: 50%; left: 70%; }
+.grid-item:nth-child(26) { top: 10%; left: 70%; }
+
+.grid-item:nth-child(27) { top: 20%; left: 20%; }
+.grid-item:nth-child(28) { top: 30%; left: 20%; }
+.grid-item:nth-child(29) { top: 40%; left: 20%; }
+
+.grid-item:nth-child(30) { top: 20%; left: 80%; }
+.grid-item:nth-child(31) { top: 30%; left: 80%; }
+.grid-item:nth-child(32) { top: 40%; left: 80%; }
+
+.grid-item:nth-child(33) { top: 30%; left: 10%; }
+.grid-item:nth-child(11) { top: 30%; left: 90%; }
+
+.grid-item:nth-child(34) { top: 80%; left: 50%; }
 
 
 </style>
