@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from "axios";
-import { store } from '../store';
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
 import RectangleGridComponent from './gridComponents/RectangleGridComponent.vue';
 import StarGridComponent from "@/components/gridComponents/StarGridComponent.vue";
@@ -12,15 +11,51 @@ import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue
 import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
 import UploadImage from "@/components/UploadImage.vue";
-const uploadedPhotos = ref([]); // Stores uploaded photos
 
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
-const quantity = ref(50); // Range for number of photos
-const spacing = ref(10); // Range for spacing
 const sortingOption = ref('contrast'); // Selected sorting option
 
+const isHeartGridVisible = ref(false);
+const isRectangleGridVisible = ref(false);
+const isStarGridVisible = ref(false);
+const isHexagonGridVisible = ref(false);
+const isCloudGridVisible = ref(false);
+const isFishGridVisible = ref(false);
+const isLeafGridVisible = ref(false);
+const isTriangleGridVisible = ref(false);
+
+const shapeVisibility = {
+  "heart.png": isHeartGridVisible,
+  "rectangle.png": isRectangleGridVisible,
+  "star.png": isStarGridVisible,
+  "hexagon.png": isHexagonGridVisible,
+  "cloud.png": isCloudGridVisible,
+  "fish.png": isFishGridVisible,
+  "leaf.png": isLeafGridVisible,
+  "triangle.png": isTriangleGridVisible,
+};
+
+const responseMessage = ref('');
+const callPing = async () => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/ping');
+    responseMessage.value = response.data.message;
+  } catch {
+    responseMessage.value = 'Failed to connect';
+  }
+};
+
 onMounted(() => {
+  // Load persisted shape from localStorage
+  const savedShape = localStorage.getItem('selectedCollageShape');
+  if (savedShape) {
+    selectedCollageShape.value = savedShape;
+    const fileName = savedShape.split('/').pop();
+    setOtherGridsInvisible(fileName);
+  }
+
+  // Initialize collage shapes
   const collageTemplatesPath = 'collage_templates/';
   const shapeFiles = [
     'heart.png',
@@ -40,82 +75,31 @@ onMounted(() => {
 
 const updateCollagePreview = async (imageSrc) => {
   if (selectedCollageShape.value === imageSrc) {
-    console.log('Shape already selected.');
     return;
   }
+
   selectedCollageShape.value = imageSrc;
+  localStorage.setItem('selectedCollageShape', imageSrc);
   const fileName = imageSrc.split('/').pop();
-  setOtherGridsInvisible(fileName)
+  setOtherGridsInvisible(fileName);
 };
 
+const setOtherGridsInvisible = (shape) => {
+  Object.keys(shapeVisibility).forEach((key) => {
+    shapeVisibility[key].value = false;
+  });
 
-const responseMessage = ref('');
-const callPing = async () => {
-  try {
-    const response = await axios.get('http://127.0.0.1:8000/ping');
-    responseMessage.value = response.data.message;
-  } catch {
-    responseMessage.value = 'Failed to connect';
+  if (shape in shapeVisibility) {
+    shapeVisibility[shape].value = true;
   }
 };
-
-const isHeartGridVisible = ref(false);
-const isRectangleGridVisible = ref(false);
-const isStarGridVisible = ref(false);
-const isHexagonGridVisible = ref(false);
-const isCloudGridVisible = ref(false);
-const isFishGridVisible = ref(false);
-const isLeafGridVisible = ref(false);
-const isTriangleGridVisible = ref(false);
-
-const setOtherGridsInvisible = (grid) => {
-  console.log(grid);
-  isHeartGridVisible.value = false;
-  isRectangleGridVisible.value = false;
-  isStarGridVisible.value = false;
-  isHexagonGridVisible.value = false;
-  isCloudGridVisible.value = false;
-  isFishGridVisible.value = false;
-  isLeafGridVisible.value = false;
-  isTriangleGridVisible.value = false;
-
-  if (grid === "heart.png") isHeartGridVisible.value = true;
-  if (grid === "rectangle.png") isRectangleGridVisible.value = true;
-  if (grid === "star.png") isStarGridVisible.value = true;
-  if (grid === "hexagon.png") isHexagonGridVisible.value = true;
-  if (grid === "cloud.png") isCloudGridVisible.value = true;
-  if (grid === "fish.png") isFishGridVisible.value = true;
-  if (grid === "leaf.png") isLeafGridVisible.value = true;
-  if (grid === "triangle.png") isTriangleGridVisible.value = true;
-};
-
-onMounted(() => {
-  console.log("Component mounted.");
-  const collageTemplatesPath = 'collage_templates/';
-  const shapeFiles = [
-    'heart.png',
-    'star.png',
-    'hexagon.png',
-    'cloud.png',
-    'fish.png',
-    'leaf.png',
-    'rectangle.png',
-    'triangle.png',
-  ];
-  collageShapes.value = shapeFiles.map((fileName) => ({
-    src: `${collageTemplatesPath}${fileName}`,
-    alt: fileName.split('.')[0],
-  }));
-});
 
 </script>
 
 <template>
   <div class="main-container">
-    <!-- Collage Preview -->
     <div class="collage-preview">
       <div class="collage-shape">
-         <!-- Shape components -->
         <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container"/>
         <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container"/>
         <StarGridComponent v-if="isStarGridVisible" class="star-grid-container"/>
@@ -124,7 +108,6 @@ onMounted(() => {
         <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container"/>
         <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container"/>
         <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container"/>
-
         </div>
     </div>
 
