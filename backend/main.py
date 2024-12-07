@@ -93,39 +93,75 @@ def ping():
 
 
 @app.post("/positions")
-async def receive_positions(positions: str = Form(...)):
+async def receive_positions(positions: str = Form(...), componentName: str = Form(...)):
+    print(componentName)
     parsed_positions = json.loads(positions)
     print("Received positions with file names:", parsed_positions)
-    array = group_elements(parsed_positions)
-    print(array)
+    if componentName in ("heartComponent", "cloudComponent", "rectangleComponent", "triangleComponent"):
+        array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=True)
+    else:
+        array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=False)
+
     return {"message": "Data received successfully"}
 
 
-def group_elements(elements):
-    # Initialisiere ein 10x10 Array mit None
-    array_2d = [["No image" for _ in range(10)] for _ in range(10)]
+def group_elements_fixed_10x10(elements, has_consistent_height):
+    """
 
-    # Finding max and min
-    min_top = min(elements, key=lambda x: x['top'])['top']
-    max_top = max(elements, key=lambda x: x['top'])['top']
-    min_left = min(elements, key=lambda x: x['left'])['left']
-    max_left = max(elements, key=lambda x: x['left'])['left']
+    elements: Dictionary of elements with top, left, id and placed image
+    has_consistent_height: Has gaps between elements at least 10% of container size. (Some shapes require smaller gaps
+    to keep the shape good-looking.)
 
-    # Steps to iterate
-    left_step = (max_left - min_left) // 9
-    top_step = (max_top - min_top) // 9
+    Returns: Array that represents the order of elements:
+        - "_" = No slot
+        - "(id, filename)" = Filled slot
+        - "(id, [])" = Empty slot
 
-    for row in range(10):
-        for col in range(10):
-            expected_left = min_left + col * left_step
-            expected_top = min_top + row * top_step
+    """
+    if not elements:
+        return [["/" for _ in range(10)] for _ in range(10)]
 
-            matched_element = next(
-                (el for el in elements if el['left'] == expected_left and abs(el['top'] - expected_top) <= 5), # Allowed "top" difference for more aesthetic shapes
-                # Getting image here
-            )
+    all_tops = [el['top'] for el in elements]
+    all_lefts = [el['left'] for el in elements]
+    min_top, max_top = min(all_tops), max(all_tops)
+    min_left, max_left = min(all_lefts), max(all_lefts)
 
-            array_2d[row][col] = matched_element
+    rows = 10
+    cols = 10
+
+    if has_consistent_height:
+        top_positions = [min_top + 60 * i for i in range(rows)]
+        print(f"Top positions: {top_positions}")
+        left_positions = [min_left + 60 * i for i in range(cols)]
+        print(f"Left positions: {left_positions}")
+        allowed_top_gap = 20
+
+    else:
+        top_positions = [min_top + 57 * i for i in range(rows)]
+        print(f"Top positions: {top_positions}")
+        left_positions = [min_left + 60 * i for i in range(cols)]
+        print(f"Left positions: {left_positions}")
+        allowed_top_gap = 40
+
+    array_2d = [["_" for _ in range(cols)] for _ in range(rows)]
+
+    top_index_map = {v: i for i, v in enumerate(top_positions)}
+    left_index_map = {v: i for i, v in enumerate(left_positions)}
+
+    for element in elements:
+        t = element['top']
+        l = element['left']
+
+        closest_top = min(top_index_map.keys(), key=lambda x: abs(t - x))
+
+        if abs(closest_top - t) <= allowed_top_gap and l in left_index_map:
+            r = top_index_map[closest_top]
+            c = left_index_map[l]
+            file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (element['id'],"[]")
+            array_2d[r][c] = file_name
+
+    for row in array_2d:
+        print(row)
 
     return array_2d
 

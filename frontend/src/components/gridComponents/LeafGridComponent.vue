@@ -13,6 +13,7 @@ const attrs = useAttrs();
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
+const componentName = "leafComponent"
 
 function openImageSelection(index) {
   fetchAndStoreImages();
@@ -86,6 +87,7 @@ async function extractGridPositions() {
 
   const formData = new FormData();
   formData.append("positions", JSON.stringify(positions));
+  formData.append("componentName", componentName);
 
   try {
     const response = await fetch(`${store.apiUrl}/positions`, {
@@ -253,7 +255,7 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .grid-item:nth-child(1) { top: 5%; left: 90%; }
 .grid-item:nth-child(2) { top: 15%; left: 70%; }
-.grid-item:nth-child(3) { top: 20%; left: 60%; }
+.grid-item:nth-child(3) { top: 25%; left: 60%; }
 .grid-item:nth-child(4) { top: 25%; left: 50%; }
 .grid-item:nth-child(5) { top: 30%; left: 40%; }
 
@@ -262,26 +264,26 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .grid-item:nth-child(8) { top: 25%; left: 70%; }
 .grid-item:nth-child(9) { top: 50%; left: 70%; }
 
-.grid-item:nth-child(10) { top: 32.5%; left: 30%; }
-.grid-item:nth-child(11) { top: 32.5%; left: 20%; }
+.grid-item:nth-child(10) { top: 30%; left: 30%; }
+.grid-item:nth-child(11) { top: 30%; left: 20%; }
 
-.grid-item:nth-child(12) { top: 37.5%; left: 10%; }
-.grid-item:nth-child(13) { top: 47.5%; left: 10%; }
-.grid-item:nth-child(14) { top: 57.5%; left: 10%; }
+.grid-item:nth-child(12) { top: 35%; left: 10%; }
+.grid-item:nth-child(13) { top: 45%; left: 10%; }
+.grid-item:nth-child(14) { top: 55%; left: 10%; }
 
-.grid-item:nth-child(15) { top: 42%; left: 20%; }
-.grid-item:nth-child(16) { top: 52%; left: 20%; }
+.grid-item:nth-child(15) { top: 40%; left: 20%; }
+.grid-item:nth-child(16) { top: 50%; left: 20%; }
 
-.grid-item:nth-child(17) { top: 62%; left: 30%; }
-.grid-item:nth-child(18) { top: 42%; left: 30%; }
-.grid-item:nth-child(19) { top: 52%; left: 30%; }
+.grid-item:nth-child(17) { top: 60%; left: 30%; }
+.grid-item:nth-child(18) { top: 40%; left: 30%; }
+.grid-item:nth-child(19) { top: 50%; left: 30%; }
 
-.grid-item:nth-child(20) { top: 62%; left: 20%; }
+.grid-item:nth-child(20) { top: 60%; left: 20%; }
 
-.grid-item:nth-child(21) { top: 52%; left: 40%; }
-.grid-item:nth-child(22) { top: 42%; left: 40%; }
+.grid-item:nth-child(21) { top: 50%; left: 40%; }
+.grid-item:nth-child(22) { top: 40%; left: 40%; }
 
-.grid-item:nth-child(23) { top: 32%; left: 60%; }
+.grid-item:nth-child(23) { top: 35%; left: 60%; }
 .grid-item:nth-child(24) { top: 35%; left: 50%; }
 
 .grid-item:nth-child(25) { top: 45%; left: 50%; }

@@ -13,6 +13,7 @@ const attrs = useAttrs();
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
+const componentName = "rectangleComponent"
 
 function openImageSelection(index) {
   fetchAndStoreImages();
@@ -86,6 +87,7 @@ async function extractGridPositions() {
 
   const formData = new FormData();
   formData.append("positions", JSON.stringify(positions));
+  formData.append("componentName", componentName);
 
   try {
     const response = await fetch(`${store.apiUrl}/positions`, {
