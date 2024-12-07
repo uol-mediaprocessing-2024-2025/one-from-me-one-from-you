@@ -1,34 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue'; // Import lifecycle hook and ref from Vue
+import { ref } from 'vue'; // Import lifecycle hook and ref from Vue
 import { store } from '../store'; // Import the global store to access shared state
-import axios from 'axios';
 
 // Reactive reference to hold the list of images and the modal state
-const images = ref([]);
 const selectedImage = ref(null); // Track the currently selected image
 const isModalOpen = ref(false); // Track whether the modal is open
-
-onMounted(async () => {
-  try {
-    const response = await axios.get(`${store.apiUrl}/getImages`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.status === 200 && Array.isArray(response.data.image_files)) {
-      images.value = response.data.image_files.map(image => {
-        const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
-        console.log("Image URL:", fullUrl);
-        return fullUrl;
-      });
-    } else {
-      console.error("No images found:", response.data.message);
-    }
-  } catch (error) {
-    console.error("Error fetching images:", error);
-  }
-});
 
 const handleImageClick = (imageSrc) => {
   selectedImage.value = imageSrc;
@@ -45,22 +21,19 @@ const closeModal = () => {
   <div class="gallery px-4 py-4">
     <v-row dense>
       <v-col
-        v-for="(imgSrc, index) in images"
+        v-for="(imgSrc, index) in store.photoUrls"
         :key="index"
         class="d-flex child-flex"
         cols="12"
         sm="6"
         md="4"
         lg="3"
-        xl="2"
-      >
-
+        xl="2">
         <v-img
           :src="imgSrc"
           aspect-ratio="1.67"
           class="mb-4 clickable-image"
-          @click="handleImageClick(imgSrc)"
-        >
+          @click="handleImageClick(imgSrc)">
           <template v-slot:placeholder>
             <v-row align="center" class="fill-height ma-0" justify="center">
               <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>

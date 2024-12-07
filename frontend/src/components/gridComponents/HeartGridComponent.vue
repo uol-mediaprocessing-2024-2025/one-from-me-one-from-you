@@ -1,8 +1,6 @@
 <script setup>
 import { store } from "@/store.js";
-import axios from "axios";
 import { ref, reactive } from "vue";
-import { fetchAndStoreImages } from '@/controller/SynchronizeImages.js';
 import { defineProps, useAttrs} from 'vue';
 
 // To supress vue warnings
@@ -16,7 +14,6 @@ const selectedIndex = ref(null);
 const componentName = "heartComponent"
 
 function openImageSelection(index) {
-  fetchAndStoreImages();
   selectedIndex.value = index;
   showModal.value = true;
 }
@@ -57,7 +54,6 @@ function scaleImage(imageUrl) {
     img.src = imageUrl;
   });
 }
-
 
 async function extractGridPositions() {
   const gridContainer = document.querySelector(".rectangle-grid");

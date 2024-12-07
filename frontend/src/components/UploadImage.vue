@@ -2,12 +2,12 @@
 import axios from 'axios';
 import { store } from '../store';
 import { ref } from 'vue';
+import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
 
 const successMessage = ref('');
 const previewImages = ref([]);
 
 const handleImageUpload = (event) => {
-  console.log('handleImageUpload');
   const files = event.target.files;
   if (files && files.length > 0) {
     successMessage.value = '';
@@ -21,12 +21,10 @@ const handleImageUpload = (event) => {
 };
 
 const removePreviewImage = (index) => {
-  console.log('Removing image at index:', index);
   previewImages.value.splice(index, 1);
 };
 
 const uploadImage = async () => {
-  console.log('uploadImage');
   if (!previewImages.value.length) return;
 
   try {
@@ -52,6 +50,8 @@ const uploadImage = async () => {
 
       successMessage.value = 'Images uploaded successfully!';
       previewImages.value = [];
+
+      fetchAndStoreImages();
     } else {
       console.error('Unexpected response:', response);
     }

@@ -141,42 +141,39 @@ onMounted(() => {
       <!-- Sorting Options -->
       <section class="sorting-options">
         <h2>Collage options</h2>
-        <ul>
-          <li>
-            <label>
-              <input
-                type="radio"
-                name="sort"
-                value="contrast"
-                v-model="sortingOption"
-              />
-              Same face
-            </label>
-          </li>
-          <li>
-            <label>
-              <input
-                type="radio"
-                name="sort"
-                value="size"
-                v-model="sortingOption"
-              />
-              Similarity
-            </label>
-          </li>
-          <li>
-            <label>
-
-              <input
-                type="radio"
-                name="sort"
-                value="style"
-                v-model="sortingOption"
-              />
-              Style
-            </label>
-          </li>
-        </ul>
+        <div class="option">
+          <label>
+            <input
+              type="radio"
+              name="sort"
+              value="contrast"
+              v-model="sortingOption"
+            />
+            Same face
+          </label>
+        </div>
+        <div class="option">
+          <label>
+            <input
+              type="radio"
+              name="sort"
+              value="size"
+              v-model="sortingOption"
+            />
+            Similarity
+          </label>
+        </div>
+        <div class="option">
+          <label>
+            <input
+              type="radio"
+              name="sort"
+              value="style"
+              v-model="sortingOption"
+            />
+            Style
+          </label>
+        </div>
       </section>
 
       <section class="collage-shapes">
