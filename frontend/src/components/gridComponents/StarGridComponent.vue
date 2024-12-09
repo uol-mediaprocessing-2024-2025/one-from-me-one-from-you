@@ -1,7 +1,7 @@
 <script setup>
 import { store } from "@/store.js";
 import { ref, reactive } from "vue";
-import { defineProps, useAttrs} from 'vue';
+import {useAttrs} from 'vue';
 
 // To supress vue warnings
 defineProps([]);
@@ -12,6 +12,8 @@ const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
 const componentName = "starComponent"
+const isAITurn = ref(false);
+const isDisabled = ref(false);
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -33,6 +35,9 @@ async function selectImage(image) {
       fileName: fileName,
     };
   closeModal();
+  this.isAITurn = true;
+  this.isDisabled = true;
+  await extractGridPositions();
   }
 }
 
@@ -102,20 +107,22 @@ async function extractGridPositions() {
 </script>
 
 <template>
-  <div class="rectangle-grid-container">
-    <div class="rectangle-grid" v-bind="attrs">
-      <div
-        v-for="(item, index) in items"
-        :key="index"
-        class="grid-item">
-
-        <!-- Show image if selected -->
-        <label v-if="!item.src" class="upload-label" @click="openImageSelection(index)">
-          + Select Image
-        </label>
-        <img v-else :src="item.src" alt="Bild" />
+  <div v-if="isAITurn" class="popup">AI is thinking...</div>
+    <div class="rectangle-grid-container">
+      <div class="rectangle-grid" v-bind="attrs">
+        <div
+          v-for="(item, index) in items"
+          :key="index"
+          class="grid-item"
+          :class="{ disabled: isDisabled }"
+          >
+          <!-- Show image if selected -->
+          <label v-if="!item.src" class="upload-label" @click="!isDisabled && openImageSelection(index)">
+            + Select Image
+          </label>
+          <img v-else :src="item.src" alt="Bild" />
+        </div>
       </div>
-    </div>
 
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
@@ -126,7 +133,8 @@ async function extractGridPositions() {
             v-for="(image, i) in store.photoUrls"
             :key="i"
             class="image-item"
-            @click="selectImage(image)">
+            @click="selectImage(image)"
+            >
             <img :src="image" alt="Uploaded Image" />
           </div>
         </div>
@@ -171,10 +179,63 @@ async function extractGridPositions() {
   margin: 10px;
 }
 
+.grid-item.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .grid-item.dragover{
   -webkit-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 }
+
+.grid-item:nth-child(1) { top: 60%; left: 50%; }
+.grid-item:nth-child(2) { top: 10%; left: 50%; }
+.grid-item:nth-child(3) { top: 20%; left: 50%; }
+.grid-item:nth-child(4) { top: 30%; left: 50%; }
+.grid-item:nth-child(5) { top: 40%; left: 50%; }
+.grid-item:nth-child(6) { top: 50%; left: 50%; }
+
+.grid-item:nth-child(8) { top: 25%; left: 20%; }
+.grid-item:nth-child(9) { top: 25%; left: 40%; }
+.grid-item:nth-child(10) { top: 25%; left: 30%; }
+.grid-item:nth-child(11) { top: 25%; left: 80%; }
+.grid-item:nth-child(12) { top: 25%; left: 60%; }
+.grid-item:nth-child(13) { top: 25%; left: 70%; }
+
+.grid-item:nth-child(14) { top: 35%; left: 30%; }
+.grid-item:nth-child(15) { top: 35%; left: 40%; }
+.grid-item:nth-child(16) { top: 45%; left: 40%; }
+
+.grid-item:nth-child(17) { top: 35%; left: 70%; }
+.grid-item:nth-child(18) { top: 35%; left: 60%; }
+.grid-item:nth-child(19) { top: 45%; left: 60%; }
+
+.grid-item:nth-child(20) { top: 55%; left: 40%; }
+.grid-item:nth-child(21) { top: 65%; left: 40%; }
+
+.grid-item:nth-child(23) { top: 65%; left: 30%; }
+.grid-item:nth-child(24) { top: 65%; left: 80%; }
+.grid-item:nth-child(25) { top: 65%; left: 20%; }
+.grid-item:nth-child(26) { top: 55%; left: 30%; }
+.grid-item:nth-child(27) { top: 10%; left: 50%; }
+
+.grid-item:nth-child(28) { top: 65%; left: 60%; }
+.grid-item:nth-child(29) { top: 55%; left: 60%; }
+.grid-item:nth-child(30) { top: 40%; left: 50%; }
+
+.grid-item:nth-child(31) { top: 55%; left: 70%; }
+.grid-item:nth-child(32) { top: 65%; left: 70%; }
+
+.grid-item:nth-child(33) { top: 15%; left: 40%; }
+.grid-item:nth-child(34) { top: 15%; left: 60%; }
+
+.grid-item:nth-child(35) { top: 0; left: 50%; }
+
+.grid-item:nth-child(7) { top: 15%; left: 30%; }
+.grid-item:nth-child(22) { top: 15%; left: 70%; }
+
 
 .upload-label {
   display: flex;
@@ -250,51 +311,17 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
   background-color: #0056b3;
 }
 
-.grid-item:nth-child(1) { top: 60%; left: 50%; }
-.grid-item:nth-child(2) { top: 10%; left: 50%; }
-.grid-item:nth-child(3) { top: 20%; left: 50%; }
-.grid-item:nth-child(4) { top: 30%; left: 50%; }
-.grid-item:nth-child(5) { top: 40%; left: 50%; }
-.grid-item:nth-child(6) { top: 50%; left: 50%; }
-
-.grid-item:nth-child(8) { top: 25%; left: 20%; }
-.grid-item:nth-child(9) { top: 25%; left: 40%; }
-.grid-item:nth-child(10) { top: 25%; left: 30%; }
-.grid-item:nth-child(11) { top: 25%; left: 80%; }
-.grid-item:nth-child(12) { top: 25%; left: 60%; }
-.grid-item:nth-child(13) { top: 25%; left: 70%; }
-
-.grid-item:nth-child(14) { top: 35%; left: 30%; }
-.grid-item:nth-child(15) { top: 35%; left: 40%; }
-.grid-item:nth-child(16) { top: 45%; left: 40%; }
-
-.grid-item:nth-child(17) { top: 35%; left: 70%; }
-.grid-item:nth-child(18) { top: 35%; left: 60%; }
-.grid-item:nth-child(19) { top: 45%; left: 60%; }
-
-.grid-item:nth-child(20) { top: 55%; left: 40%; }
-.grid-item:nth-child(21) { top: 65%; left: 40%; }
-
-.grid-item:nth-child(23) { top: 65%; left: 30%; }
-.grid-item:nth-child(24) { top: 65%; left: 80%; }
-.grid-item:nth-child(25) { top: 65%; left: 20%; }
-.grid-item:nth-child(26) { top: 55%; left: 30%; }
-.grid-item:nth-child(27) { top: 10%; left: 50%; }
-
-.grid-item:nth-child(28) { top: 65%; left: 60%; }
-.grid-item:nth-child(29) { top: 55%; left: 60%; }
-.grid-item:nth-child(30) { top: 40%; left: 50%; }
-
-.grid-item:nth-child(31) { top: 55%; left: 70%; }
-.grid-item:nth-child(32) { top: 65%; left: 70%; }
-
-.grid-item:nth-child(33) { top: 15%; left: 40%; }
-.grid-item:nth-child(34) { top: 15%; left: 60%; }
-
-.grid-item:nth-child(35) { top: 0; left: 50%; }
-
-.grid-item:nth-child(7) { top: 15%; left: 30%; }
-.grid-item:nth-child(22) { top: 15%; left: 70%; }
-
+.popup {
+  position: absolute;
+  top: 48.5%;
+  left: 23.5%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
 
 </style>

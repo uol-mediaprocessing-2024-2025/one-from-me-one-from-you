@@ -121,6 +121,9 @@ const setOtherGridsInvisible = (shape) => {
         <!-- Debug Remove -->
       </section>
 
+
+
+
       <!-- Sorting Options -->
       <section class="sorting-options">
         <h2>Collage options</h2>
@@ -237,6 +240,19 @@ header h1 {
 
 .collage-container map area {
   cursor: pointer;
+}
+
+.popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 </style>

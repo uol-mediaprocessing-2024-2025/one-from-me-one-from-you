@@ -12,6 +12,8 @@ const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
 const componentName = "rectangleComponent"
+const isAITurn = ref(false);
+const isDisabled = ref(false);
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -33,6 +35,9 @@ async function selectImage(image) {
       fileName: fileName,
     };
   closeModal();
+  this.isAITurn = true;
+  this.isDisabled = true;
+  await extractGridPositions();
   }
 }
 
@@ -102,20 +107,22 @@ async function extractGridPositions() {
 </script>
 
 <template>
-  <div class="rectangle-grid-container">
-    <div class="rectangle-grid" v-bind="attrs">
-      <div
-        v-for="(item, index) in items"
-        :key="index"
-        class="grid-item">
-
-        <!-- Show image if selected -->
-        <label v-if="!item.src" class="upload-label" @click="openImageSelection(index)">
-          + Select Image
-        </label>
-        <img v-else :src="item.src" alt="Bild" />
+  <div v-if="isAITurn" class="popup">AI is thinking...</div>
+    <div class="rectangle-grid-container">
+      <div class="rectangle-grid" v-bind="attrs">
+        <div
+          v-for="(item, index) in items"
+          :key="index"
+          class="grid-item"
+          :class="{ disabled: isDisabled }"
+          >
+          <!-- Show image if selected -->
+          <label v-if="!item.src" class="upload-label" @click="!isDisabled && openImageSelection(index)">
+            + Select Image
+          </label>
+          <img v-else :src="item.src" alt="Bild" />
+        </div>
       </div>
-    </div>
 
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
@@ -126,7 +133,8 @@ async function extractGridPositions() {
             v-for="(image, i) in store.photoUrls"
             :key="i"
             class="image-item"
-            @click="selectImage(image)">
+            @click="selectImage(image)"
+            >
             <img :src="image" alt="Uploaded Image" />
           </div>
         </div>
@@ -169,6 +177,12 @@ async function extractGridPositions() {
   position: absolute;
   transform: none;
   margin: 10px;
+}
+
+.grid-item.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .grid-item.dragover{
@@ -285,6 +299,19 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .modal-content button:hover {
   background-color: #0056b3;
+}
+
+.popup {
+  position: absolute;
+  top: 48.5%;
+  left: 23.5%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 </style>
