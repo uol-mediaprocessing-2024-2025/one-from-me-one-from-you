@@ -52,25 +52,31 @@ all_images = {
     if f.lower().endswith(valid_extensions)
 }
 
-# Dynamically find neighbor images based on names
-neighbor_files = ["top", "bottom", "left", "right"]  # Define expected neighbor names, replace later for closest neighbors
-neighbors = [
-    os.path.join(base_folder, f)
-    for f in all_images.keys()
-    if any(f.lower().startswith(n) for n in neighbor_files)
-]
+def get_neighbors(image_name, num_neighbors):
+    """
+    Get the neighbor images based on the specified number of neighbors.
 
-# Preprocess and cache neighbor images in a batch
-neighbor_tensors = torch.cat(
-    [preprocess(all_images[os.path.basename(path)]).unsqueeze(0) for path in neighbors]
-).to(device)
-neighbor_features = model.encode_image(neighbor_tensors)
+    Args:
+        image_name (str): The name of the center image.
+        num_neighbors (int): The number of neighbors to consider.
+
+    Returns:
+        list: List of neighbor image paths.
+    """
+    neighbor_files = ["top", "bottom", "left", "right", "top-left", "top-right", "bottom-left", "bottom-right"]
+    selected_neighbors = neighbor_files[:num_neighbors]
+    neighbors = [
+        os.path.join(base_folder, f)
+        for f in all_images.keys()
+        if any(f.lower().startswith(n) for n in selected_neighbors)
+    ]
+    return neighbors
 
 # Exclude neighbors from potential center images
 potential_centers = [
     os.path.join(base_folder, f)
     for f in all_images.keys()
-    if os.path.join(base_folder, f) not in neighbors
+    if os.path.join(base_folder, f) not in get_neighbors(f, 8)
 ]
 
 # Start the timer, remove later or keep, whatever
@@ -80,15 +86,24 @@ start_time = time.time()
 best_score = -float("inf")
 best_center = None
 
-def process_center(center_path):
+def process_center(center_path, num_neighbors):
     # Preprocess the center image
     center_tensor = preprocess(all_images[os.path.basename(center_path)]).unsqueeze(0).to(device)
+    # Get neighbor images
+    neighbors = get_neighbors(os.path.basename(center_path), num_neighbors)
+    # Preprocess and cache neighbor images in a batch
+    neighbor_tensors = torch.cat(
+        [preprocess(all_images[os.path.basename(path)]).unsqueeze(0) for path in neighbors]
+    ).to(device)
+    neighbor_features = model.encode_image(neighbor_tensors)
     # Calculate the match score
     score = calculate_match_score(center_tensor, neighbor_features, model)
     return center_path, score
 
+num_neighbors = 8  # Set the number of neighbors (1 to 8)
+
 with ThreadPoolExecutor() as executor:
-    results = list(executor.map(process_center, potential_centers))
+    results = list(executor.map(lambda center: process_center(center, num_neighbors), potential_centers))
 
 # Find the best center image
 for center_path, score in results:

@@ -11,9 +11,16 @@ import shutil
 from fastapi.responses import JSONResponse
 import uvicorn
 import os
+from PIL import Image
+import clip
+import torch
 import json
 
 app = FastAPI()
+
+# Initialize the CLIP model
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model, preprocess = clip.load("RN50", device=device)
 
 # Ensure the 'uploaded_images' directory exists before mounting
 UPLOAD_DIR = Path("uploaded_images")
@@ -49,22 +56,49 @@ class Base64Image(BaseModel):
 async def saveImages(files: List[UploadFile] = File(...)):
     try:
         saved_files = []
+        encoded_images = {}
 
         for file in files:
             file_extension = file.filename.split('.')[-1]
             random_filename = f"{uuid.uuid4()}.{file_extension}"
             file_path = os.path.join(UPLOAD_DIR, random_filename)
 
+            print(f"Saving file: {file.filename} as {random_filename}")
+
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
+            print(f"File saved at: {file_path}")
+
+            # Load and preprocess the image
+            image = Image.open(file_path)
+            image_tensor = preprocess(image).unsqueeze(0).to(device)
+
+            print(f"Image preprocessed for: {random_filename}")
+
+            # Encode the image using the CLIP model
+            with torch.no_grad():
+                encoded_image = model.encode_image(image_tensor).cpu().numpy()
+
+            print(f"Image encoded for: {random_filename}")
+
+            # Store the encoded information in the dictionary
+            encoded_images[random_filename] = encoded_image.tolist()
+
             saved_files.append(file_path)
 
+        # Save the encoded images dictionary to a file
+        with open(os.path.join(UPLOAD_DIR, "encoded_images.json"), "w") as f:
+            json.dump(encoded_images, f)
+
+        print("Encoded images saved to encoded_images.json")
+
         return {
-            "message": "Images saved successfully",
+            "message": "Images saved and encoded successfully",
             "file_paths": saved_files
         }
     except Exception as e:
+        print(f"Error: {e}")
         return JSONResponse(
             status_code=500,
             content={"message": "Failed to process images", "error": str(e)},
@@ -106,18 +140,6 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
 
 
 def group_elements_fixed_10x10(elements, has_consistent_height):
-    """
-
-    elements: Dictionary of elements with top, left, id and placed image
-    has_consistent_height: Has gaps between elements at least 10% of container size. (Some shapes require smaller gaps
-    to keep the shape good-looking.)
-
-    Returns: Array that represents the order of elements:
-        - "_" = No slot
-        - "(id, filename)" = Filled slot
-        - "(id, [])" = Empty slot
-
-    """
     if not elements:
         return [["/" for _ in range(10)] for _ in range(10)]
 
@@ -135,7 +157,6 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
         left_positions = [min_left + 60 * i for i in range(cols)]
         print(f"Left positions: {left_positions}")
         allowed_top_gap = 20
-
     else:
         top_positions = [min_top + 57 * i for i in range(rows)]
         print(f"Top positions: {top_positions}")
@@ -157,8 +178,17 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
         if abs(closest_top - t) <= allowed_top_gap and l in left_index_map:
             r = top_index_map[closest_top]
             c = left_index_map[l]
-            file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (element['id'],"[]")
+            file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (element['id'], "[]")
             array_2d[r][c] = file_name
+            if file_name[1] != "[]":
+                print(f"Placed image {file_name} at position ({r}, {c})")
+                neighbors = {
+                    "top": array_2d[r-1][c] if r > 0 else None,
+                    "bottom": array_2d[r+1][c] if r < rows - 1 else None,
+                    "left": array_2d[r][c-1] if c > 0 else None,
+                    "right": array_2d[r][c+1] if c < cols - 1 else None
+                }
+                print(f"Neighbors of image {file_name} at position ({r}, {c}): {neighbors}")
 
     for row in array_2d:
         print(row)
