@@ -26,7 +26,6 @@ function closeModal() {
 }
 
 async function selectImage(image) {
-  console.log("selectImage");
   if (selectedIndex.value !== null) {
     const scaledImage = await scaleImage(image);
     const fileName = image.split("/").pop();
@@ -73,7 +72,7 @@ async function extractGridPositions() {
       id: index + 1,
       top: itemRect.top - containerRect.top,
       left: itemRect.left - containerRect.left,
-      fileName: items[index].fileName || null,
+      fileName: items[index].filename || null,
     };
 
     positions.push(positionData);

@@ -27,3 +27,37 @@ export async function fetchAndStoreImages() {
     console.error("Error fetching images:", error);
   }
 }
+
+export async function fetchAndStoreComponentData(componentName, items) {
+  console.log("fetchAndStoreComponentData with " + componentName);
+  try {
+    const response = await axios.get(`${store.apiUrl}/getArray`, {
+      params: { component_name: componentName },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 200 && Array.isArray(response.data)) {
+      // Update the `items` array with the fetched data
+      response.data.forEach((item, index) => {
+        if (index < items.length) {
+          // Check for valid file names
+          const fileName = item[1];
+          const isValidFileName = fileName && fileName !== '[]';
+
+          items[index] = {
+            src: isValidFileName ? `${store.apiUrl}/uploaded_images/${fileName}` : null, // Set to null if invalid
+            fileName: isValidFileName ? fileName : null, // Set to null if invalid
+          };
+        }
+      });
+    } else {
+      console.error(`No data found for ${componentName}:`, response.data.detail || "Unknown error");
+    }
+  } catch (error) {
+    console.error(`Error fetching data for ${componentName}:`, error);
+  }
+  console.log(`Data for ${componentName}:`, items);
+}
+

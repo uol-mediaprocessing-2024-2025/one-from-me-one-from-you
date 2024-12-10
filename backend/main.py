@@ -1,22 +1,24 @@
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
-import uuid
-import hashlib
-from typing import List
-
-import shutil
+from PIL import Image
+from typing import Dict, List, Any
 from fastapi.responses import JSONResponse
+from itertools import chain
+
 import uvicorn
 import os
-from PIL import Image
+import shutil
 import clip
 import torch
 import json
+import uuid
 
 app = FastAPI()
+
+components_data: Dict[str, List[Dict[str, Any]]] = {}
 
 # Initialize the CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -123,12 +125,12 @@ async def get_images():
 
 @app.get("/ping")
 def ping():
+    print("ping")
     return {"message": "pong"}
-
 
 @app.post("/positions")
 async def receive_positions(positions: str = Form(...), componentName: str = Form(...)):
-    print(componentName)
+    print(f"Received componentName: {componentName}")
     parsed_positions = json.loads(positions)
     print("Received positions with file names:", parsed_positions)
     if componentName in ("heartComponent", "cloudComponent", "rectangleComponent", "triangleComponent"):
@@ -136,8 +138,33 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
     else:
         array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=False)
 
+    add_component(component_name=componentName, data=array)
+
     return {"message": "Data received successfully"}
 
+@app.get("/getArray")
+def get_array(component_name: str):
+    print("array: getArray")
+
+    if component_name in components_data:
+        # Flatten the 2D list and remove empty lists or '_'
+        flattened_array = list(chain.from_iterable(
+            (item for item in sublist if item != '_' and item != '[]')
+            for sublist in components_data[component_name]
+        ))
+
+        return flattened_array
+    else:
+        raise HTTPException(status_code=404, detail="Component not found")
+
+def add_component(component_name: str, data: List[Dict[str, Any]]):
+    """
+    Adds or updates the data for a specific component name in the global dictionary.
+
+    :param component_name: Name of the component.
+    :param data: List of position data dictionaries.
+    """
+    components_data[component_name] = data
 
 def group_elements_fixed_10x10(elements, has_consistent_height):
     if not elements:

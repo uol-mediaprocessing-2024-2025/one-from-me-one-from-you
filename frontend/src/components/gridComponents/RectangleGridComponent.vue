@@ -1,7 +1,8 @@
 <script setup>
 import { store } from "@/store.js";
-import { ref, reactive } from "vue";
+import {ref, reactive, onMounted} from "vue";
 import {useAttrs} from 'vue';
+import {fetchAndStoreComponentData} from "@/controller/SynchronizeImages.js";
 
 // To supress vue warnings
 defineProps([]);
@@ -15,6 +16,24 @@ const componentName = "rectangleComponent"
 const isAITurn = ref(false);
 const isDisabled = ref(false);
 
+onMounted(async () => {
+  await fetchAndStoreComponentData(componentName, items);
+
+  // Process scaling after data is fetched
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
+    if (item.src) {
+      try {
+        // Scale the image and update `scaledSrc`
+        const scaledImage = await scaleImage(item.src);
+        item.scaledSrc = scaledImage;
+      } catch (error) {
+        console.error(`Error scaling image for index ${index}:`, error);
+      }
+    }
+  }
+});
+
 function openImageSelection(index) {
   selectedIndex.value = index;
   showModal.value = true;
@@ -26,7 +45,6 @@ function closeModal() {
 }
 
 async function selectImage(image) {
-  console.log("selectImage");
   if (selectedIndex.value !== null) {
     const scaledImage = await scaleImage(image);
     const fileName = image.split("/").pop();
@@ -38,6 +56,7 @@ async function selectImage(image) {
   this.isAITurn = true;
   this.isDisabled = true;
   await extractGridPositions();
+  // console.log(items);
   }
 }
 
@@ -59,7 +78,6 @@ function scaleImage(imageUrl) {
     img.src = imageUrl;
   });
 }
-
 
 async function extractGridPositions() {
   const gridContainer = document.querySelector(".rectangle-grid");
@@ -114,15 +132,15 @@ async function extractGridPositions() {
           v-for="(item, index) in items"
           :key="index"
           class="grid-item"
-          :class="{ disabled: isDisabled }"
-          >
+        >
           <!-- Show image if selected -->
-          <label v-if="!item.src" class="upload-label" @click="!isDisabled && openImageSelection(index)">
+          <label v-if="!item.src" class="upload-label" @click="openImageSelection(index)">
             + Select Image
           </label>
-          <img v-else :src="item.src" alt="Bild" />
+          <img v-else :src="item.scaledSrc || item.src" alt="Bild" />
         </div>
       </div>
+    </div>
 
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
@@ -140,7 +158,6 @@ async function extractGridPositions() {
         </div>
         <button @click="closeModal">Cancel</button>
       </div>
-    </div>
   </div>
 
   <v-btn @click="extractGridPositions">Send to backend </v-btn>
@@ -303,7 +320,7 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .popup {
   position: absolute;
-  top: 48.5%;
+  top: 78.5%;
   left: 23.5%;
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
@@ -312,6 +329,12 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.rectangle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
 }
 
 </style>

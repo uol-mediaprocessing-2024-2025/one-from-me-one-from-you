@@ -11,6 +11,7 @@ import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue
 import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
 import UploadImage from "@/components/UploadImage.vue";
+import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
 
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
@@ -71,6 +72,8 @@ onMounted(() => {
     src: `${collageTemplatesPath}${fileName}`,
     alt: fileName.split('.')[0],
   }));
+
+  fetchAndStoreImages();
 });
 
 const updateCollagePreview = async (imageSrc) => {

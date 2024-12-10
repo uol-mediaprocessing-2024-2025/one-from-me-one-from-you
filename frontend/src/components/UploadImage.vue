@@ -51,7 +51,7 @@ const uploadImage = async () => {
       successMessage.value = 'Images uploaded successfully!';
       previewImages.value = [];
 
-      fetchAndStoreImages();
+      await fetchAndStoreImages();
     } else {
       console.error('Unexpected response:', response);
     }
