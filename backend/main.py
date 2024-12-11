@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
-from typing import Dict, List, Any
+from typing import Any, Dict, List, Tuple
 from fastapi.responses import JSONResponse
 from itertools import chain
 
@@ -15,10 +15,11 @@ import clip
 import torch
 import json
 import uuid
+import random
 
 app = FastAPI()
 
-components_data: Dict[str, List[Dict[str, Any]]] = {}
+components_data: Dict[str, List[List[Dict[str, Any]]]] = {}
 
 # Initialize the CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -121,6 +122,7 @@ async def get_images():
         return {"image_files": image_files}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": "Failed to retrieve images", "error": str(e)})
+        return JSONResponse(status_code=500, content={"message": "Failed to retrieve images", "error": str(e)})
 
 
 @app.get("/ping")
@@ -130,9 +132,9 @@ def ping():
 
 @app.post("/positions")
 async def receive_positions(positions: str = Form(...), componentName: str = Form(...)):
-    print(f"Received componentName: {componentName}")
+    # print(f"Received componentName: {componentName}")
     parsed_positions = json.loads(positions)
-    print("Received positions with file names:", parsed_positions)
+    # print("Received positions with file names:", parsed_positions)
     if componentName in ("heartComponent", "cloudComponent", "rectangleComponent", "triangleComponent"):
         array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=True)
     else:
@@ -144,8 +146,6 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
 
 @app.get("/getArray")
 def get_array(component_name: str):
-    print("array: getArray")
-
     if component_name in components_data:
         # Flatten the 2D list and remove empty lists or '_'
         flattened_array = list(chain.from_iterable(
@@ -165,6 +165,50 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
     :param data: List of position data dictionaries.
     """
     components_data[component_name] = data
+    insert_random_image(component_name)  # This represents the AI
+
+def get_available_images() -> List[str]:
+    """Retrieve all filenames in the UPLOAD_DIR."""
+    if not UPLOAD_DIR.exists() or not UPLOAD_DIR.is_dir():
+        return []
+    return [f.name for f in UPLOAD_DIR.iterdir() if f.is_file()]
+
+def find_free_position(component_name: str) -> Tuple[int, int]:
+    """
+    Find the first free position in the component's data list.
+    Returns the (row_index, col_index) of the free position.
+    """
+    if component_name not in components_data or not components_data[component_name]:
+        return -1, -1
+
+    for row_idx, row in enumerate(components_data[component_name]):
+        for col_idx, (id_, filepath) in enumerate(row):
+            if filepath == '[]':  # Free position identified by '[]'
+                return row_idx, col_idx
+    return -1, -1  # No free position found
+
+def insert_random_image(component_name: str):
+    """Insert a random image filename into the components_data dictionary."""
+    available_images = get_available_images()
+
+    if not available_images:
+        print("No images available in the upload directory.")
+        return
+
+    random_image = random.choice(available_images)
+    row_idx, col_idx = find_free_position(component_name)
+
+    if row_idx == -1 or col_idx == -1:
+        print(f"No free position available for component '{component_name}'.")
+        return
+
+    # Update the free position with the new random image
+    components_data[component_name][row_idx][col_idx] = (
+        components_data[component_name][row_idx][col_idx][0],  # Keep the existing id
+        random_image,  # Set the filepath to the chosen random image
+    )
+    print(f"Inserted {random_image} at position ({row_idx}, {col_idx}) for component '{component_name}'.")
+    print(components_data[component_name])
 
 def group_elements_fixed_10x10(elements, has_consistent_height):
     if not elements:
@@ -180,15 +224,15 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
 
     if has_consistent_height:
         top_positions = [min_top + 60 * i for i in range(rows)]
-        print(f"Top positions: {top_positions}")
+        # print(f"Top positions: {top_positions}")
         left_positions = [min_left + 60 * i for i in range(cols)]
-        print(f"Left positions: {left_positions}")
+        # print(f"Left positions: {left_positions}")
         allowed_top_gap = 20
     else:
         top_positions = [min_top + 57 * i for i in range(rows)]
-        print(f"Top positions: {top_positions}")
+        # print(f"Top positions: {top_positions}")
         left_positions = [min_left + 60 * i for i in range(cols)]
-        print(f"Left positions: {left_positions}")
+        # print(f"Left positions: {left_positions}")
         allowed_top_gap = 40
 
     array_2d = [["_" for _ in range(cols)] for _ in range(rows)]
@@ -208,17 +252,17 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
             file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (element['id'], "[]")
             array_2d[r][c] = file_name
             if file_name[1] != "[]":
-                print(f"Placed image {file_name} at position ({r}, {c})")
+                # print(f"Placed image {file_name} at position ({r}, {c})")
                 neighbors = {
                     "top": array_2d[r-1][c] if r > 0 else None,
                     "bottom": array_2d[r+1][c] if r < rows - 1 else None,
                     "left": array_2d[r][c-1] if c > 0 else None,
                     "right": array_2d[r][c+1] if c < cols - 1 else None
                 }
-                print(f"Neighbors of image {file_name} at position ({r}, {c}): {neighbors}")
+                # print(f"Neighbors of image {file_name} at position ({r}, {c}): {neighbors}")
 
-    for row in array_2d:
-        print(row)
+    # for row in array_2d:
+        # print(row)
 
     return array_2d
 
