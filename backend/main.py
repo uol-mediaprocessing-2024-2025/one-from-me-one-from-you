@@ -182,8 +182,8 @@ def find_free_position(component_name: str) -> Tuple[int, int]:
         return -1, -1
 
     for row_idx, row in enumerate(components_data[component_name]):
-        for col_idx, (id_, filepath) in enumerate(row):
-            if filepath == '[]':  # Free position identified by '[]'
+        for col_idx, item in enumerate(row):
+            if isinstance(item, tuple) and len(item) == 2 and item[1] == '[]':  # Free position identified by '[]'
                 return row_idx, col_idx
     return -1, -1  # No free position found
 
