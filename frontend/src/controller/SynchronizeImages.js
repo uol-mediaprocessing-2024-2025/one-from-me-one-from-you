@@ -39,8 +39,11 @@ export async function fetchAndStoreComponentData(componentName, items) {
     });
 
     if (response.status === 200 && Array.isArray(response.data)) {
+      // Sort the data by the id (the first element of each sub-array)
+      const sortedData = response.data.sort((a, b) => a[0] - b[0]);
+
       // Update the `items` array with the fetched data
-      response.data.forEach((item, index) => {
+      sortedData.forEach((item, index) => {
         if (index < items.length) {
           // Check for valid file names
           const fileName = item[1];
