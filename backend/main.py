@@ -187,6 +187,37 @@ def find_free_position(component_name: str) -> Tuple[int, int]:
                 return row_idx, col_idx
     return -1, -1  # No free position found
 
+def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
+    """
+    Find the position with the most neighbors in the component's data list.
+    Returns the (row_index, col_index) of the position with the most neighbors.
+    """
+    if component_name not in components_data or not components_data[component_name]:
+        return -1, -1
+
+    max_neighbors = -1
+    best_position = (-1, -1)
+    image_extensions = ('.jpeg', '.jpg', '.png', '.gif', '.bmp')
+
+    for row_idx, row in enumerate(components_data[component_name]):
+        for col_idx, item in enumerate(row):
+            if item != '_':
+                neighbors = 0
+                if row_idx > 0 and isinstance(components_data[component_name][row_idx - 1][col_idx], tuple) and len(components_data[component_name][row_idx - 1][col_idx]) > 1 and components_data[component_name][row_idx - 1][col_idx][1].lower().endswith(image_extensions):
+                    neighbors += 1
+                if row_idx < len(components_data[component_name]) - 1 and isinstance(components_data[component_name][row_idx + 1][col_idx], tuple) and len(components_data[component_name][row_idx + 1][col_idx]) > 1 and components_data[component_name][row_idx + 1][col_idx][1].lower().endswith(image_extensions):
+                    neighbors += 1
+                if col_idx > 0 and isinstance(components_data[component_name][row_idx][col_idx - 1], tuple) and len(components_data[component_name][row_idx][col_idx - 1]) > 1 and components_data[component_name][row_idx][col_idx - 1][1].lower().endswith(image_extensions):
+                    neighbors += 1
+                if col_idx < len(row) - 1 and isinstance(components_data[component_name][row_idx][col_idx + 1], tuple) and len(components_data[component_name][row_idx][col_idx + 1]) > 1 and components_data[component_name][row_idx][col_idx + 1][1].lower().endswith(image_extensions):
+                    neighbors += 1
+
+                if neighbors > max_neighbors:
+                    max_neighbors = neighbors
+                    best_position = (row_idx, col_idx)
+
+    return best_position
+
 def insert_random_image(component_name: str):
     """Insert a random image filename into the components_data dictionary."""
     available_images = get_available_images()
@@ -209,6 +240,8 @@ def insert_random_image(component_name: str):
     )
     print(f"Inserted {random_image} at position ({row_idx}, {col_idx}) for component '{component_name}'.")
     print(components_data[component_name])
+    print("--------------------")
+    print(f"Best position with most neighbors: {find_position_with_most_neighbors(component_name)}")
 
 def group_elements_fixed_10x10(elements, has_consistent_height):
     if not elements:
