@@ -93,8 +93,9 @@ Icon?
 logs/
 *.log
 
-
 .idea/
 
 *.vite
 node_modules/.vite/
+
+uploaded_images/*
