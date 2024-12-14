@@ -98,4 +98,4 @@ logs/
 *.vite
 node_modules/.vite/
 
-uploaded_images/*
+uploaded_images/
