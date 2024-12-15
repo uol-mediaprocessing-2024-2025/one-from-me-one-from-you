@@ -165,7 +165,7 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
     :param data: List of position data dictionaries.
     """
     components_data[component_name] = data
-    insert_random_image(component_name)  # This represents the AI
+    insert_most_similar_image(component_name)  # This represents the AI
 
 def get_available_images() -> List[str]:
     """Retrieve all image filenames in the UPLOAD_DIR."""
@@ -195,6 +195,7 @@ def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
     """
     Find the position with the most neighbors in the component's data list.
     Returns the (row_index, col_index) of the position with the most neighbors.
+    If the best position is already occupied by an image, it chooses the next best one.
     """
     if component_name not in components_data or not components_data[component_name]:
         return -1, -1
@@ -202,11 +203,14 @@ def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
     max_neighbors = -1
     best_position = (-1, -1)
     image_extensions = ('.jpeg', '.jpg', '.png', '.gif', '.bmp')
+    candidates = []  # Store potential positions sorted by number of neighbors
 
     for row_idx, row in enumerate(components_data[component_name]):
         for col_idx, item in enumerate(row):
             if item != '_':
                 neighbors = 0
+
+                # Check all four possible neighbors
                 if row_idx > 0 and isinstance(components_data[component_name][row_idx - 1][col_idx], tuple) and len(components_data[component_name][row_idx - 1][col_idx]) > 1 and components_data[component_name][row_idx - 1][col_idx][1].lower().endswith(image_extensions):
                     neighbors += 1
                 if row_idx < len(components_data[component_name]) - 1 and isinstance(components_data[component_name][row_idx + 1][col_idx], tuple) and len(components_data[component_name][row_idx + 1][col_idx]) > 1 and components_data[component_name][row_idx + 1][col_idx][1].lower().endswith(image_extensions):
@@ -216,11 +220,24 @@ def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
                 if col_idx < len(row) - 1 and isinstance(components_data[component_name][row_idx][col_idx + 1], tuple) and len(components_data[component_name][row_idx][col_idx + 1]) > 1 and components_data[component_name][row_idx][col_idx + 1][1].lower().endswith(image_extensions):
                     neighbors += 1
 
-                if neighbors > max_neighbors:
-                    max_neighbors = neighbors
-                    best_position = (row_idx, col_idx)
+                # Add the position and its neighbor count to candidates
+                candidates.append(((row_idx, col_idx), neighbors))
+
+    # Sort candidates by number of neighbors in descending order
+    candidates.sort(key=lambda x: x[1], reverse=True)
+
+    # Choose the best position not occupied by an image
+    for position, neighbors in candidates:
+        row_idx, col_idx = position
+        item = components_data[component_name][row_idx][col_idx]
+
+        # Check if the position is NOT already occupied by an image
+        if not (isinstance(item, tuple) and len(item) > 1 and item[1].lower().endswith(image_extensions)):
+            best_position = position
+            break
 
     return best_position
+
 
 def insert_random_image(component_name: str):
     """Insert a random image filename into the components_data dictionary."""
@@ -303,6 +320,86 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
 
     return array_2d
 
+def insert_most_similar_image(component_name: str):
+    """Insert the most similar image filename into the components_data dictionary."""
+    available_images = get_available_images()
+
+    if not available_images:
+        print("No images available in the upload directory.")
+        return
+
+    row_idx, col_idx = find_position_with_most_neighbors(component_name)
+
+    if row_idx == -1 or col_idx == -1:
+        print(f"No suitable position available for component '{component_name}'.")
+        return
+
+    # Check if the position is already occupied
+    if components_data[component_name][row_idx][col_idx][1] != '[]':
+        print(f"Position ({row_idx}, {col_idx}) is already occupied.")
+        return
+
+    # Load the encoded images from the JSON file
+    with open(os.path.join(UPLOAD_DIR, "encoded_images.json"), "r") as f:
+        encoded_images = json.load(f)
+
+    # Convert the encoded vectors back to tensors
+    encoded_tensors = {k: torch.tensor(v) for k, v in encoded_images.items()}
+
+    # Collect all currently placed images
+    placed_images = {
+        item[1]
+        for row in components_data[component_name]
+        for item in row
+        if isinstance(item, tuple) and len(item) > 1 and item[1] != '[]'
+    }
+
+    # Get the neighbor images
+    neighbors = []
+    if row_idx > 0:
+        neighbors.append(components_data[component_name][row_idx - 1][col_idx][1])
+    if row_idx < len(components_data[component_name]) - 1:
+        neighbors.append(components_data[component_name][row_idx + 1][col_idx][1])
+    if col_idx > 0:
+        neighbors.append(components_data[component_name][row_idx][col_idx - 1][1])
+    if col_idx < len(components_data[component_name][row_idx]) - 1:
+        neighbors.append(components_data[component_name][row_idx][col_idx + 1][1])
+
+    # Get the encoded vectors for the neighbor images
+    neighbor_tensors = [encoded_tensors[neighbor] for neighbor in neighbors if neighbor in encoded_tensors]
+
+    if not neighbor_tensors:
+        print("No valid neighbors found.")
+        return
+
+    neighbor_tensors = torch.stack(neighbor_tensors)
+    neighbor_features = neighbor_tensors.mean(dim=0)
+
+    # Find the most similar image
+    best_score = -float("inf")
+    best_image = None
+
+    for image_name in available_images:
+        # Skip images that are already placed
+        if image_name in placed_images:
+            continue
+
+        if image_name in encoded_tensors:
+            image_features = encoded_tensors[image_name]
+            score = torch.cosine_similarity(image_features, neighbor_features, dim=0).mean().item()
+            if score > best_score:
+                best_score = score
+                best_image = image_name
+
+    if best_image:
+        # Update the position with the most similar image
+        components_data[component_name][row_idx][col_idx] = (
+            components_data[component_name][row_idx][col_idx][0],  # Keep the existing id
+            best_image,  # Set the filepath to the most similar image
+        )
+        print(f"Inserted {best_image} at position ({row_idx}, {col_idx}) for component '{component_name}' with a similarity score of {best_score:.2f}.")
+    else:
+        print("No suitable image found.")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
