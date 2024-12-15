@@ -1,5 +1,5 @@
 import { store } from "@/store.js"; // Assuming store.js is in the src folder
-import { fetchAndStoreComponentData } from "@/controller/SynchronizeImages.js"; // Adjusted to match the folder structure
+import { fetchAndStoreComponentData } from "@/controller/SynchronizeImages.js";
 
 /**
  * Updates the collage items by fetching component data and scaling images.
@@ -8,19 +8,6 @@ import { fetchAndStoreComponentData } from "@/controller/SynchronizeImages.js"; 
  */
 export async function updateCollageItems(componentName, items) {
   await fetchAndStoreComponentData(componentName, items);
-
-  // Process scaling after data is fetched
-  for (let index = 0; index < items.length; index++) {
-    const item = items[index];
-    if (item.src) {
-      try {
-        const scaledImage = await scaleImage(item.src);
-        item.scaledSrc = scaledImage;
-      } catch (error) {
-        console.error(`Error scaling image for index ${index}:`, error);
-      }
-    }
-  }
 }
 
 /**

@@ -31,22 +31,36 @@ function closeModal() {
   selectedIndex.value = null;
 }
 
+// Helper function to wait for a specified amount of time (in milliseconds)
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function selectImage(image) {
   if (selectedIndex.value !== null) {
     const scaledImage = await scaleImage(image);
     const fileName = image.split("/").pop();
+
     items[selectedIndex.value] = {
-      src: scaledImage,
+      src: scaledImage,  // Updated source for the image
       fileName: fileName,
     };
+
     closeModal();
+
     isAITurn.value = true;
     isDisabled.value = true;
+
+    await wait(2000);  // Optional wait, if needed
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
     await extractGridPositions(gridContainer, gridItems, items, componentName);
+
     await updateCollageItems(componentName, items);
+
+    isAITurn.value = false;
+    isDisabled.value = false;
   }
 }
 </script>
@@ -59,12 +73,13 @@ async function selectImage(image) {
           v-for="(item, index) in items"
           :key="index"
           class="grid-item"
+          :class="{ disabled: isDisabled }"
         >
           <!-- Show image if selected -->
-          <label v-if="!item.src" class="upload-label" @click="openImageSelection(index)">
+          <label v-if="!item.src" class="upload-label" @click="!isDisabled && openImageSelection(index)">
             + Select Image
           </label>
-          <img v-else :src="item.scaledSrc" alt="Bild" />
+          <img v-else :src="item.src" alt="Bild" />
         </div>
       </div>
     </div>

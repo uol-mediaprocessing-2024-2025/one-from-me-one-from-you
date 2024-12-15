@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { store } from '@/store.js';
+import { scaleImage } from "@/controller/GridComponentHelper.js";
 
 export async function fetchAndStoreImages() {
   try {
@@ -29,7 +30,6 @@ export async function fetchAndStoreImages() {
 }
 
 export async function fetchAndStoreComponentData(componentName, items) {
-  console.log("fetchAndStoreComponentData with " + componentName);
   try {
     const response = await axios.get(`${store.apiUrl}/getArray`, {
       params: { component_name: componentName },
@@ -39,28 +39,35 @@ export async function fetchAndStoreComponentData(componentName, items) {
     });
 
     if (response.status === 200 && Array.isArray(response.data)) {
-      // Sort the data by the id (the first element of each sub-array)
       const sortedData = response.data.sort((a, b) => a[0] - b[0]);
 
-      // Update the `items` array with the fetched data
-      sortedData.forEach((item, index) => {
+      // Use a for...of loop instead of forEach to handle async operations
+      for (const [index, item] of sortedData.entries()) {
         if (index < items.length) {
-          // Check for valid file names
           const fileName = item[1];
           const isValidFileName = fileName && fileName !== '[]';
 
+          let imageUrl = isValidFileName ? `${store.apiUrl}/uploaded_images/${fileName}` : null;
+
+          // If valid image URL is present, scale it
+          if (imageUrl) {
+            const scaledImage = await scaleImage(imageUrl);
+            imageUrl = scaledImage;
+          }
+
+          // Assign scaled image URL to the item
           items[index] = {
-            src: isValidFileName ? `${store.apiUrl}/uploaded_images/${fileName}` : null, // Set to null if invalid
-            fileName: isValidFileName ? fileName : null, // Set to null if invalid
+            src: imageUrl,
+            fileName: isValidFileName ? fileName : null,
           };
         }
-      });
+      }
     } else {
       console.error(`No data found for ${componentName}:`, response.data.detail || "Unknown error");
     }
   } catch (error) {
     console.error(`Error fetching data for ${componentName}:`, error);
   }
-  console.log(`Data for ${componentName}:`, items);
 }
+
 
