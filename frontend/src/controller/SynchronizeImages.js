@@ -41,7 +41,6 @@ export async function fetchAndStoreComponentData(componentName, items) {
     if (response.status === 200 && Array.isArray(response.data)) {
       const sortedData = response.data.sort((a, b) => a[0] - b[0]);
 
-      // Use a for...of loop instead of forEach to handle async operations
       for (const [index, item] of sortedData.entries()) {
         if (index < items.length) {
           const fileName = item[1];
@@ -49,13 +48,11 @@ export async function fetchAndStoreComponentData(componentName, items) {
 
           let imageUrl = isValidFileName ? `${store.apiUrl}/uploaded_images/${fileName}` : null;
 
-          // If valid image URL is present, scale it
           if (imageUrl) {
             const scaledImage = await scaleImage(imageUrl);
             imageUrl = scaledImage;
           }
 
-          // Assign scaled image URL to the item
           items[index] = {
             src: imageUrl,
             fileName: isValidFileName ? fileName : null,

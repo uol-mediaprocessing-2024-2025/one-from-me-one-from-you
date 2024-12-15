@@ -58,7 +58,6 @@ export async function extractGridPositions(gridContainer, gridItems, items, comp
     positions.push(positionData);
   });
 
-  // Sorting, starting at top left
   positions.sort((a, b) => {
     if (a.left === b.left) {
       return a.top - b.top;
@@ -84,4 +83,8 @@ export async function extractGridPositions(gridContainer, gridItems, items, comp
   } catch (error) {
     console.error("Error sending grid positions to the backend:", error);
   }
+}
+
+export function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

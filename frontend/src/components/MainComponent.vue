@@ -11,7 +11,7 @@ import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue
 import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
 import UploadImage from "@/components/UploadImage.vue";
-import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
+import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
 
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
@@ -48,7 +48,6 @@ const callPing = async () => {
 };
 
 onMounted(() => {
-  // Load persisted shape from localStorage
   const savedShape = localStorage.getItem('selectedCollageShape');
   if (savedShape) {
     selectedCollageShape.value = savedShape;
@@ -56,7 +55,6 @@ onMounted(() => {
     setOtherGridsInvisible(fileName);
   }
 
-  // Initialize collage shapes
   const collageTemplatesPath = 'collage_templates/';
   const shapeFiles = [
     'heart.png',
@@ -123,9 +121,6 @@ const setOtherGridsInvisible = (shape) => {
         <p>{{ responseMessage }}</p>
         <!-- Debug Remove -->
       </section>
-
-
-
 
       <!-- Sorting Options -->
       <section class="sorting-options">

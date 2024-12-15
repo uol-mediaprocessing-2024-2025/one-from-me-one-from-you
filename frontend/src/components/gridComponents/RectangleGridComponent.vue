@@ -1,13 +1,12 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { useAttrs } from "vue";
-import { updateCollageItems, scaleImage, extractGridPositions } from "@/controller/GridComponentHelper.js"; // Adjusted import path
+import { updateCollageItems, scaleImage, extractGridPositions, wait } from "@/controller/GridComponentHelper.js";
 import { store } from "@/store.js";
 
 defineProps([]);
 const attrs = useAttrs();
 
-// Reactive variables
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
@@ -20,20 +19,13 @@ onMounted(async () => {
 });
 
 function openImageSelection(index) {
-  console.log("Opening modal for index", index);  // Check if this logs when you click on the item
   selectedIndex.value = index;
   showModal.value = true;
-  console.log('showModal:', showModal.value);
 }
 
 function closeModal() {
   showModal.value = false;
   selectedIndex.value = null;
-}
-
-// Helper function to wait for a specified amount of time (in milliseconds)
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function selectImage(image) {
@@ -42,7 +34,7 @@ async function selectImage(image) {
     const fileName = image.split("/").pop();
 
     items[selectedIndex.value] = {
-      src: scaledImage,  // Updated source for the image
+      src: scaledImage,
       fileName: fileName,
     };
 
@@ -51,7 +43,7 @@ async function selectImage(image) {
     isAITurn.value = true;
     isDisabled.value = true;
 
-    await wait(2000);  // Optional wait, if needed
+    await wait(2000);
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
