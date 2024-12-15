@@ -113,7 +113,7 @@ async def get_images():
         image_files = []
         for file_name in os.listdir(UPLOAD_DIR):
             file_path = os.path.join(UPLOAD_DIR, file_name)
-            if os.path.isfile(file_path) and file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+            if os.path.isfile(file_path) and file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
                 image_files.append(file_name)
 
         if not image_files:
@@ -168,10 +168,14 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
     insert_random_image(component_name)  # This represents the AI
 
 def get_available_images() -> List[str]:
-    """Retrieve all filenames in the UPLOAD_DIR."""
+    """Retrieve all image filenames in the UPLOAD_DIR."""
+    IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
     if not UPLOAD_DIR.exists() or not UPLOAD_DIR.is_dir():
         return []
-    return [f.name for f in UPLOAD_DIR.iterdir() if f.is_file()]
+    return [
+        f.name for f in UPLOAD_DIR.iterdir()
+        if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
+    ]
 
 def find_free_position(component_name: str) -> Tuple[int, int]:
     """

@@ -4,7 +4,7 @@ import {ref, reactive, onMounted} from "vue";
 import {useAttrs} from 'vue';
 import {fetchAndStoreComponentData} from "@/controller/SynchronizeImages.js";
 
-// To supress vue warnings
+// To suppress vue warnings
 defineProps([]);
 const attrs = useAttrs();
 
@@ -12,11 +12,15 @@ const attrs = useAttrs();
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
-const componentName = "rectangleComponent"
+const componentName = "rectangleComponent";
 const isAITurn = ref(false);
 const isDisabled = ref(false);
 
 onMounted(async () => {
+  await updateCollageItems();
+});
+
+async function updateCollageItems(){
   await fetchAndStoreComponentData(componentName, items);
 
   // Process scaling after data is fetched
@@ -24,7 +28,6 @@ onMounted(async () => {
     const item = items[index];
     if (item.src) {
       try {
-        // Scale the image and update `scaledSrc`
         const scaledImage = await scaleImage(item.src);
         item.scaledSrc = scaledImage;
       } catch (error) {
@@ -32,7 +35,7 @@ onMounted(async () => {
       }
     }
   }
-});
+}
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -52,11 +55,10 @@ async function selectImage(image) {
       src: scaledImage,
       fileName: fileName,
     };
-  closeModal();
-  this.isAITurn = true;
-  this.isDisabled = true;
-  await extractGridPositions();
-  // console.log(items);
+    closeModal();
+    isAITurn.value = true;
+    isDisabled.value = true;
+    await extractGridPositions();
   }
 }
 
@@ -97,7 +99,7 @@ async function extractGridPositions() {
     positions.push(positionData);
   });
 
-    // Sorting, starting at top left
+  // Sorting, starting at top left
   positions.sort((a, b) => {
     if (a.left === b.left) {
       return a.top - b.top;
@@ -109,19 +111,26 @@ async function extractGridPositions() {
   formData.append("positions", JSON.stringify(positions));
   formData.append("componentName", componentName);
 
-  try {
+try {
+    console.log("Sending grid positions to backend:", JSON.stringify(positions));
     const response = await fetch(`${store.apiUrl}/positions`, {
       method: "POST",
       body: formData,
     });
 
+    if (!response.ok) {
+      throw new Error(`Failed to send grid positions. Status: ${response.status}`);
+    }
+
     const result = await response.json();
     console.log("Response from backend:", result);
+
+    // Call updateCollageItems if the response is successful
+    await updateCollageItems();
   } catch (error) {
-    console.error("Error sending grid with file names:", error);
+    console.error("Error sending grid positions to the backend:", error);
   }
 }
-
 </script>
 
 <template>
