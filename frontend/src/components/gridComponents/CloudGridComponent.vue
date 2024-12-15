@@ -80,7 +80,6 @@ async function selectImage(image) {
     </div>
   </div>
 
-  <v-btn @click="extractGridPositions">Send to backend </v-btn>
 
 </template>
 
@@ -114,7 +113,14 @@ async function selectImage(image) {
   position: absolute;
   transform: none;
   margin: 10px;
+  overflow: visible;
 }
+
+.grid-item img {
+  transform: scale(1.05);
+  transform-origin: center center;
+}
+
 
 .grid-item.disabled {
   pointer-events: none;
@@ -126,6 +132,7 @@ async function selectImage(image) {
   -webkit-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 }
+
 
 .grid-item:nth-child(2) { top: 15%; left: 50%; }
 .grid-item:nth-child(3) { top: 25%; left: 50%; }
@@ -257,8 +264,8 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .popup {
   position: absolute;
-  top: 48.5%;
-  left: 23.5%;
+  top: 30%;
+  left: 45%;
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
@@ -266,6 +273,8 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 2;
 }
+
 
 </style>

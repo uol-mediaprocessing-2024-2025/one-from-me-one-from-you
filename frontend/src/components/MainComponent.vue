@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from "axios";
+import html2canvas from "html2canvas";
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
 import RectangleGridComponent from './gridComponents/RectangleGridComponent.vue';
 import StarGridComponent from "@/components/gridComponents/StarGridComponent.vue";
@@ -12,6 +13,7 @@ import TriangleGridComponent from "@/components/gridComponents/TriangleGridCompo
 
 import UploadImage from "@/components/UploadImage.vue";
 import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
+import {store} from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
@@ -74,6 +76,105 @@ onMounted(() => {
   fetchAndStoreImages();
 });
 
+const captureAndDownload = async () => {
+  const activeGrid = Object.keys(shapeVisibility).find(
+    (key) => shapeVisibility[key].value
+  );
+
+  if (!activeGrid) {
+    console.error("No grid found.");
+    return;
+  }
+
+  const gridContainer = document.querySelector(
+    `.${activeGrid.split('.')[0]}-grid-container`
+  );
+
+  if (!gridContainer) {
+    console.error("No grid-container found.");
+    return;
+  }
+  // Adjusting css to center the contents of downloaded collage
+  const originalStyle = gridContainer.style.cssText;
+  gridContainer.style.margin = "0";
+  gridContainer.style.padding = "0";
+  gridContainer.style.transform = "none";
+  gridContainer.style.position = "static";
+
+  //Getting canvas of (adjusted) grid container and removing the background
+  try {
+    const canvas = await html2canvas(gridContainer, {
+      backgroundColor: null,
+    });
+
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = `${activeGrid.split('.')[0]}-collage.png`;
+    link.click();
+  } catch (error) {
+    console.error("Couldn't take screenshot:", error);
+  } finally {
+    gridContainer.style.cssText = originalStyle;
+  }
+};
+
+const safeCollageToGallery = async () => {
+  const activeGrid = Object.keys(shapeVisibility).find(
+    (key) => shapeVisibility[key].value
+  );
+
+  if (!activeGrid) {
+    console.error("No grid found.");
+    return;
+  }
+
+  const gridContainer = document.querySelector(
+    `.${activeGrid.split('.')[0]}-grid-container`
+  );
+
+  if (!gridContainer) {
+    console.error("No grid-container found.");
+    return;
+  }
+
+  const originalStyle = gridContainer.style.cssText;
+  gridContainer.style.margin = "0";
+  gridContainer.style.padding = "0";
+  gridContainer.style.transform = "none";
+  gridContainer.style.position = "static";
+
+  try {
+    const canvas = await html2canvas(gridContainer, {
+      backgroundColor: null,
+    });
+
+    const dataUrl = canvas.toDataURL("image/png");
+    const blob = await (await fetch(dataUrl)).blob();
+
+    const formData = new FormData();
+    formData.append('files', blob, 'collage.png');
+
+    const response = await axios.post(`${store.apiUrl}/saveImages`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.status === 200) {
+      console.log('Collage saved to gallery.');
+      await fetchAndStoreImages();
+    } else {
+      console.error('Unexpected response:', response);
+    }
+
+  } catch (error) {
+    console.error("Couldn't take screenshot or save collage:", error);
+  } finally {
+    gridContainer.style.cssText = originalStyle;
+  }
+};
+
+
 const updateCollagePreview = async (imageSrc) => {
   if (selectedCollageShape.value === imageSrc) {
     return;
@@ -95,6 +196,7 @@ const setOtherGridsInvisible = (shape) => {
   }
 };
 
+
 </script>
 
 <template>
@@ -110,6 +212,8 @@ const setOtherGridsInvisible = (shape) => {
         <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container"/>
         <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container"/>
         </div>
+      <v-btn @click="captureAndDownload">Download</v-btn>
+      <v-btn @click="safeCollageToGallery">Safe to gallery</v-btn>
     </div>
 
     <div class="settings-panel">

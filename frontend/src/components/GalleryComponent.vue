@@ -75,4 +75,8 @@ const closeModal = () => {
   color: white;
   border-radius: 50%;
 }
+
+.clickable-image{
+  border: 1px dotted;
+}
 </style>

@@ -30,7 +30,7 @@ def get_neighbors(grid, target_id):
             break
 
     if x == -1 or y == -1:
-        raise ValueError("ID nicht im Grid gefunden")
+        raise ValueError("ID not found.")
 
     # Creating neighbour matrix
     directions = [
