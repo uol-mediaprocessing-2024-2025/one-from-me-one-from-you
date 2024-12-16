@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import {ref, onMounted} from 'vue';
 import axios from "axios";
 import html2canvas from "html2canvas";
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
@@ -12,7 +12,7 @@ import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue
 import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
 import UploadImage from "@/components/UploadImage.vue";
-import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
+import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
 import {store} from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
@@ -27,6 +27,9 @@ const isCloudGridVisible = ref(false);
 const isFishGridVisible = ref(false);
 const isLeafGridVisible = ref(false);
 const isTriangleGridVisible = ref(false);
+const isSelectedShape = (shapeSrc) => {
+  return shapeSrc === selectedCollageShape.value;
+};
 
 const shapeVisibility = {
   "heart.png": isHeartGridVisible,
@@ -78,7 +81,7 @@ onMounted(() => {
 
 const captureAndDownload = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
-    (key) => shapeVisibility[key].value
+      (key) => shapeVisibility[key].value
   );
 
   if (!activeGrid) {
@@ -87,7 +90,7 @@ const captureAndDownload = async () => {
   }
 
   const gridContainer = document.querySelector(
-    `.${activeGrid.split('.')[0]}-grid-container`
+      `.${activeGrid.split('.')[0]}-grid-container`
   );
 
   if (!gridContainer) {
@@ -120,7 +123,7 @@ const captureAndDownload = async () => {
 
 const safeCollageToGallery = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
-    (key) => shapeVisibility[key].value
+      (key) => shapeVisibility[key].value
   );
 
   if (!activeGrid) {
@@ -129,7 +132,7 @@ const safeCollageToGallery = async () => {
   }
 
   const gridContainer = document.querySelector(
-    `.${activeGrid.split('.')[0]}-grid-container`
+      `.${activeGrid.split('.')[0]}-grid-container`
   );
 
   if (!gridContainer) {
@@ -211,42 +214,33 @@ const setOtherGridsInvisible = (shape) => {
         <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container"/>
         <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container"/>
         <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container"/>
-        </div>
-      <v-btn @click="captureAndDownload">Download</v-btn>
-      <v-btn @click="safeCollageToGallery">Safe to gallery</v-btn>
+      </div>
     </div>
 
     <div class="settings-panel">
-      <section class="settings">
-        <h2>Settings</h2>
 
-        <!-- Debug Remove -->
-        <button @click="callPing">Ping Backend</button>
-        <p>{{ responseMessage }}</p>
-        <!-- Debug Remove -->
-      </section>
 
       <!-- Sorting Options -->
-      <section class="sorting-options">
-        <h2>Collage options</h2>
+      <h2>Settings</h2>
+      <section class="sorting-options horizontal-layout">
         <div class="option">
           <label>
             <input
-              type="radio"
-              name="sort"
-              value="contrast"
-              v-model="sortingOption"
+                type="radio"
+                name="sort"
+                value="contrast"
+                v-model="sortingOption"
             />
-            Same face
+            Face Detection
           </label>
         </div>
         <div class="option">
           <label>
             <input
-              type="radio"
-              name="sort"
-              value="size"
-              v-model="sortingOption"
+                type="radio"
+                name="sort"
+                value="size"
+                v-model="sortingOption"
             />
             Similarity
           </label>
@@ -254,28 +248,32 @@ const setOtherGridsInvisible = (shape) => {
         <div class="option">
           <label>
             <input
-              type="radio"
-              name="sort"
-              value="style"
-              v-model="sortingOption"
+                type="radio"
+                name="sort"
+                value="style"
+                v-model="sortingOption"
             />
             Style
           </label>
         </div>
       </section>
-
+      <br>
       <section class="collage-shapes">
         <h2>Collage Shape</h2>
         <div class="shapes">
           <img
-            v-for="shape in collageShapes"
-            :key="shape.alt"
-            :src="shape.src"
-            :alt="shape.alt"
-            @click="updateCollagePreview(shape.src)"
+              v-for="shape in collageShapes"
+              :key="shape.alt"
+              :src="shape.src"
+              :alt="shape.alt"
+              @click="updateCollagePreview(shape.src)"
+              :class="{ 'selected-shape': isSelectedShape(shape.src) }"
           />
         </div>
       </section>
+      <br>
+            <v-btn @click="captureAndDownload">Download</v-btn>
+      <v-btn @click="safeCollageToGallery">Save to Gallery</v-btn>
     </div>
   </div>
 
@@ -355,6 +353,20 @@ header h1 {
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.shapes img.selected-shape {
+  border-color: Red;
+}
+
+.horizontal-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.horizontal-layout .option {
+  margin-right: 20px;
 }
 
 </style>
