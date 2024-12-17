@@ -323,38 +323,52 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
 def insert_most_similar_image(component_name: str):
     """Insert the most similar image filename into the components_data dictionary."""
     available_images = get_available_images()
-
     if not available_images:
         print("No images available in the upload directory.")
         return
 
     row_idx, col_idx = find_position_with_most_neighbors(component_name)
+    if not is_position_valid(row_idx, col_idx, component_name):
+        return
 
+    encoded_tensors = load_encoded_image_tensors()
+    neighbor_tensors = get_neighbor_tensors(component_name, row_idx, col_idx, encoded_tensors)
+
+    if neighbor_tensors.numel() == 0:
+        print("No valid neighbors found.")
+        return
+
+    most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors,
+                                                             component_name)
+
+    if most_similar_image:
+        update_component_data(component_name, row_idx, col_idx, most_similar_image, best_score)
+    else:
+        print("No suitable image found.")
+
+
+# ---------------- Helper Methods ---------------- #
+
+def is_position_valid(row_idx: int, col_idx: int, component_name: str) -> bool:
+    """Check if the position is valid and not already occupied."""
     if row_idx == -1 or col_idx == -1:
         print(f"No suitable position available for component '{component_name}'.")
-        return
-
-    # Check if the position is already occupied
+        return False
     if components_data[component_name][row_idx][col_idx][1] != '[]':
         print(f"Position ({row_idx}, {col_idx}) is already occupied.")
-        return
+        return False
+    return True
 
-    # Load the encoded images from the JSON file
+
+def load_encoded_image_tensors():
+    """Load encoded images and convert them back to tensors."""
     with open(os.path.join(UPLOAD_DIR, "encoded_images.json"), "r") as f:
         encoded_images = json.load(f)
+    return {k: torch.tensor(v) for k, v in encoded_images.items()}
 
-    # Convert the encoded vectors back to tensors
-    encoded_tensors = {k: torch.tensor(v) for k, v in encoded_images.items()}
 
-    # Collect all currently placed images
-    placed_images = {
-        item[1]
-        for row in components_data[component_name]
-        for item in row
-        if isinstance(item, tuple) and len(item) > 1 and item[1] != '[]'
-    }
-
-    # Get the neighbor images
+def get_neighbor_tensors(component_name: str, row_idx: int, col_idx: int, encoded_tensors: dict):
+    """Retrieve the encoded tensors for neighboring images."""
     neighbors = []
     if row_idx > 0:
         neighbors.append(components_data[component_name][row_idx - 1][col_idx][1])
@@ -365,41 +379,52 @@ def insert_most_similar_image(component_name: str):
     if col_idx < len(components_data[component_name][row_idx]) - 1:
         neighbors.append(components_data[component_name][row_idx][col_idx + 1][1])
 
-    # Get the encoded vectors for the neighbor images
-    neighbor_tensors = [encoded_tensors[neighbor] for neighbor in neighbors if neighbor in encoded_tensors]
+    # Filter and stack valid tensors
+    tensor_list = [encoded_tensors[neighbor] for neighbor in neighbors if neighbor in encoded_tensors]
 
-    if not neighbor_tensors:
-        print("No valid neighbors found.")
-        return
+    if not tensor_list:  # No neighbors found
+        print("No valid neighboring tensors found.")
+        return None
 
-    neighbor_tensors = torch.stack(neighbor_tensors)
+    if len(tensor_list) == 1:  # Handle single neighbor case
+        print("Single valid neighbor tensor found.")
+        return tensor_list[0]  # Return the single tensor
+
+    return torch.stack(tensor_list)
+
+
+def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict,
+                            component_name: str):
+    """Find the most similar image based on cosine similarity."""
+    placed_images = {
+        item[1]
+        for row in components_data[component_name]
+        for item in row
+        if isinstance(item, tuple) and len(item) > 1 and item[1] != '[]'
+    }
     neighbor_features = neighbor_tensors.mean(dim=0)
-
-    # Find the most similar image
     best_score = -float("inf")
     best_image = None
 
     for image_name in available_images:
-        # Skip images that are already placed
-        if image_name in placed_images:
+        if image_name in placed_images or image_name not in encoded_tensors:
             continue
+        score = torch.cosine_similarity(encoded_tensors[image_name], neighbor_features, dim=0).mean().item()
+        if score > best_score:
+            best_score = score
+            best_image = image_name
+    return best_image, best_score
 
-        if image_name in encoded_tensors:
-            image_features = encoded_tensors[image_name]
-            score = torch.cosine_similarity(image_features, neighbor_features, dim=0).mean().item()
-            if score > best_score:
-                best_score = score
-                best_image = image_name
 
-    if best_image:
-        # Update the position with the most similar image
-        components_data[component_name][row_idx][col_idx] = (
-            components_data[component_name][row_idx][col_idx][0],  # Keep the existing id
-            best_image,  # Set the filepath to the most similar image
-        )
-        print(f"Inserted {best_image} at position ({row_idx}, {col_idx}) for component '{component_name}' with a similarity score of {best_score:.2f}.")
-    else:
-        print("No suitable image found.")
+def update_component_data(component_name: str, row_idx: int, col_idx: int, image_name: str, score: float):
+    """Update components_data with the most similar image at the given position."""
+    components_data[component_name][row_idx][col_idx] = (
+        components_data[component_name][row_idx][col_idx][0],  # Keep existing ID
+        image_name,  # Set image name
+    )
+    print(
+        f"Inserted {image_name} at position ({row_idx}, {col_idx}) for component '{component_name}' with a similarity score of {score:.2f}.")
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
