@@ -88,3 +88,20 @@ export async function extractGridPositions(gridContainer, gridItems, items, comp
 export function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+export async function clearCollage(componentName) {
+  const formData = new FormData();
+  formData.append("component_name", componentName);
+
+  try {
+    const response = await fetch(`${store.apiUrl}/clearCollage`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to reach backend trying to clear collage. Status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Error clearing collage:", error);
+  }
+}

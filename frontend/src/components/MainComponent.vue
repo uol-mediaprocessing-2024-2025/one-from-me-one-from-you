@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted} from 'vue';
+import {ref, onMounted, provide} from 'vue';
 import axios from "axios";
 import html2canvas from "html2canvas";
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
@@ -13,6 +13,7 @@ import TriangleGridComponent from "@/components/gridComponents/TriangleGridCompo
 
 import UploadImage from "@/components/UploadImage.vue";
 import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
+import {clearCollage} from "@/controller/GridComponentHelper.js";
 import {store} from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
@@ -40,6 +41,18 @@ const shapeVisibility = {
   "fish.png": isFishGridVisible,
   "leaf.png": isLeafGridVisible,
   "triangle.png": isTriangleGridVisible,
+};
+
+// For mapping the currently selected shape onto the collageName, as in each Component
+const componentNameMap = {
+  "heart.png": "heartComponent",
+  "rectangle.png": "rectangleComponent",
+  "star.png": "starComponent",
+  "hexagon.png": "hexagonComponent",
+  "cloud.png": "cloudComponent",
+  "fish.png": "fishComponent",
+  "leaf.png": "leafComponent",
+  "triangle.png": "triangleComponent",
 };
 
 const responseMessage = ref('');
@@ -78,6 +91,7 @@ onMounted(() => {
 
   fetchAndStoreImages();
 });
+
 
 const captureAndDownload = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
@@ -200,6 +214,24 @@ const setOtherGridsInvisible = (shape) => {
 };
 
 
+const removeImages = async () => {
+  const fileName = selectedCollageShape.value.split('/').pop();
+  const componentName = componentNameMap[fileName];
+
+  if (!componentName) {
+    console.error("No matching componentName found for:", fileName);
+    return;
+  }
+  try {
+    await clearCollage(componentName);
+    console.log(`Images cleared for component: ${componentName}`);
+  } catch (error) {
+    console.error("Error clearing collage:", error);
+  }
+  location.reload();
+};
+
+
 </script>
 
 <template>
@@ -274,6 +306,7 @@ const setOtherGridsInvisible = (shape) => {
       <br>
             <v-btn @click="captureAndDownload">Download</v-btn>
       <v-btn @click="safeCollageToGallery">Save to Gallery</v-btn>
+      <v-btn @click="removeImages">Clear collage</v-btn>
     </div>
   </div>
 

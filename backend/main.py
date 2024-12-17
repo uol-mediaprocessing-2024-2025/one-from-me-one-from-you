@@ -122,13 +122,13 @@ async def get_images():
         return {"image_files": image_files}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": "Failed to retrieve images", "error": str(e)})
-        return JSONResponse(status_code=500, content={"message": "Failed to retrieve images", "error": str(e)})
 
 
 @app.get("/ping")
 def ping():
     print("ping")
     return {"message": "pong"}
+
 
 @app.post("/positions")
 async def receive_positions(positions: str = Form(...), componentName: str = Form(...)):
@@ -157,6 +157,16 @@ def get_array(component_name: str):
     else:
         raise HTTPException(status_code=404, detail="Component not found")
 
+
+@app.post("/clearCollage")
+def clear_collage(component_name: str = Form(...)):
+    print(component_name)
+    for row_idx, row in enumerate(components_data[component_name]):
+        for col_idx, item in enumerate(row):
+            row[col_idx] = None
+
+
+
 def add_component(component_name: str, data: List[Dict[str, Any]]):
     """
     Adds or updates the data for a specific component name in the global dictionary.
@@ -167,6 +177,7 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
     components_data[component_name] = data
     insert_most_similar_image(component_name)  # This represents the AI
 
+
 def get_available_images() -> List[str]:
     """Retrieve all image filenames in the UPLOAD_DIR."""
     IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
@@ -176,6 +187,7 @@ def get_available_images() -> List[str]:
         f.name for f in UPLOAD_DIR.iterdir()
         if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
     ]
+
 
 def find_free_position(component_name: str) -> Tuple[int, int]:
     """
@@ -190,6 +202,7 @@ def find_free_position(component_name: str) -> Tuple[int, int]:
             if isinstance(item, tuple) and len(item) == 2 and item[1] == '[]':  # Free position identified by '[]'
                 return row_idx, col_idx
     return -1, -1  # No free position found
+
 
 def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
     """
