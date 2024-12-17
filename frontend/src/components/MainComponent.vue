@@ -14,6 +14,8 @@ import TriangleGridComponent from "@/components/gridComponents/TriangleGridCompo
 import UploadImage from "@/components/UploadImage.vue";
 import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
 import {clearCollage} from "@/controller/GridComponentHelper.js";
+import {removeEmptyPlaceholders, scaleCollageImages} from "@/controller/FinishCollage.js";
+
 import {store} from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
@@ -93,9 +95,10 @@ onMounted(() => {
 });
 
 
+
 const captureAndDownload = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
-      (key) => shapeVisibility[key].value
+    (key) => shapeVisibility[key].value
   );
 
   if (!activeGrid) {
@@ -104,26 +107,24 @@ const captureAndDownload = async () => {
   }
 
   const gridContainer = document.querySelector(
-      `.${activeGrid.split('.')[0]}-grid-container`
+    `.${activeGrid.split('.')[0]}-grid-container`
   );
 
   if (!gridContainer) {
     console.error("No grid-container found.");
     return;
   }
-  // Adjusting css to center the contents of downloaded collage
-  const originalStyle = gridContainer.style.cssText;
-  gridContainer.style.margin = "0";
-  gridContainer.style.padding = "0";
-  gridContainer.style.transform = "none";
-  gridContainer.style.position = "static";
 
-  //Getting canvas of (adjusted) grid container and removing the background
+  // Removing empty slots
+  const resetPlaceholders = await removeEmptyPlaceholders(gridContainer);
+
   try {
+    // Getting screenshot
     const canvas = await html2canvas(gridContainer, {
       backgroundColor: null,
     });
 
+    // Bild speichern
     const link = document.createElement("a");
     link.href = canvas.toDataURL("image/png");
     link.download = `${activeGrid.split('.')[0]}-collage.png`;
@@ -131,13 +132,14 @@ const captureAndDownload = async () => {
   } catch (error) {
     console.error("Couldn't take screenshot:", error);
   } finally {
-    gridContainer.style.cssText = originalStyle;
+    // Resetting styles
+    resetPlaceholders();
   }
 };
 
 const safeCollageToGallery = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
-      (key) => shapeVisibility[key].value
+    (key) => shapeVisibility[key].value
   );
 
   if (!activeGrid) {
@@ -146,7 +148,7 @@ const safeCollageToGallery = async () => {
   }
 
   const gridContainer = document.querySelector(
-      `.${activeGrid.split('.')[0]}-grid-container`
+    `.${activeGrid.split('.')[0]}-grid-container`
   );
 
   if (!gridContainer) {
@@ -160,36 +162,37 @@ const safeCollageToGallery = async () => {
   gridContainer.style.transform = "none";
   gridContainer.style.position = "static";
 
+  const resetPlaceholders = await removeEmptyPlaceholders(gridContainer);
+
   try {
-    const canvas = await html2canvas(gridContainer, {
-      backgroundColor: null,
-    });
+    // Scaling collage
+    const scaledBlob = await scaleCollageImages(gridContainer, 2);
 
-    const dataUrl = canvas.toDataURL("image/png");
-    const blob = await (await fetch(dataUrl)).blob();
-
+    // Saving in backend
     const formData = new FormData();
-    formData.append('files', blob, 'collage.png');
+    formData.append("files", scaledBlob, "collage-upscaled.png");
 
     const response = await axios.post(`${store.apiUrl}/saveImages`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
 
     if (response.status === 200) {
-      console.log('Collage saved to gallery.');
+      console.log("Upscaled collage saved to gallery.");
       await fetchAndStoreImages();
     } else {
-      console.error('Unexpected response:', response);
+      console.error("Unexpected response:", response);
     }
-
   } catch (error) {
-    console.error("Couldn't take screenshot or save collage:", error);
+    console.error("Couldn't upscale or save collage:", error);
   } finally {
+    resetPlaceholders();
     gridContainer.style.cssText = originalStyle;
   }
 };
+
+
 
 
 const updateCollagePreview = async (imageSrc) => {
@@ -401,5 +404,11 @@ header h1 {
 .horizontal-layout .option {
   margin-right: 20px;
 }
+
+.grid-item:not(:has(img)) {
+  background-color: transparent !important; /* Entferne die Hintergrundfarbe */
+  border: none; /* Optional: Entferne die Umrandung */
+}
+
 
 </style>

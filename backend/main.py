@@ -160,7 +160,7 @@ def get_array(component_name: str):
 
 @app.post("/clearCollage")
 def clear_collage(component_name: str = Form(...)):
-    print(component_name)
+    print(f"Clearing component: {component_name}")
     for row_idx, row in enumerate(components_data[component_name]):
         for col_idx, item in enumerate(row):
             row[col_idx] = None
