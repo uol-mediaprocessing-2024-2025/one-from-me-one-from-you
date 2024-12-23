@@ -13,7 +13,7 @@ import TriangleGridComponent from "@/components/gridComponents/TriangleGridCompo
 
 import UploadImage from "@/components/UploadImage.vue";
 import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
-import {clearCollage} from "@/controller/GridComponentHelper.js";
+import {clearCollage, wait} from "@/controller/GridComponentHelper.js";
 import {removeEmptyPlaceholders, scaleCollageImages} from "@/controller/FinishCollage.js";
 
 import {store} from "@/store.js";
@@ -30,6 +30,8 @@ const isCloudGridVisible = ref(false);
 const isFishGridVisible = ref(false);
 const isLeafGridVisible = ref(false);
 const isTriangleGridVisible = ref(false);
+
+
 const isSelectedShape = (shapeSrc) => {
   return shapeSrc === selectedCollageShape.value;
 };
@@ -58,6 +60,10 @@ const componentNameMap = {
 };
 
 const responseMessage = ref('');
+
+const downloadSuccess = ref(false);
+const saveToGallerySuccess = ref(false);
+
 const callPing = async () => {
   try {
     const response = await axios.get('http://127.0.0.1:8000/ping');
@@ -129,12 +135,19 @@ const captureAndDownload = async () => {
     link.href = canvas.toDataURL("image/png");
     link.download = `${activeGrid.split('.')[0]}-collage.png`;
     link.click();
+    displaySuccess(downloadSuccess)
   } catch (error) {
     console.error("Couldn't take screenshot:", error);
   } finally {
     // Resetting styles
     resetPlaceholders();
   }
+};
+
+const displaySuccess = (popup, duration = 1500) => {
+  popup.value = true; // Popup anzeigen
+  setTimeout(() => {popup.value = false; // Popup nach der angegebenen Zeit ausblenden
+  }, duration);
 };
 
 const safeCollageToGallery = async () => {
@@ -180,6 +193,7 @@ const safeCollageToGallery = async () => {
 
     if (response.status === 200) {
       console.log("Upscaled collage saved to gallery.");
+      displaySuccess(saveToGallerySuccess)
       await fetchAndStoreImages();
     } else {
       console.error("Unexpected response:", response);
@@ -307,7 +321,9 @@ const removeImages = async () => {
         </div>
       </section>
       <br>
-            <v-btn @click="captureAndDownload">Download</v-btn>
+      <p v-if="downloadSuccess" class="success-message">Collage Downloaded successfully!</p>
+      <p v-if="saveToGallerySuccess" class="success-message">Collage saved to gallery!</p>
+      <v-btn @click="captureAndDownload">Download</v-btn>
       <v-btn @click="safeCollageToGallery">Save to Gallery</v-btn>
       <v-btn @click="removeImages">Clear collage</v-btn>
     </div>
@@ -410,5 +426,8 @@ header h1 {
   border: none; /* Optional: Entferne die Umrandung */
 }
 
+.success-message{
+  color: green;
+}
 
 </style>

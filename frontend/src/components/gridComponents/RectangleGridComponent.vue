@@ -58,23 +58,39 @@ async function selectImage(image) {
 </script>
 
 <template>
-  <div v-if="isAITurn" class="popup">AI is thinking...</div>
-    <div class="rectangle-grid-container">
-      <div class="rectangle-grid" v-bind="attrs">
-        <div
-          v-for="(item, index) in items"
-          :key="index"
-          class="grid-item"
-          :class="{ disabled: isDisabled }"
-        >
-          <!-- Show image if selected -->
-          <label v-if="!item.src" class="upload-label" @click="!isDisabled && openImageSelection(index)">
-            + Select Image
-          </label>
-          <img v-else :src="item.src" alt="Bild" />
-        </div>
-      </div>
+<div class="rectangle-grid-container">
+  <div v-if="isAITurn" class="popup">
+    <v-progress-linear
+      color="teal"
+      indeterminate
+      rounded
+      buffer-value="10000"
+      stream
+    ></v-progress-linear>
+    <br>
+    AI is thinking...
+  </div>
+
+  <div class="rectangle-grid" v-bind="attrs">
+    <div
+      v-for="(item, index) in items"
+      :key="index"
+      class="grid-item"
+      :class="{ disabled: isDisabled }"
+    >
+      <!-- Show image if selected -->
+      <label
+        v-if="!item.src"
+        class="upload-label"
+        @click="!isDisabled && openImageSelection(index)"
+      >
+        + Select Image
+      </label>
+      <img v-else :src="item.src" alt="Bild" />
     </div>
+  </div>
+</div>
+
 
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
@@ -258,8 +274,8 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .popup {
   position: absolute;
-  top: 30%;
-  left: 45%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
   color: white;

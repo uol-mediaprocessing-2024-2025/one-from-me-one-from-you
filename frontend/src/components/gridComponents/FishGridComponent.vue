@@ -1,19 +1,22 @@
 <script setup>
+import { ref, reactive, onMounted } from "vue";
+import { useAttrs } from "vue";
+import { updateCollageItems, scaleImage, extractGridPositions, wait } from "@/controller/GridComponentHelper.js";
 import { store } from "@/store.js";
-import { ref, reactive } from "vue";
-import {useAttrs} from 'vue';
 
-// To supress vue warnings
 defineProps([]);
 const attrs = useAttrs();
 
-// Reactive variables
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
-const componentName = "fishComponent"
+const componentName = "fishComponent";
 const isAITurn = ref(false);
 const isDisabled = ref(false);
+
+onMounted(async () => {
+  await updateCollageItems(componentName, items);
+});
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -26,103 +29,68 @@ function closeModal() {
 }
 
 async function selectImage(image) {
-  console.log("selectImage");
   if (selectedIndex.value !== null) {
     const scaledImage = await scaleImage(image);
     const fileName = image.split("/").pop();
+
     items[selectedIndex.value] = {
       src: scaledImage,
       fileName: fileName,
     };
-  closeModal();
-  this.isAITurn = true;
-  this.isDisabled = true;
-  await extractGridPositions();
+
+    closeModal();
+
+    isAITurn.value = true;
+    isDisabled.value = true;
+
+    await wait(2000);
+
+    const gridContainer = document.querySelector(".rectangle-grid");
+    const gridItems = document.querySelectorAll(".grid-item");
+    await extractGridPositions(gridContainer, gridItems, items, componentName);
+
+    await updateCollageItems(componentName, items);
+
+    isAITurn.value = false;
+    isDisabled.value = false;
   }
 }
-
-function scaleImage(imageUrl) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 50;
-      canvas.height = 50;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, 50, 50);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
-    };
-    img.onerror = (err) => {
-      reject(new Error(`Failed to load image: ${err.message}`));
-    };
-    img.src = imageUrl;
-  });
-}
-
-
-async function extractGridPositions() {
-  const gridContainer = document.querySelector(".rectangle-grid");
-  const gridItems = document.querySelectorAll(".grid-item");
-  const containerRect = gridContainer.getBoundingClientRect();
-  let positions = [];
-
-  gridItems.forEach((item, index) => {
-    const itemRect = item.getBoundingClientRect();
-    const positionData = {
-      id: index + 1,
-      top: itemRect.top - containerRect.top,
-      left: itemRect.left - containerRect.left,
-      fileName: items[index].fileName || null,
-    };
-
-    positions.push(positionData);
-  });
-
-    // Sorting, starting at top left
-  positions.sort((a, b) => {
-    if (a.left === b.left) {
-      return a.top - b.top;
-    }
-    return a.left - b.left;
-  });
-
-  const formData = new FormData();
-  formData.append("positions", JSON.stringify(positions));
-  formData.append("componentName", componentName);
-
-  try {
-    const response = await fetch(`${store.apiUrl}/positions`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await response.json();
-    console.log("Response from backend:", result);
-  } catch (error) {
-    console.error("Error sending grid with file names:", error);
-  }
-}
-
 </script>
 
 <template>
-  <div v-if="isAITurn" class="popup">AI is thinking...</div>
-    <div class="rectangle-grid-container">
-      <div class="rectangle-grid" v-bind="attrs">
-        <div
-          v-for="(item, index) in items"
-          :key="index"
-          class="grid-item"
-          :class="{ disabled: isDisabled }"
-          >
-          <!-- Show image if selected -->
-          <label v-if="!item.src" class="upload-label" @click="!isDisabled && openImageSelection(index)">
-            + Select Image
-          </label>
-          <img v-else :src="item.src" alt="Bild" />
-        </div>
-      </div>
+<div class="rectangle-grid-container">
+  <div v-if="isAITurn" class="popup">
+    <v-progress-linear
+      color="teal"
+      indeterminate
+      rounded
+      buffer-value="10000"
+      stream
+    ></v-progress-linear>
+    <br>
+    AI is thinking...
+  </div>
+
+  <div class="rectangle-grid" v-bind="attrs">
+    <div
+      v-for="(item, index) in items"
+      :key="index"
+      class="grid-item"
+      :class="{ disabled: isDisabled }"
+    >
+      <!-- Show image if selected -->
+      <label
+        v-if="!item.src"
+        class="upload-label"
+        @click="!isDisabled && openImageSelection(index)"
+      >
+        + Select Image
+      </label>
+      <img v-else :src="item.src" alt="Bild" />
+    </div>
+  </div>
+</div>
+
 
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
@@ -140,10 +108,7 @@ async function extractGridPositions() {
         </div>
         <button @click="closeModal">Cancel</button>
       </div>
-    </div>
   </div>
-
-
 
 </template>
 
@@ -180,11 +145,6 @@ async function extractGridPositions() {
   overflow: visible;
 }
 
-.grid-item img {
-  transform: scale(1.05);
-  transform-origin: center center;
-}
-
 .grid-item.disabled {
   pointer-events: none;
   opacity: 0.6;
@@ -194,6 +154,11 @@ async function extractGridPositions() {
 .grid-item.dragover{
   -webkit-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
 box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
+}
+
+.grid-item img {
+  transform: scale(1.05);
+  transform-origin: center center;
 }
 
 .grid-item:nth-child(1) { top: 20%; left: 50%; }
@@ -323,8 +288,8 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .popup {
   position: absolute;
-  top: 30%;
-  left: 45%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
@@ -333,6 +298,12 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 2;
+}
+
+.rectangle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
 }
 
 </style>
