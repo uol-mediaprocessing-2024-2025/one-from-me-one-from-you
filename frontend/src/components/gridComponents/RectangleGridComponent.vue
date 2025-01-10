@@ -23,6 +23,23 @@ function openImageSelection(index) {
   showModal.value = true;
 }
 
+const removePreviewImage = async (index) => {
+  items[index] = { src: null, fileName: null };
+  isAITurn.value = true;
+  isDisabled.value = true;
+
+  await wait(2000);
+
+  const gridContainer = document.querySelector(".rectangle-grid");
+  const gridItems = document.querySelectorAll(".grid-item");
+  await extractGridPositions(gridContainer, gridItems, items, componentName);
+
+  await updateCollageItems(componentName, items);
+
+  isAITurn.value = false;
+  isDisabled.value = false;
+};
+
 function closeModal() {
   showModal.value = false;
   selectedIndex.value = null;
@@ -86,7 +103,10 @@ async function selectImage(image) {
       >
         + Select Image
       </label>
-      <img v-else :src="item.src" alt="Bild" />
+      <div v-else class="image-container">
+        <img :src="item.src" alt="Bild" />
+        <button class="remove-button" @click="removePreviewImage(index)">X</button>
+      </div>
     </div>
   </div>
 </div>
@@ -129,6 +149,28 @@ async function selectImage(image) {
   position: relative;
   width: 600px;
   height: 600px;
+}
+
+.remove-button {
+  position: absolute;
+  top: -1px; /* Move further up */
+  right: -1px; /* Move further to the right */
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 18px;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Optional: Add some shadow for better visibility */
+}
+
+.remove-button:hover {
+  background-color: darkred;
 }
 
 .grid-item {

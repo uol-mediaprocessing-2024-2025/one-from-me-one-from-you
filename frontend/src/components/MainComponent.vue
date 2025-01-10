@@ -100,8 +100,6 @@ onMounted(() => {
   fetchAndStoreImages();
 });
 
-
-
 const captureAndDownload = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
     (key) => shapeVisibility[key].value

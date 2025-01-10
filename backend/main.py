@@ -57,6 +57,10 @@ class Base64Image(BaseModel):
 
 @app.post("/saveImages")
 async def saveImages(files: List[UploadFile] = File(...)):
+    """
+    Save the uploaded images to the server and encode them using the CLIP model
+    and saves them into the 'encoded_images.json' file.
+    """
     try:
         saved_files = []
         encoded_images = {}
@@ -66,24 +70,22 @@ async def saveImages(files: List[UploadFile] = File(...)):
             random_filename = f"{uuid.uuid4()}.{file_extension}"
             file_path = os.path.join(UPLOAD_DIR, random_filename)
 
-            print(f"Saving file: {file.filename} as {random_filename}")
+            # print(f"Saving file: {file.filename} as {random_filename}")
 
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
-
-            print(f"File saved at: {file_path}")
 
             # Load and preprocess the image
             image = Image.open(file_path)
             image_tensor = preprocess(image).unsqueeze(0).to(device)
 
-            print(f"Image preprocessed for: {random_filename}")
+            # print(f"Image preprocessed for: {random_filename}")
 
             # Encode the image using the CLIP model
             with torch.no_grad():
                 encoded_image = model.encode_image(image_tensor).cpu().numpy()
 
-            print(f"Image encoded for: {random_filename}")
+            # print(f"Image encoded for: {random_filename}")
 
             # Store the encoded information in the dictionary
             encoded_images[random_filename] = encoded_image.tolist()
@@ -109,6 +111,7 @@ async def saveImages(files: List[UploadFile] = File(...)):
 
 @app.get("/getImages")
 async def get_images():
+    """Retrieve all image filenames in the UPLOAD_DIR."""
     try:
         image_files = []
         for file_name in os.listdir(UPLOAD_DIR):
@@ -250,32 +253,6 @@ def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
             break
 
     return best_position
-
-
-def insert_random_image(component_name: str):
-    """Insert a random image filename into the components_data dictionary."""
-    available_images = get_available_images()
-
-    if not available_images:
-        print("No images available in the upload directory.")
-        return
-
-    random_image = random.choice(available_images)
-    row_idx, col_idx = find_free_position(component_name)
-
-    if row_idx == -1 or col_idx == -1:
-        print(f"No free position available for component '{component_name}'.")
-        return
-
-    # Update the free position with the new random image
-    components_data[component_name][row_idx][col_idx] = (
-        components_data[component_name][row_idx][col_idx][0],  # Keep the existing id
-        random_image,  # Set the filepath to the chosen random image
-    )
-    print(f"Inserted {random_image} at position ({row_idx}, {col_idx}) for component '{component_name}'.")
-    print(components_data[component_name])
-    print("--------------------")
-    print(f"Best position with most neighbors: {find_position_with_most_neighbors(component_name)}")
 
 def group_elements_fixed_10x10(elements, has_consistent_height):
     if not elements:
