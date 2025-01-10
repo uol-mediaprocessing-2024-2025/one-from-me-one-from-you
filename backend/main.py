@@ -169,7 +169,6 @@ def clear_collage(component_name: str = Form(...)):
             row[col_idx] = None
 
 
-
 def add_component(component_name: str, data: List[Dict[str, Any]]):
     """
     Adds or updates the data for a specific component name in the global dictionary.
@@ -177,9 +176,82 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
     :param component_name: Name of the component.
     :param data: List of position data dictionaries.
     """
-    components_data[component_name] = data
-    insert_most_similar_image(component_name)  # This represents the AI
+    # Check if the component already exists in components_data
+    if component_name not in components_data or not components_data[component_name]:
+        # Now, we try to find the target_id from the first tuple in the data
+        target_id = None
+        for row in data:
+            for item in row:
+                if isinstance(item, tuple) and len(item) > 0 and isinstance(item[0], int):
+                    # Only consider tuples where the second value is not '[]'
+                    if item[1] != '[]':
+                        target_id = item[0]  # Extract target_id from the tuple's first position
+                        print(f"Initial target_id found: {target_id}")
+                        break
+            if target_id is not None:
+                break
 
+        if target_id is None:
+            print("No target_id found in the first element.")
+
+    else:
+        # If the component already exists, compare and get the new ID
+        target_id = compare_and_get_new_id(components_data[component_name], data)
+        if target_id is not None:
+            row_idx, col_idx, matching_tuple = find_tuple_by_id(data, target_id)
+            print(f"Found matching tuple: {matching_tuple} at position ({row_idx}, {col_idx})")
+        else:
+            print(f"No new ID found to compare for component: {component_name}")
+
+    components_data[component_name] = data
+    # Insert the most similar image after either finding the target_id or updating the data
+    if target_id is not None:
+        # Find row and col position based on the target_id
+        row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
+        insert_most_similar_image(component_name, row_idx, col_idx)  # AI insert function
+
+def find_tuple_by_id(data: List[List[Any]], target_id: int) -> Tuple[int, int, Tuple[int, str]]:
+    """
+    Find the tuple with the specified id in the data structure.
+
+    Args:
+        data: The 2D data structure (list of lists).
+        target_id: The id to search for.
+
+    Returns:
+        A tuple containing (row_index, col_index, matching_tuple).
+        If no match is found, return (-1, -1, None).
+    """
+    for row_idx, row in enumerate(data):
+        for col_idx, item in enumerate(row):
+            if isinstance(item, tuple) and len(item) > 0 and item[0] == target_id:
+                return row_idx, col_idx, item  # Return the position and the matching tuple
+
+    return -1, -1, None  # Return (-1, -1, None) if the tuple isn't found
+
+def compare_and_get_new_id(existing_data, new_data):
+    """
+    Compare two data structures and retrieve the id of the new element in new_data.
+
+    Args:
+        existing_data: The original data structure.
+        new_data: The updated data structure.
+
+    Returns:
+        The id of the new element, if found. None otherwise.
+    """
+    # Flatten the existing and new data for easier comparison
+    flat_existing = [item for row in existing_data for item in row if isinstance(item, tuple)]
+    flat_new = [item for row in new_data for item in row if isinstance(item, tuple)]
+
+    # Find the new element in flat_new that's not in flat_existing
+    for item in flat_new:
+        if item not in flat_existing:
+            print(f"New element found: {item}")
+            return item[0]  # Assuming the id is the first element in the tuple
+
+    print("No new element found.")
+    return None
 
 def get_available_images() -> List[str]:
     """Retrieve all image filenames in the UPLOAD_DIR."""
@@ -190,22 +262,6 @@ def get_available_images() -> List[str]:
         f.name for f in UPLOAD_DIR.iterdir()
         if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
     ]
-
-
-def find_free_position(component_name: str) -> Tuple[int, int]:
-    """
-    Find the first free position in the component's data list.
-    Returns the (row_index, col_index) of the free position.
-    """
-    if component_name not in components_data or not components_data[component_name]:
-        return -1, -1
-
-    for row_idx, row in enumerate(components_data[component_name]):
-        for col_idx, item in enumerate(row):
-            if isinstance(item, tuple) and len(item) == 2 and item[1] == '[]':  # Free position identified by '[]'
-                return row_idx, col_idx
-    return -1, -1  # No free position found
-
 
 def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
     """
@@ -310,21 +366,22 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
 
     return array_2d
 
-def insert_most_similar_image(component_name: str):
+def insert_most_similar_image(component_name: str, row_idx: int, col_idx: int):
     """Insert the most similar image filename into the components_data dictionary."""
     available_images = get_available_images()
     if not available_images:
         print("No images available in the upload directory.")
         return
 
-    row_idx, col_idx = find_position_with_most_neighbors(component_name)
+    # row_idx, col_idx = find_position_with_most_neighbors(component_name) von Oliver
+    row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
     if not is_position_valid(row_idx, col_idx, component_name):
         return
 
     encoded_tensors = load_encoded_image_tensors()
     neighbor_tensors = get_neighbor_tensors(component_name, row_idx, col_idx, encoded_tensors)
 
-    if neighbor_tensors.numel() == 0:
+    if neighbor_tensors is None or neighbor_tensors.numel() == 0:
         print("No valid neighbors found.")
         return
 
@@ -338,6 +395,52 @@ def insert_most_similar_image(component_name: str):
 
 
 # ---------------- Helper Methods ---------------- #
+
+
+def find_free_neighbor(component_name: str, row_idx: int, col_idx: int) -> Tuple[int, int]:
+    """
+    Find the first free neighbor position for the given row and column index in the component's data list.
+
+    A neighbor is considered free if its value is a tuple with the second element as '[]'.
+
+    Args:
+        component_name: The name of the component in the components_data.
+        row_idx: The starting row index.
+        col_idx: The starting column index.
+
+    Returns:
+        The (row_index, col_index) of the first free neighbor position.
+        Returns (-1, -1) if no free neighbor is found.
+    """
+    if component_name not in components_data or not components_data[component_name]:
+        return -1, -1
+
+    # Define all possible neighbor offsets (top, bottom, left, right)
+    neighbor_offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+    for offset in neighbor_offsets:
+        neighbor_row = row_idx + offset[0]
+        neighbor_col = col_idx + offset[1]
+
+        # Debugging: Show calculated neighbor position
+        print(f"Checking neighbor at ({neighbor_row}, {neighbor_col})")
+
+        # Ensure neighbor position is within bounds
+        if 0 <= neighbor_row < len(components_data[component_name]) and \
+                0 <= neighbor_col < len(components_data[component_name][neighbor_row]):
+
+            # Get the value of the neighbor
+            neighbor_value = components_data[component_name][neighbor_row][neighbor_col]
+            print(f"Neighbor value at ({neighbor_row}, {neighbor_col}): {neighbor_value}")
+
+            # Check if the neighbor is free (tuple with second element '[]')
+            if isinstance(neighbor_value, tuple) and len(neighbor_value) == 2 and neighbor_value[1] == '[]':
+                print(f"Free neighbor found at ({neighbor_row}, {neighbor_col})")
+                return neighbor_row, neighbor_col
+
+    print("No free neighbor found.")
+    return -1, -1  # No free neighbor found
+
 
 def is_position_valid(row_idx: int, col_idx: int, component_name: str) -> bool:
     """Check if the position is valid and not already occupied."""
@@ -360,14 +463,21 @@ def load_encoded_image_tensors():
 def get_neighbor_tensors(component_name: str, row_idx: int, col_idx: int, encoded_tensors: dict):
     """Retrieve the encoded tensors for neighboring images."""
     neighbors = []
+
+    # Collect the neighbors (checking boundaries)
     if row_idx > 0:
-        neighbors.append(components_data[component_name][row_idx - 1][col_idx][1])
+        neighbors.append(components_data[component_name][row_idx - 1][col_idx][1])  # Above
     if row_idx < len(components_data[component_name]) - 1:
-        neighbors.append(components_data[component_name][row_idx + 1][col_idx][1])
+        neighbors.append(components_data[component_name][row_idx + 1][col_idx][1])  # Below
     if col_idx > 0:
-        neighbors.append(components_data[component_name][row_idx][col_idx - 1][1])
+        neighbors.append(components_data[component_name][row_idx][col_idx - 1][1])  # Left
+
+    # Check if we're not at the last column before accessing col_idx + 1
     if col_idx < len(components_data[component_name][row_idx]) - 1:
-        neighbors.append(components_data[component_name][row_idx][col_idx + 1][1])
+        # Ensure the item is a tuple and has at least 2 elements
+        item = components_data[component_name][row_idx][col_idx + 1]
+        if isinstance(item, tuple) and len(item) > 1:
+            neighbors.append(item[1])  # Right
 
     # Filter and stack valid tensors
     tensor_list = [encoded_tensors[neighbor] for neighbor in neighbors if neighbor in encoded_tensors]

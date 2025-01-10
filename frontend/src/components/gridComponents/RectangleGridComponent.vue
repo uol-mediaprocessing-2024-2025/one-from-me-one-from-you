@@ -55,6 +55,8 @@ async function selectImage(image) {
       fileName: fileName,
     };
 
+    console.info("Zuletzt gesetzte ID: " + selectedIndex.value);
+
     closeModal();
 
     isAITurn.value = true;
