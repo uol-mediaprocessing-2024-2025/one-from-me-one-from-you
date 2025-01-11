@@ -239,7 +239,6 @@ const removeImages = async () => {
   location.reload();
 };
 
-
 </script>
 
 <template>
@@ -263,40 +262,33 @@ const removeImages = async () => {
       <!-- Sorting Options -->
       <h2>Settings</h2>
       <section class="sorting-options horizontal-layout">
-        <div class="option">
-          <label>
-            <input
-                type="radio"
-                name="sort"
-                value="contrast"
-                v-model="sortingOption"
-            />
-            Face Detection
-          </label>
-        </div>
-        <div class="option">
-          <label>
-            <input
-                type="radio"
-                name="sort"
-                value="size"
-                v-model="sortingOption"
-            />
-            Similarity
-          </label>
-        </div>
-        <div class="option">
-          <label>
-            <input
-                type="radio"
-                name="sort"
-                value="style"
-                v-model="sortingOption"
-            />
-            Style
-          </label>
-        </div>
+         <v-radio-group v-model="sortingOption">
+             <div class="option">
+                 <v-radio label="Face Detection" value="contrast" v-model="sortingOption" name="sort" color="indigo"></v-radio>
+            </div>
+
+            <div class="option">
+                <v-radio label="Similarity" value="size" v-model="sortingOption" name="sort" color="indigo"></v-radio>
+            </div>
+
+            <div class="option">
+              <v-radio label="Style" value="style" v-model="sortingOption" name="sort" color="indigo"></v-radio>
+            </div>
+          </v-radio-group>
       </section>
+      <br>
+        <section>
+          <v-text-field class="next-image-prompt"
+              v-model="message"
+              :prepend-icon="icon"
+              clear-icon="mdi-close-circle"
+              label="What should your next image be?"
+              type="text"
+              variant="filled"
+              clearable
+            ></v-text-field>
+
+        </section>
       <br>
       <section class="collage-shapes">
         <h2>Collage Shape</h2>
@@ -451,7 +443,7 @@ header h1 {
 }
 
 .shapes img.selected-shape {
-  border-color: Red;
+  border-color: blue;
 }
 
 .horizontal-layout {
