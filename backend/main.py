@@ -556,11 +556,11 @@ def get_neighbor_tensors(component_name: str, row_idx: int, col_idx: int, encode
 
     # Collect the neighbors (checking boundaries)
     if row_idx > 0:
-        neighbors.append(components_data[component_name][row_idx - 1][col_idx][1])  # Above
+        neighbors.append(components_data[component_name][row_idx - 1][col_idx][0])  # Above
     if row_idx < len(components_data[component_name]) - 1:
-        neighbors.append(components_data[component_name][row_idx + 1][col_idx][1])  # Below
+        neighbors.append(components_data[component_name][row_idx + 1][col_idx][0])  # Below
     if col_idx > 0:
-        neighbors.append(components_data[component_name][row_idx][col_idx - 1][1])  # Left
+        neighbors.append(components_data[component_name][row_idx][col_idx - 1][0])  # Left
 
     # Check if we're not at the last column before accessing col_idx + 1
     if col_idx < len(components_data[component_name][row_idx]) - 1:
