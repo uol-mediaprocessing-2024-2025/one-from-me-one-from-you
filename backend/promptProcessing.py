@@ -29,8 +29,8 @@ def get_image_filenames(folder_path: str):
 
     return [file.name for file in folder.iterdir() if file.suffix.lower() in allowed_extensions and file.is_file()]
 
+
 def find_image_according_to_prompt(already_selected_images: List[str], prompt: str) -> str:
-    # TODO: Avoid duplicate placement here.
     # Importing here to avoid circular import with main.py
     from main import UPLOAD_DIR
     """
@@ -45,8 +45,8 @@ def find_image_according_to_prompt(already_selected_images: List[str], prompt: s
     """
     # Get all available images (list of filenames as strings)
     all_images = get_image_filenames(UPLOAD_DIR)
-
-    print(all_images)
+    # Removing already placed images by ignoring them
+    all_images = list(set(all_images) - set(already_selected_images))
 
     # Preprocess images
     image_tensors = []

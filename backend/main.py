@@ -246,10 +246,16 @@ def add_component(component_name: str, data: List[Dict[str, Any]], prompt):
 
     elif target_id is not None:
         row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
-        filename = find_image_according_to_prompt(already_selected_images=[], prompt=prompt)
-        row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
-        update_component_data(component_name=component_name, row_idx=row_idx, col_idx=col_idx, image_name=filename,
-                              score=1)
+        placed_images = find_already_placed_images(component_name)
+        print(f"Found placed images:{placed_images}")
+        try:
+            filename = find_image_according_to_prompt(already_selected_images=placed_images, prompt=prompt)
+            row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
+            update_component_data(component_name=component_name, row_idx=row_idx, col_idx=col_idx, image_name=filename,
+                                  score=1)
+        except ValueError as e:
+            print(f"No valid images processed. Error message: {e}")
+
 
 def ai_insert_image(component_name: str, row_idx: int, col_idx: int):
     # Handle similarity case
@@ -608,6 +614,23 @@ def update_component_data(component_name: str, row_idx: int, col_idx: int, image
     )
     print(
         f"Inserted {image_name} at position ({row_idx}, {col_idx}) for component '{component_name}' with a similarity score of {score:.2f}.")
+
+
+def find_already_placed_images(component_name: str):
+    """Function that returns all image names that have already been placed in a given component (component_name)."""
+    if component_name not in components_data:
+        return []
+
+    # Creating set for unique content.
+    placed_images = {
+        item[1]
+        for row in components_data[component_name]
+        for item in row
+        if isinstance(item, tuple) and len(item) > 1 and item[1] != '[]'
+    }
+
+    # Converting to list for further processing.
+    return list(placed_images)
 
 
 if __name__ == "__main__":
