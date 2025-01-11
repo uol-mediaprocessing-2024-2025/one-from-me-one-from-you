@@ -49,7 +49,7 @@ export async function extractGridPositions(gridContainer, gridItems, items, comp
   gridItems.forEach((item, index) => {
     const itemRect = item.getBoundingClientRect();
     const positionData = {
-      id: index + 1,
+      id: index,
       top: itemRect.top - containerRect.top,
       left: itemRect.left - containerRect.left,
       fileName: items[index].fileName || null,

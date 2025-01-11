@@ -10,6 +10,7 @@ export async function fetchAndStoreImages() {
       },
     });
 
+    // Check if the response status is OK and image_files exist
     if (response.status === 200 && Array.isArray(response.data.image_files)) {
       store.photoUrls = [];
       store.photoBlobs = [];
@@ -18,16 +19,38 @@ export async function fetchAndStoreImages() {
         const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
         store.photoUrls.push(fullUrl);
 
-        const blobResponse = await axios.get(fullUrl, { responseType: 'blob' });
-        store.photoBlobs.push(blobResponse.data);
+        // Fetch the blob for each image
+        try {
+          const blobResponse = await axios.get(fullUrl, { responseType: 'blob' });
+          store.photoBlobs.push(blobResponse.data);
+        } catch (blobError) {
+          console.error(`Failed to fetch blob for image: ${fullUrl}`, blobError);
+          // Optionally, you can skip the blob or store an error placeholder
+          store.photoBlobs.push(null); // Placeholder for the failed blob
+        }
       }
     } else {
-      console.error("No images found:", response.data.message);
+      console.error("No images found or invalid response format:", response.data.message);
     }
   } catch (error) {
-    console.error("Error fetching images:", error);
+    // Handle specific HTTP errors
+    if (error.response) {
+      const statusCode = error.response.status;
+      if (statusCode === 404) {
+        console.error("Error: The requested resource was not found (404).");
+      } else {
+        console.error(`Error: HTTP status ${statusCode} returned from the server.`);
+      }
+    } else if (error.request) {
+      // Network errors or no response from the server
+      console.error("Error: No response from the server. Check if the server is running and reachable.");
+    } else {
+      // Other errors (e.g., invalid request configuration)
+      console.error("Error: Something went wrong with the request setup:", error.message);
+    }
   }
 }
+
 
 export async function fetchAndStoreComponentData(componentName, items) {
   try {

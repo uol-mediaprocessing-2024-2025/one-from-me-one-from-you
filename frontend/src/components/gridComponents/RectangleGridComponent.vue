@@ -56,6 +56,7 @@ async function selectImage(image) {
     };
 
     console.info("Zuletzt gesetzte ID: " + selectedIndex.value);
+    console.info(items);
 
     closeModal();
 
@@ -102,7 +103,7 @@ async function selectImage(image) {
         class="upload-label"
         @click="!isDisabled && openImageSelection(index)"
       >
-        + Select Image
+        + Select Image ({{ index}})
       </label>
       <div v-else class="image-container">
         <img :src="item.src" alt="Bild" />
