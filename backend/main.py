@@ -15,11 +15,12 @@ import clip
 import torch
 import json
 import uuid
-import random
 
 app = FastAPI()
 
 components_data: Dict[str, List[List[Dict[str, Any]]]] = {}
+
+image_selection_mode = "similarity"
 
 # Initialize the CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -110,6 +111,11 @@ async def saveImages(files: List[UploadFile] = File(...)):
             content={"message": "Failed to process images", "error": str(e)},
         )
 
+@app.post("/update_image_selection_mode")
+async def update_image_selection_mode(new_mode: str = Form(...)):
+    image_selection_mode = new_mode
+    print(f"Image selection mode updated to: {image_selection_mode}")
+    return {"message": "Image selection mode updated successfully", "new_mode": new_mode}
 
 @app.get("/getImages")
 async def get_images():
@@ -149,14 +155,14 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
 
 @app.post("/new_selection")
 async def new_selection(component_name: str = Form(...), target_id: int = Form(...)):
-    print(f"New selection for component: {component_name}, target_id: {target_id}")
     data = components_data[component_name]
     row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
+
     available_images = get_available_images()
     if not available_images:
         print("No images available in the upload directory.")
         return
-    print(f"Component data for {component_name}: {components_data[component_name]}")
+
     components_data[component_name][row_idx][col_idx] = (
         components_data[component_name][row_idx][col_idx][0],
         '[]',

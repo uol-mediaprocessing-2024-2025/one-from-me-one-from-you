@@ -13,14 +13,13 @@ import TriangleGridComponent from "@/components/gridComponents/TriangleGridCompo
 
 import UploadImage from "@/components/UploadImage.vue";
 import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
-import {clearCollage} from "@/controller/GridComponentHelper.js";
+import {clearCollage, updateImageSelectionMode} from "@/controller/GridComponentHelper.js";
 import {removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons} from "@/controller/FinishCollage.js";
 
 import {store} from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
-const sortingOption = ref('contrast'); // Selected sorting option
 
 const isHeartGridVisible = ref(false);
 const isRectangleGridVisible = ref(false);
@@ -47,7 +46,20 @@ const shapeVisibility = {
   "triangle.png": isTriangleGridVisible,
 };
 
-// For mapping the currently selected shape onto the collageName, as in each Component
+const ImageSelectionModes = {
+  FACE_DETECTION: "faceDetection",
+  SIMILARITY: "similarity",
+  STYLE: "style",
+};
+
+const imageSelectionMode = ref(ImageSelectionModes.SIMILARITY);
+
+const onImageSelectionModeChange = (event) => {
+  const newMode = event.target.value;
+  imageSelectionMode.value = newMode;
+  updateImageSelectionMode(newMode);
+};
+
 const componentNameMap = {
   "heart.png": "heartComponent",
   "rectangle.png": "rectangleComponent",
@@ -58,8 +70,6 @@ const componentNameMap = {
   "leaf.png": "leafComponent",
   "triangle.png": "triangleComponent",
 };
-
-const responseMessage = ref('');
 
 const downloadSuccess = ref(false);
 const saveToGallerySuccess = ref(false);
@@ -257,24 +267,19 @@ const removeImages = async () => {
     </div>
 
     <div class="settings-panel">
-
-
-      <!-- Sorting Options -->
-      <h2>Settings</h2>
+      <h2>Image Selection Mode</h2>
       <section class="sorting-options horizontal-layout">
-         <v-radio-group v-model="sortingOption">
-             <div class="option">
-                 <v-radio label="Face Detection" value="contrast" v-model="sortingOption" name="sort" color="indigo"></v-radio>
-            </div>
-
-            <div class="option">
-                <v-radio label="Similarity" value="size" v-model="sortingOption" name="sort" color="indigo"></v-radio>
-            </div>
-
-            <div class="option">
-              <v-radio label="Style" value="style" v-model="sortingOption" name="sort" color="indigo"></v-radio>
-            </div>
-          </v-radio-group>
+      <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
+        <div class="option">
+          <v-radio label="Face Detection" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
+        </div>
+        <div class="option">
+          <v-radio label="Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort" color="indigo"></v-radio>
+        </div>
+        <div class="option">
+          <v-radio label="Style" :value="ImageSelectionModes.STYLE" name="sort" color="indigo"></v-radio>
+        </div>
+      </v-radio-group>
       </section>
       <br>
         <section>

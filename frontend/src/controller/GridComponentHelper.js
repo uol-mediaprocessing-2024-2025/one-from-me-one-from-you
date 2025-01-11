@@ -34,6 +34,31 @@ export function scaleImage(imageUrl) {
   });
 }
 
+/**
+ * Updates the image selection mode by sending the new mode to the backend.
+ * @param {String} newMode - The new image selection mode to set.
+ */
+export async function updateImageSelectionMode(newMode) {
+  console.info(newMode);
+  const formData = new FormData();
+  formData.append("new_mode", newMode);
+
+  try {
+    const response = await fetch(`${store.apiUrl}/update_image_selection_mode`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update image selection mode. Status: ${response.status}`);
+    }
+
+    await response.json();
+  } catch (error) {
+    console.error("Error updating image selection mode:", error);
+  }
+}
+
 export async function newSelection(componentName, target_id) {
   const formData = new FormData();
   formData.append("component_name", componentName);
