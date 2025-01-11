@@ -53,13 +53,12 @@ const ImageSelectionModes = {
 };
 
 const imageSelectionMode = ref(ImageSelectionModes.SIMILARITY);
-const message = ref("")
+const userPrompt = ref("")
 
 const onImageSelectionModeChange = (event) => {
   const newMode = event.target.value;
   imageSelectionMode.value = newMode;
   updateImageSelectionMode(newMode);
-  console.log(message.value)
 };
 
 const componentNameMap = {
@@ -286,7 +285,7 @@ const removeImages = async () => {
       <br>
         <section>
           <v-text-field class="next-image-prompt"
-              v-model="message"
+              v-model="userPrompt"
               clear-icon="mdi-close-circle"
               label="What should your next image be?"
               type="text"
