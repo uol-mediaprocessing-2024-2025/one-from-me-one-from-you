@@ -5,7 +5,6 @@ from PIL import Image
 from typing import List
 import os
 
-from main import get_available_images, is_position_valid, UPLOAD_DIR
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("RN50", device=device)
@@ -31,6 +30,9 @@ def get_image_filenames(folder_path: str):
     return [file.name for file in folder.iterdir() if file.suffix.lower() in allowed_extensions and file.is_file()]
 
 def find_image_according_to_prompt(already_selected_images: List[str], prompt: str) -> str:
+    # TODO: Avoid duplicate placement here.
+    # Importing here to avoid circular import with main.py
+    from main import UPLOAD_DIR
     """
     Finds the image in the collection that best matches the prompt using CLIP.
 
@@ -42,7 +44,7 @@ def find_image_according_to_prompt(already_selected_images: List[str], prompt: s
         str: Filename of the best matching image.
     """
     # Get all available images (list of filenames as strings)
-    all_images = get_image_filenames(r"C:\Users")
+    all_images = get_image_filenames(UPLOAD_DIR)
 
     print(all_images)
 
@@ -50,7 +52,7 @@ def find_image_according_to_prompt(already_selected_images: List[str], prompt: s
     image_tensors = []
     image_filenames = []
     for img_name in all_images:
-        img_path = os.path.join(r"C:\Users", img_name)# Construct the full path
+        img_path = os.path.join(UPLOAD_DIR, img_name)# Construct the full path
         try:
             image = Image.open(img_path).convert("RGB")
             image_tensor = preprocess(image).unsqueeze(0).to(device)
@@ -85,6 +87,3 @@ def find_image_according_to_prompt(already_selected_images: List[str], prompt: s
     best_image_filename = image_filenames[best_match_idx]
 
     return best_image_filename
-
-filename = find_image_according_to_prompt(already_selected_images=[], prompt="Drawing.")
-print(filename)

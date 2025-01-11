@@ -7,6 +7,7 @@ from PIL import Image
 from typing import Any, Dict, List, Tuple
 from fastapi.responses import JSONResponse
 from itertools import chain
+from promptProcessing import find_image_according_to_prompt
 
 import uvicorn
 import os
@@ -149,7 +150,12 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
     else:
         array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=False)
 
-    add_component(component_name=componentName, data=array)
+    if user_prompt in ("", " ", None) or str(user_prompt) == "null":
+        print(f"No user prompt detected.: {user_prompt}")
+        add_component(component_name=componentName, data=array, prompt=None)
+    else:
+        print(f"User prompt detected: {user_prompt}")
+        add_component(component_name=componentName, data=array, prompt=user_prompt)
 
     return {"message": "Data received successfully"}
 
@@ -196,12 +202,13 @@ def clear_collage(component_name: str = Form(...)):
             row[col_idx] = None
 
 
-def add_component(component_name: str, data: List[Dict[str, Any]]):
+def add_component(component_name: str, data: List[Dict[str, Any]], prompt):
     """
     Adds or updates the data for a specific component name in the global dictionary.
 
     :param component_name: Name of the component.
     :param data: List of position data dictionaries.
+    :param prompt: Prompt for CLIP model, is None if no prompt was set.
     """
     # Check if the component already exists in components_data
     if component_name not in components_data or not components_data[component_name]:
@@ -231,11 +238,18 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
 
     components_data[component_name] = data
     # Insert the most similar image after either finding the target_id or updating the data
-    if target_id is not None:
+
+    if target_id is not None and prompt is None:
         # Find row and col position based on the target_id
         row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
         ai_insert_image(component_name, row_idx, col_idx)  # AI insert function
 
+    elif target_id is not None:
+        row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
+        filename = find_image_according_to_prompt(already_selected_images=[], prompt=prompt)
+        row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
+        update_component_data(component_name=component_name, row_idx=row_idx, col_idx=col_idx, image_name=filename,
+                              score=1)
 
 def ai_insert_image(component_name: str, row_idx: int, col_idx: int):
     # Handle similarity case
