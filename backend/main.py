@@ -20,7 +20,7 @@ app = FastAPI()
 
 components_data: Dict[str, List[List[Dict[str, Any]]]] = {}
 
-image_selection_mode = "similarity"
+image_selection_mode = "similarity" # "See ImageSelectionModes in MainComponent.vue"
 
 # Initialize the CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -114,7 +114,6 @@ async def saveImages(files: List[UploadFile] = File(...)):
 @app.post("/update_image_selection_mode")
 async def update_image_selection_mode(new_mode: str = Form(...)):
     image_selection_mode = new_mode
-    print(f"Image selection mode updated to: {image_selection_mode}")
     return {"message": "Image selection mode updated successfully", "new_mode": new_mode}
 
 @app.get("/getImages")
@@ -155,37 +154,21 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
 
 @app.post("/new_selection")
 async def new_selection(component_name: str = Form(...), target_id: int = Form(...)):
+    """
+    Sets new selection for the specified component and target_id.
+    """
     data = components_data[component_name]
     row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
-
-    available_images = get_available_images()
-    if not available_images:
-        print("No images available in the upload directory.")
-        return
 
     components_data[component_name][row_idx][col_idx] = (
         components_data[component_name][row_idx][col_idx][0],
         '[]',
     )
-    print(f"Component data for {component_name}: {components_data[component_name]}")
 
-    if not is_position_valid(row_idx, col_idx, component_name):
-        return
-
-    encoded_tensors = load_encoded_image_tensors()
-    neighbor_tensors = get_neighbor_tensors(component_name, row_idx, col_idx, encoded_tensors)
-
-    if neighbor_tensors is None or neighbor_tensors.numel() == 0:
-        print("No valid neighbors found.")
-        return
-
-    most_similar_image, best_score = find_most_similar_image(available_images,
-                                                             neighbor_tensors, encoded_tensors, component_name)
-
-    if most_similar_image:
+    result = select_and_update_image(component_name, row_idx, col_idx)
+    if result:
+        most_similar_image, best_score = result
         update_component_data(component_name, row_idx, col_idx, most_similar_image, best_score)
-    else:
-        print("No suitable image found.")
 
     return {"message": "Data received successfully"}
 
@@ -250,7 +233,21 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
     if target_id is not None:
         # Find row and col position based on the target_id
         row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
-        insert_most_similar_image(component_name, row_idx, col_idx)  # AI insert function
+        ai_insert_image(component_name, row_idx, col_idx)  # AI insert function
+
+
+def ai_insert_image(component_name: str, row_idx: int, col_idx: int):
+    # Handle similarity case
+    if image_selection_mode == "similarity":
+        insert_most_similar_image(component_name, row_idx, col_idx)
+    # Handle face detection case
+    elif image_selection_mode == "faceDetection":
+        print(f"Image selection mode 'faceDetection' is not supported for {component_name}.")
+    # Handle style case
+    elif image_selection_mode == "style":
+        print(f"Image selection mode 'style' is not supported for {component_name}.")
+    else:
+        print(f"Invalid image selection mode '{image_selection_mode}' for {component_name}.")
 
 
 def find_tuple_by_id(data: List[List[Any]], target_id: int) -> Tuple[int, int, Tuple[int, str]]:
@@ -425,32 +422,45 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
     return array_2d
 
 
-def insert_most_similar_image(component_name: str, row_idx: int, col_idx: int):
-    """Insert the most similar image filename into the components_data dictionary."""
+def select_and_update_image(component_name: str, row_idx: int, col_idx: int):
+    """
+    Common logic to select and update an image based on similarity and available neighbors.
+    """
     available_images = get_available_images()
     if not available_images:
         print("No images available in the upload directory.")
-        return
+        return None
 
-    # row_idx, col_idx = find_position_with_most_neighbors(component_name) von Oliver
-    row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
     if not is_position_valid(row_idx, col_idx, component_name):
-        return
+        return None
 
     encoded_tensors = load_encoded_image_tensors()
     neighbor_tensors = get_neighbor_tensors(component_name, row_idx, col_idx, encoded_tensors)
 
     if neighbor_tensors is None or neighbor_tensors.numel() == 0:
         print("No valid neighbors found.")
+        return None
+
+    most_similar_image, best_score = find_most_similar_image(available_images,
+                                                             neighbor_tensors, encoded_tensors, component_name)
+
+    if not most_similar_image:
+        print("No suitable image found.")
+        return None
+
+    return most_similar_image, best_score
+
+
+def insert_most_similar_image(component_name: str, row_idx: int, col_idx: int):
+    """Insert the most similar image filename into the components_data dictionary."""
+    row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
+    if not is_position_valid(row_idx, col_idx, component_name):
         return
 
-    most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors,
-                                                             component_name)
-
-    if most_similar_image:
+    result = select_and_update_image(component_name, row_idx, col_idx)
+    if result:
+        most_similar_image, best_score = result
         update_component_data(component_name, row_idx, col_idx, most_similar_image, best_score)
-    else:
-        print("No suitable image found.")
 
 
 # ---------------- Helper Methods ---------------- #
