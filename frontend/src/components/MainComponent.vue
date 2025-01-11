@@ -283,6 +283,7 @@ const removeImages = async () => {
       </section>
       <br>
         <section>
+          <h2>Custom image selection</h2>
           <v-text-field class="next-image-prompt"
               v-model="userPrompt"
               clear-icon="mdi-close-circle"
