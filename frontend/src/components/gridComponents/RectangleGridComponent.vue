@@ -100,7 +100,7 @@ async function selectImage(image) {
         class="upload-label"
         @click="!isDisabled && openImageSelection(index)"
       >
-        + Select Image ({{ index}})
+        + Select Image
       </label>
       <div v-else class="image-container">
         <img :src="item.src" alt="Bild" />
