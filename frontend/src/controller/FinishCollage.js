@@ -1,5 +1,3 @@
-import axios from 'axios';
-import { store } from '@/store.js';
 import html2canvas from "html2canvas";
 
 export async function scaleCollageImages(gridContainer, scaleFactor = 2) {
@@ -44,5 +42,16 @@ export async function removeEmptyPlaceholders(gridContainer) {
         item.style.border = "";
       }
     });
+  };
+}
+
+export async function removeRemoveButtons(gridContainer) {
+  // Hiding all remove buttons
+  const removeButtons = gridContainer.querySelectorAll(".remove-button");
+  removeButtons.forEach((button) => (button.style.display = "none"));
+
+  return () => {
+    // Restoring remove buttons
+    removeButtons.forEach((button) => (button.style.display = ""));
   };
 }

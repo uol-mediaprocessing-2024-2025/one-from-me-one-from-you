@@ -95,8 +95,7 @@ async function selectImage(image) {
       v-for="(item, index) in items"
       :key="index"
       class="grid-item"
-      :class="{ disabled: isDisabled }"
-    >
+      :class="{ disabled: isDisabled }">
       <!-- Show image if selected -->
       <label
         v-if="!item.src"
@@ -155,8 +154,8 @@ async function selectImage(image) {
 
 .remove-button {
   position: absolute;
-  top: -1px; /* Move further up */
-  right: -1px; /* Move further to the right */
+  top: -1px;
+  right: -1px;
   background-color: red;
   color: white;
   border: none;
@@ -168,7 +167,7 @@ async function selectImage(image) {
   font-size: 14px;
   line-height: 18px;
   padding: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Optional: Add some shadow for better visibility */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .remove-button:hover {

@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, provide} from 'vue';
+import {ref, onMounted} from 'vue';
 import axios from "axios";
 import html2canvas from "html2canvas";
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
@@ -13,8 +13,8 @@ import TriangleGridComponent from "@/components/gridComponents/TriangleGridCompo
 
 import UploadImage from "@/components/UploadImage.vue";
 import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
-import {clearCollage, wait} from "@/controller/GridComponentHelper.js";
-import {removeEmptyPlaceholders, scaleCollageImages} from "@/controller/FinishCollage.js";
+import {clearCollage} from "@/controller/GridComponentHelper.js";
+import {removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons} from "@/controller/FinishCollage.js";
 
 import {store} from "@/store.js";
 
@@ -63,16 +63,6 @@ const responseMessage = ref('');
 
 const downloadSuccess = ref(false);
 const saveToGallerySuccess = ref(false);
-
-const callPing = async () => {
-  try {
-    const response = await axios.get('http://127.0.0.1:8000/ping');
-    responseMessage.value = response.data.message;
-  } catch {
-    responseMessage.value = 'Failed to connect';
-  }
-};
-
 onMounted(() => {
   const savedShape = localStorage.getItem('selectedCollageShape');
   if (savedShape) {
@@ -122,30 +112,28 @@ const captureAndDownload = async () => {
   // Removing empty slots
   const resetPlaceholders = await removeEmptyPlaceholders(gridContainer);
 
+  // Temporarily remove remove-buttons
+  const resetRemoveButtons = await removeRemoveButtons(gridContainer);
+
   try {
-    // Getting screenshot
+    // Taking screenshot
     const canvas = await html2canvas(gridContainer, {
       backgroundColor: null,
     });
 
-    // Bild speichern
+    // Save the image
     const link = document.createElement("a");
     link.href = canvas.toDataURL("image/png");
     link.download = `${activeGrid.split('.')[0]}-collage.png`;
     link.click();
-    displaySuccess(downloadSuccess)
+    displaySuccess(downloadSuccess);
   } catch (error) {
     console.error("Couldn't take screenshot:", error);
   } finally {
-    // Resetting styles
+    // Reset styles
     resetPlaceholders();
+    resetRemoveButtons();
   }
-};
-
-const displaySuccess = (popup, duration = 1500) => {
-  popup.value = true; // Popup anzeigen
-  setTimeout(() => {popup.value = false; // Popup nach der angegebenen Zeit ausblenden
-  }, duration);
 };
 
 const safeCollageToGallery = async () => {
@@ -174,6 +162,7 @@ const safeCollageToGallery = async () => {
   gridContainer.style.position = "static";
 
   const resetPlaceholders = await removeEmptyPlaceholders(gridContainer);
+  const resetRemoveButtons = await removeRemoveButtons(gridContainer);
 
   try {
     // Scaling collage
@@ -200,12 +189,16 @@ const safeCollageToGallery = async () => {
     console.error("Couldn't upscale or save collage:", error);
   } finally {
     resetPlaceholders();
+    resetRemoveButtons();
     gridContainer.style.cssText = originalStyle;
   }
 };
 
-
-
+const displaySuccess = (popup, duration = 2000) => {
+  popup.value = true;
+  setTimeout(() => {popup.value = false;
+  }, duration);
+};
 
 const updateCollagePreview = async (imageSrc) => {
   if (selectedCollageShape.value === imageSrc) {
@@ -321,9 +314,22 @@ const removeImages = async () => {
       <br>
       <p v-if="downloadSuccess" class="success-message">Collage Downloaded successfully!</p>
       <p v-if="saveToGallerySuccess" class="success-message">Collage saved to gallery!</p>
-      <v-btn @click="captureAndDownload">Download</v-btn>
-      <v-btn @click="safeCollageToGallery">Save to Gallery</v-btn>
-      <v-btn @click="removeImages">Clear collage</v-btn>
+      <button
+        @click="captureAndDownload"
+        class="button download-button">
+        Download
+      </button>
+      <button
+        @click="safeCollageToGallery"
+        class="button save-button">
+        Save to Gallery
+      </button>
+      <button
+        @click="removeImages"
+        class="button clear-button">
+        Clear Collage
+      </button>
+
     </div>
   </div>
 
@@ -380,6 +386,45 @@ header h1 {
   overflow: hidden;
   border: 2px solid #ccc;
   border-radius: 5px;
+}
+
+.button {
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  margin: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.download-button {
+  background-color: #28a745;
+}
+.download-button:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.save-button {
+  background-color: #007bff;
+}
+.save-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.clear-button {
+  background-color: #dc3545;
+}
+.clear-button:hover {
+  background-color: #c82333;
+  transform: scale(1.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .collage-container img {
