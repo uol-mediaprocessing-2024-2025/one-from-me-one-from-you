@@ -1,10 +1,15 @@
 <script setup>
 import { store } from "@/store.js";
-import { ref, reactive } from "vue";
+import {ref, reactive, defineProps} from "vue";
 import {useAttrs} from 'vue';
 
-// To supress vue warnings
-defineProps([]);
+defineProps({
+  userPrompt: {
+    type: String,
+    required: true,
+  },
+});
+
 const attrs = useAttrs();
 
 // Reactive variables

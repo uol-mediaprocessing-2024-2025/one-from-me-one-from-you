@@ -141,7 +141,8 @@ def ping():
 
 
 @app.post("/positions")
-async def receive_positions(positions: str = Form(...), componentName: str = Form(...)):
+async def receive_positions(positions: str = Form(...), componentName: str = Form(...), user_prompt: str = Form(...)):
+    print(user_prompt)
     parsed_positions = json.loads(positions)
     if componentName in ("heartComponent", "cloudComponent", "rectangleComponent", "triangleComponent"):
         array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=True)

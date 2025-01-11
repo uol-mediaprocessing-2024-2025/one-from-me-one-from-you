@@ -1,10 +1,16 @@
 <script setup>
-import {ref, reactive, onMounted} from "vue";
+import {ref, reactive, onMounted, defineProps} from "vue";
 import {useAttrs} from "vue";
 import {updateCollageItems, scaleImage, extractGridPositions, wait} from "@/controller/GridComponentHelper.js";
 import {store} from "@/store.js";
 
-defineProps([]);
+const props = defineProps({
+  userPrompt: {
+    type: String,
+    required: true,
+  },
+});
+
 const attrs = useAttrs();
 
 const items = reactive(Array(34).fill({src: null, fileName: null}));
@@ -47,7 +53,7 @@ async function selectImage(image) {
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
-    await extractGridPositions(gridContainer, gridItems, items, componentName);
+    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
 
     await updateCollageItems(componentName, items);
 

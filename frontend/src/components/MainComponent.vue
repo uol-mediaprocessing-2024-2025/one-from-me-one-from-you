@@ -30,7 +30,6 @@ const isFishGridVisible = ref(false);
 const isLeafGridVisible = ref(false);
 const isTriangleGridVisible = ref(false);
 
-
 const isSelectedShape = (shapeSrc) => {
   return shapeSrc === selectedCollageShape.value;
 };
@@ -256,14 +255,14 @@ const removeImages = async () => {
   <div class="main-container">
     <div class="collage-preview">
       <div class="collage-shape">
-        <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container"/>
-        <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container"/>
-        <StarGridComponent v-if="isStarGridVisible" class="star-grid-container"/>
-        <CloudGridComponent v-if="isCloudGridVisible" class="cloud-grid-container"/>
-        <HexagonGridComponent v-if="isHexagonGridVisible" class="hexagon-grid-container"/>
-        <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container"/>
-        <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container"/>
-        <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container"/>
+        <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container" :userPrompt="userPrompt"/>
+        <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container" :userPrompt="userPrompt"/>
+        <StarGridComponent v-if="isStarGridVisible" class="star-grid-container" :userPrompt="userPrompt"/>
+        <CloudGridComponent v-if="isCloudGridVisible" class="cloud-grid-container" :userPrompt="userPrompt"/>
+        <HexagonGridComponent v-if="isHexagonGridVisible" class="hexagon-grid-container" :userPrompt="userPrompt"/>
+        <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container" :userPrompt="userPrompt"/>
+        <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container" :userPrompt="userPrompt"/>
+        <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container" :userPrompt="userPrompt"/>
       </div>
     </div>
 

@@ -1,10 +1,9 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
-import { useAttrs } from "vue";
+import { useAttrs, defineProps } from "vue";
 import { updateCollageItems, scaleImage, extractGridPositions, wait, newSelection } from "@/controller/GridComponentHelper.js";
 import { store } from "@/store.js";
 
-defineProps([]);
 const attrs = useAttrs();
 
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
@@ -22,6 +21,13 @@ function openImageSelection(index) {
   selectedIndex.value = index;
   showModal.value = true;
 }
+
+const props = defineProps({
+  userPrompt: {
+    type: String,
+    required: true,
+  },
+});
 
 const removePreviewImage = async (index) => {
   //items[index] = { src: null, fileName: null };
@@ -51,11 +57,7 @@ async function selectImage(image) {
       fileName: fileName,
     };
 
-    console.info("Zuletzt gesetzte ID: " + selectedIndex.value);
-    console.info(items);
-
     closeModal();
-
     isAITurn.value = true;
     isDisabled.value = true;
 
@@ -63,7 +65,7 @@ async function selectImage(image) {
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
-    await extractGridPositions(gridContainer, gridItems, items, componentName);
+    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
 
     await updateCollageItems(componentName, items);
 
@@ -86,7 +88,6 @@ async function selectImage(image) {
     <br>
     AI is thinking...
   </div>
-
   <div class="rectangle-grid" v-bind="attrs">
     <div
       v-for="(item, index) in items"

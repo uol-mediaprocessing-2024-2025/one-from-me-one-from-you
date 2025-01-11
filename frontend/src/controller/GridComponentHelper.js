@@ -85,9 +85,10 @@ export async function newSelection(componentName, target_id) {
  * @param {NodeListOf<HTMLElement>} gridItems - NodeList of grid item elements.
  * @param {Array} items - Array of items containing fileName information.
  * @param {String} componentName - Name of the component to send data for.
+ * @param  {String} userPrompt - User prompt to send to the backend.
  * @returns {Promise<void>}
  */
-export async function extractGridPositions(gridContainer, gridItems, items, componentName) {
+export async function extractGridPositions(gridContainer, gridItems, items, componentName, userPrompt) {
   const containerRect = gridContainer.getBoundingClientRect();
   let positions = [];
 
@@ -113,6 +114,7 @@ export async function extractGridPositions(gridContainer, gridItems, items, comp
   const formData = new FormData();
   formData.append("positions", JSON.stringify(positions));
   formData.append("componentName", componentName);
+  formData.append("user_prompt", userPrompt);
 
   try {
     const response = await fetch(`${store.apiUrl}/positions`, {
