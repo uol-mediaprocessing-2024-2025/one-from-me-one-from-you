@@ -43,10 +43,11 @@ const uploadImage = async () => {
     });
 
     if (response.status === 200) {
-      const { message, file_paths } = response.data;
+      response.data;
 
-      console.log('Images uploaded successfully:', message);
-      console.log('Saved at:', file_paths);
+      //const { message, file_paths } = response.data;
+      //console.log('Images uploaded successfully:', message);
+      //console.log('Saved at:', file_paths);
 
       successMessage.value = 'Images uploaded successfully!';
       previewImages.value = [];

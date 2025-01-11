@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { useAttrs } from "vue";
-import { updateCollageItems, scaleImage, extractGridPositions, wait } from "@/controller/GridComponentHelper.js";
+import { updateCollageItems, scaleImage, extractGridPositions, wait, newSelection } from "@/controller/GridComponentHelper.js";
 import { store } from "@/store.js";
 
 defineProps([]);
@@ -24,16 +24,12 @@ function openImageSelection(index) {
 }
 
 const removePreviewImage = async (index) => {
-  items[index] = { src: null, fileName: null };
+  //items[index] = { src: null, fileName: null };
   isAITurn.value = true;
   isDisabled.value = true;
 
   await wait(2000);
-
-  const gridContainer = document.querySelector(".rectangle-grid");
-  const gridItems = document.querySelectorAll(".grid-item");
-  await extractGridPositions(gridContainer, gridItems, items, componentName);
-
+  await newSelection(componentName, index);
   await updateCollageItems(componentName, items);
 
   isAITurn.value = false;

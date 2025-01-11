@@ -46,14 +46,15 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-
 for file in UPLOAD_DIR.iterdir():
     if file.is_file():
         file.unlink()
 
+
 class Base64Image(BaseModel):
     filename: str
     content: str
+
 
 @app.post("/saveImages")
 async def saveImages(files: List[UploadFile] = File(...)):
@@ -109,6 +110,7 @@ async def saveImages(files: List[UploadFile] = File(...)):
             content={"message": "Failed to process images", "error": str(e)},
         )
 
+
 @app.get("/getImages")
 async def get_images():
     """Retrieve all image filenames in the UPLOAD_DIR."""
@@ -135,9 +137,7 @@ def ping():
 
 @app.post("/positions")
 async def receive_positions(positions: str = Form(...), componentName: str = Form(...)):
-    # print(f"Received componentName: {componentName}")
     parsed_positions = json.loads(positions)
-    # print("Received positions with file names:", parsed_positions)
     if componentName in ("heartComponent", "cloudComponent", "rectangleComponent", "triangleComponent"):
         array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=True)
     else:
@@ -146,6 +146,43 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
     add_component(component_name=componentName, data=array)
 
     return {"message": "Data received successfully"}
+
+@app.post("/new_selection")
+async def new_selection(component_name: str = Form(...), target_id: int = Form(...)):
+    print(f"New selection for component: {component_name}, target_id: {target_id}")
+    data = components_data[component_name]
+    row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
+    available_images = get_available_images()
+    if not available_images:
+        print("No images available in the upload directory.")
+        return
+    print(f"Component data for {component_name}: {components_data[component_name]}")
+    components_data[component_name][row_idx][col_idx] = (
+        components_data[component_name][row_idx][col_idx][0],
+        '[]',
+    )
+    print(f"Component data for {component_name}: {components_data[component_name]}")
+
+    if not is_position_valid(row_idx, col_idx, component_name):
+        return
+
+    encoded_tensors = load_encoded_image_tensors()
+    neighbor_tensors = get_neighbor_tensors(component_name, row_idx, col_idx, encoded_tensors)
+
+    if neighbor_tensors is None or neighbor_tensors.numel() == 0:
+        print("No valid neighbors found.")
+        return
+
+    most_similar_image, best_score = find_most_similar_image(available_images,
+                                                             neighbor_tensors, encoded_tensors, component_name)
+
+    if most_similar_image:
+        update_component_data(component_name, row_idx, col_idx, most_similar_image, best_score)
+    else:
+        print("No suitable image found.")
+
+    return {"message": "Data received successfully"}
+
 
 @app.get("/getArray")
 def get_array(component_name: str):
@@ -193,7 +230,6 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
 
         if target_id is None:
             print("No target_id found in the first element.")
-
     else:
         # If the component already exists, compare and get the new ID
         target_id = compare_and_get_new_id(components_data[component_name], data)
@@ -209,6 +245,7 @@ def add_component(component_name: str, data: List[Dict[str, Any]]):
         # Find row and col position based on the target_id
         row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
         insert_most_similar_image(component_name, row_idx, col_idx)  # AI insert function
+
 
 def find_tuple_by_id(data: List[List[Any]], target_id: int) -> Tuple[int, int, Tuple[int, str]]:
     """
@@ -228,6 +265,7 @@ def find_tuple_by_id(data: List[List[Any]], target_id: int) -> Tuple[int, int, T
                 return row_idx, col_idx, item  # Return the position and the matching tuple
 
     return -1, -1, None  # Return (-1, -1, None) if the tuple isn't found
+
 
 def compare_and_get_new_id(existing_data, new_data):
     """
@@ -253,6 +291,7 @@ def compare_and_get_new_id(existing_data, new_data):
     print("No new element found.")
     return None
 
+
 def get_available_images() -> List[str]:
     """Retrieve all image filenames in the UPLOAD_DIR."""
     IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
@@ -262,6 +301,7 @@ def get_available_images() -> List[str]:
         f.name for f in UPLOAD_DIR.iterdir()
         if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
     ]
+
 
 def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
     """
@@ -283,13 +323,23 @@ def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
                 neighbors = 0
 
                 # Check all four possible neighbors
-                if row_idx > 0 and isinstance(components_data[component_name][row_idx - 1][col_idx], tuple) and len(components_data[component_name][row_idx - 1][col_idx]) > 1 and components_data[component_name][row_idx - 1][col_idx][1].lower().endswith(image_extensions):
+                if row_idx > 0 and isinstance(components_data[component_name][row_idx - 1][col_idx], tuple) and len(
+                        components_data[component_name][row_idx - 1][col_idx]) > 1 and \
+                        components_data[component_name][row_idx - 1][col_idx][1].lower().endswith(image_extensions):
                     neighbors += 1
-                if row_idx < len(components_data[component_name]) - 1 and isinstance(components_data[component_name][row_idx + 1][col_idx], tuple) and len(components_data[component_name][row_idx + 1][col_idx]) > 1 and components_data[component_name][row_idx + 1][col_idx][1].lower().endswith(image_extensions):
+                if row_idx < len(components_data[component_name]) - 1 and isinstance(
+                        components_data[component_name][row_idx + 1][col_idx], tuple) and len(
+                        components_data[component_name][row_idx + 1][col_idx]) > 1 and \
+                        components_data[component_name][row_idx + 1][col_idx][1].lower().endswith(image_extensions):
                     neighbors += 1
-                if col_idx > 0 and isinstance(components_data[component_name][row_idx][col_idx - 1], tuple) and len(components_data[component_name][row_idx][col_idx - 1]) > 1 and components_data[component_name][row_idx][col_idx - 1][1].lower().endswith(image_extensions):
+                if col_idx > 0 and isinstance(components_data[component_name][row_idx][col_idx - 1], tuple) and len(
+                        components_data[component_name][row_idx][col_idx - 1]) > 1 and \
+                        components_data[component_name][row_idx][col_idx - 1][1].lower().endswith(image_extensions):
                     neighbors += 1
-                if col_idx < len(row) - 1 and isinstance(components_data[component_name][row_idx][col_idx + 1], tuple) and len(components_data[component_name][row_idx][col_idx + 1]) > 1 and components_data[component_name][row_idx][col_idx + 1][1].lower().endswith(image_extensions):
+                if col_idx < len(row) - 1 and isinstance(components_data[component_name][row_idx][col_idx + 1],
+                                                         tuple) and len(
+                        components_data[component_name][row_idx][col_idx + 1]) > 1 and \
+                        components_data[component_name][row_idx][col_idx + 1][1].lower().endswith(image_extensions):
                     neighbors += 1
 
                 # Add the position and its neighbor count to candidates
@@ -309,6 +359,7 @@ def find_position_with_most_neighbors(component_name: str) -> Tuple[int, int]:
             break
 
     return best_position
+
 
 def group_elements_fixed_10x10(elements, has_consistent_height):
     if not elements:
@@ -349,22 +400,24 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
         if abs(closest_top - t) <= allowed_top_gap and l in left_index_map:
             r = top_index_map[closest_top]
             c = left_index_map[l]
-            file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (element['id'], "[]")
+            file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (
+            element['id'], "[]")
             array_2d[r][c] = file_name
             if file_name[1] != "[]":
                 # print(f"Placed image {file_name} at position ({r}, {c})")
                 neighbors = {
-                    "top": array_2d[r-1][c] if r > 0 else None,
-                    "bottom": array_2d[r+1][c] if r < rows - 1 else None,
-                    "left": array_2d[r][c-1] if c > 0 else None,
-                    "right": array_2d[r][c+1] if c < cols - 1 else None
+                    "top": array_2d[r - 1][c] if r > 0 else None,
+                    "bottom": array_2d[r + 1][c] if r < rows - 1 else None,
+                    "left": array_2d[r][c - 1] if c > 0 else None,
+                    "right": array_2d[r][c + 1] if c < cols - 1 else None
                 }
                 # print(f"Neighbors of image {file_name} at position ({r}, {c}): {neighbors}")
 
     # for row in array_2d:
-        # print(row)
+    # print(row)
 
     return array_2d
+
 
 def insert_most_similar_image(component_name: str, row_idx: int, col_idx: int):
     """Insert the most similar image filename into the components_data dictionary."""

@@ -34,6 +34,26 @@ export function scaleImage(imageUrl) {
   });
 }
 
+export async function newSelection(componentName, target_id) {
+  const formData = new FormData();
+  formData.append("component_name", componentName);
+  formData.append("target_id", target_id);
+  try {
+    const response = await fetch(`${store.apiUrl}/new_selection`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send information. Status: ${response.status}`);
+    }
+
+    await response.json();
+  } catch (error) {
+    console.error("Error sending information to the backend:", error);
+  }
+}
+
 /**
  * Extracts grid positions of items inside a container.
  * @param {HTMLElement} gridContainer - The container element of the grid.
@@ -79,7 +99,7 @@ export async function extractGridPositions(gridContainer, gridItems, items, comp
       throw new Error(`Failed to send grid positions. Status: ${response.status}`);
     }
 
-    const result = await response.json();
+    await response.json();
   } catch (error) {
     console.error("Error sending grid positions to the backend:", error);
   }
