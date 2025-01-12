@@ -266,34 +266,34 @@ const removeImages = async () => {
       </div>
     </div>
 
-    <div class="settings-panel">
-      <h2>Image Selection Mode</h2>
-      <section class="sorting-options horizontal-layout">
-      <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
-        <div class="option">
-          <v-radio label="Face Detection" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
-        </div>
-        <div class="option">
-          <v-radio label="Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort" color="indigo"></v-radio>
-        </div>
-        <div class="option">
-          <v-radio label="Style" :value="ImageSelectionModes.STYLE" name="sort" color="indigo"></v-radio>
-        </div>
-      </v-radio-group>
-      </section>
-      <br>
-        <section>
-          <h2>Custom image selection</h2>
-          <v-text-field class="next-image-prompt"
-              v-model="userPrompt"
-              clear-icon="mdi-close-circle"
-              label="What should your next image be?"
-              type="text"
-              clearable
-            ></v-text-field>
+<div class="settings-panel">
+  <h2>Image Selection Mode</h2>
+  <section class="sorting-options horizontal-layout">
+    <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
+      <div class="option">
+        <v-radio label="Face Detection" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
+      </div>
+      <div class="option">
+        <v-radio label="Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort" color="indigo"></v-radio>
+      </div>
+      <div class="option">
+        <v-radio label="Prompt" :value="ImageSelectionModes.STYLE" name="sort" color="indigo"></v-radio>
+      </div>
+    </v-radio-group>
+  </section>
+  <br>
+  <section>
+    <h2>Custom image selection</h2>
+    <v-text-field class="next-image-prompt"
+        v-model="userPrompt"
+        clear-icon="mdi-close-circle"
+        label="What should your next image be?"
+        type="text"
+        clearable
+:disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"      ></v-text-field>
+  </section>
+  <br>
 
-        </section>
-      <br>
       <section class="collage-shapes">
         <h2>Collage Shape</h2>
         <div class="shapes">

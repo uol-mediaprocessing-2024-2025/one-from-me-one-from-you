@@ -49,7 +49,7 @@ async function selectImage(image) {
     isAITurn.value = true;
     isDisabled.value = true;
 
-    await wait(2000);
+    await wait(0);
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
