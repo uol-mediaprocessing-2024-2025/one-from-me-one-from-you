@@ -11,6 +11,8 @@ from promptProcessing import find_image_according_to_prompt
 
 import uvicorn
 import os
+import numpy as np
+import face_recognition
 import shutil
 import clip
 import torch
@@ -462,7 +464,7 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int):
         print("No valid neighbors found.")
         return None
 
-    most_similar_image, best_score = find_most_similar_image(available_images,
+    most_similar_image, best_score = find_most_similar_face(available_images,
                                                              neighbor_tensors, encoded_tensors, component_name)
 
     if not most_similar_image:
@@ -598,6 +600,41 @@ def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tens
         if score > best_score:
             best_score = score
             best_image = image_name
+    return best_image, best_score
+
+
+def find_most_similar_face(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict,
+                           component_name: str):
+    placed_images = {
+        item[1]
+        for row in components_data[component_name]
+        for item in row
+        if isinstance(item, tuple) and len(item) > 1 and item[1] != '[]'
+    }
+    neighbor_features = neighbor_tensors.mean(dim=0).numpy()
+    best_score = float("inf")
+    best_image = None
+
+    for image_name in available_images:
+        if image_name in placed_images or image_name not in encoded_tensors:
+            continue
+
+        image_path = os.path.join(UPLOAD_DIR, image_name)
+        image = face_recognition.load_image_file(image_path)
+        face_encodings = face_recognition.face_encodings(image)
+
+        if not face_encodings:
+            continue
+
+        image_tensor = preprocess(Image.fromarray(image)).unsqueeze(0).to(device)
+        with torch.no_grad():
+            encoded_face = model.encode_image(image_tensor).cpu().numpy()
+
+        face_distance = np.linalg.norm(encoded_face - neighbor_features)
+        if face_distance < best_score:
+            best_score = face_distance
+            best_image = image_name
+
     return best_image, best_score
 
 
