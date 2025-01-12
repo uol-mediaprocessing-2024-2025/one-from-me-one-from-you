@@ -554,33 +554,28 @@ def get_neighbor_tensors(component_name: str, row_idx: int, col_idx: int, encode
     """Retrieve the encoded tensors for neighboring images."""
     neighbors = []
 
-    # Collect the neighbors (checking boundaries)
-    if row_idx > 0:
-        neighbors.append(components_data[component_name][row_idx - 1][col_idx][0])  # Above
-    if row_idx < len(components_data[component_name]) - 1:
-        neighbors.append(components_data[component_name][row_idx + 1][col_idx][0])  # Below
-    if col_idx > 0:
-        neighbors.append(components_data[component_name][row_idx][col_idx - 1][0])  # Left
+    # Define all possible neighbor offsets (top, bottom, left, right)
+    neighbor_offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
-    # Check if we're not at the last column before accessing col_idx + 1
-    if col_idx < len(components_data[component_name][row_idx]) - 1:
-        # Ensure the item is a tuple and has at least 2 elements
-        item = components_data[component_name][row_idx][col_idx + 1]
-        if isinstance(item, tuple) and len(item) > 1:
-            neighbors.append(item[1])  # Right
+    for offset in neighbor_offsets:
+        neighbor_row = row_idx + offset[0]
+        neighbor_col = col_idx + offset[1]
+
+        # Ensure neighbor position is within bounds
+        if 0 <= neighbor_row < len(components_data[component_name]) and \
+                0 <= neighbor_col < len(components_data[component_name][neighbor_row]):
+
+            # Get the value of the neighbor
+            neighbor_value = components_data[component_name][neighbor_row][neighbor_col]
+
+            # Check if the neighbor is a valid image tuple
+            if isinstance(neighbor_value, tuple) and len(neighbor_value) > 1 and neighbor_value[1] != '[]':
+                neighbors.append(neighbor_value[1])
 
     # Filter and stack valid tensors
     tensor_list = [encoded_tensors[neighbor] for neighbor in neighbors if neighbor in encoded_tensors]
 
-    if not tensor_list:  # No neighbors found
-        print("No valid neighboring tensors found.")
-        return None
-
-    if len(tensor_list) == 1:  # Handle single neighbor case
-        print("Single valid neighbor tensor found.")
-        return tensor_list[0]  # Return the single tensor
-
-    return torch.stack(tensor_list)
+    return torch.stack(tensor_list) if tensor_list else torch.empty(0)
 
 
 def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict,
