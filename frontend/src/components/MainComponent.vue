@@ -290,7 +290,7 @@ const removeImages = async () => {
         label="What should your next image be?"
         type="text"
         clearable
-    ></v-text-field>
+                  :disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"      ></v-text-field>
   </section>
   <br>
 

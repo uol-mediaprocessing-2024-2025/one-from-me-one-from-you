@@ -117,6 +117,7 @@ async def saveImages(files: List[UploadFile] = File(...)):
 @app.post("/update_image_selection_mode")
 async def update_image_selection_mode(new_mode: str = Form(...)):
     image_selection_mode = new_mode
+    print(image_selection_mode + "-mode selected.")
     return {"message": "Image selection mode updated successfully", "new_mode": new_mode}
 
 @app.get("/getImages")
@@ -260,18 +261,17 @@ def add_component(component_name: str, data: List[Dict[str, Any]], prompt):
 
 
 def ai_insert_image(component_name: str, row_idx: int, col_idx: int):
-    # Handle similarity case
-    if image_selection_mode == "similarity":
-        insert_most_similar_image(component_name, row_idx, col_idx)
+    # Handle prompt case
+    if image_selection_mode == "style":
+        insert_image(component_name, row_idx, col_idx)
     # Handle face detection case
     elif image_selection_mode == "faceDetection":
         print(f"Image selection mode 'faceDetection' is not supported for {component_name}.")
-    # Handle style case
-    elif image_selection_mode == "style":
-        print(f"Image selection mode 'style' is not supported for {component_name}.")
+    # Handle similarity case
+    elif image_selection_mode == "similarity":
+        insert_image(component_name, row_idx, col_idx)
     else:
         print(f"Invalid image selection mode '{image_selection_mode}' for {component_name}.")
-
 
 def find_tuple_by_id(data: List[List[Any]], target_id: int) -> Tuple[int, int, Tuple[int, str]]:
     """
@@ -444,7 +444,6 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
 
     return array_2d
 
-
 def select_and_update_image(component_name: str, row_idx: int, col_idx: int):
     """
     Common logic to select and update an image based on similarity and available neighbors.
@@ -464,8 +463,13 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int):
         print("No valid neighbors found.")
         return None
 
-    most_similar_image, best_score = find_most_similar_face(available_images,
-                                                             neighbor_tensors, encoded_tensors, component_name)
+    if image_selection_mode == "faceDetection":
+        most_similar_image, best_score = find_most_similar_face(available_images, neighbor_tensors, encoded_tensors, component_name)
+    if image_selection_mode == "similarity":
+        most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors, component_name)
+    if image_selection_mode == "style":
+        print("TODO: Implement prompt-based image logic.")
+        return None
 
     if not most_similar_image:
         print("No suitable image found.")
@@ -474,7 +478,7 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int):
     return most_similar_image, best_score
 
 
-def insert_most_similar_image(component_name: str, row_idx: int, col_idx: int):
+def insert_image(component_name: str, row_idx: int, col_idx: int):
     """Insert the most similar image filename into the components_data dictionary."""
     row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
     if not is_position_valid(row_idx, col_idx, component_name):
