@@ -15,6 +15,7 @@ import numpy as np
 import face_recognition
 import shutil
 import clip
+import time
 import torch
 import json
 import uuid
@@ -444,10 +445,13 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
 
     return array_2d
 
-def select_and_update_image(component_name: str, row_idx: int, col_idx: int):
+
+def select_and_update_image(component_name: str, row_idx: int, col_idx: int, target_id: int = None, prompt: str = None):
     """
-    Common logic to select and update an image based on similarity and available neighbors.
+    Common logic to select and update an image based on similarity, style, and available neighbors.
     """
+    start_time = time.time()
+
     available_images = get_available_images()
     if not available_images:
         print("No images available in the upload directory.")
@@ -463,17 +467,28 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int):
         print("No valid neighbors found.")
         return None
 
+    if target_id is not None and prompt is None:
+        # Find row and col position based on the target_id
+        row_idx, col_idx, _ = find_tuple_by_id(components_data[component_name], target_id)
+        ai_insert_image(component_name, row_idx, col_idx)  # AI insert function
+
     if image_selection_mode == "faceDetection":
         most_similar_image, best_score = find_most_similar_face(available_images, neighbor_tensors, encoded_tensors, component_name)
-    if image_selection_mode == "similarity":
+    elif image_selection_mode == "similarity":
         most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors, component_name)
-    if image_selection_mode == "style":
-        print("TODO: Implement prompt-based image logic.")
+    elif image_selection_mode == "style":
+        most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors, component_name)
+    else:
+        print(f"Invalid image selection mode '{image_selection_mode}' for {component_name}.")
         return None
 
     if not most_similar_image:
         print("No suitable image found.")
         return None
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Execution time: {elapsed_time:.4f} seconds")
 
     return most_similar_image, best_score
 
