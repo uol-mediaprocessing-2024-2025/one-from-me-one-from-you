@@ -185,9 +185,10 @@ async def new_selection(component_name: str = Form(...), target_id: int = Form(.
     if result:
         most_similar_image, best_score = result
         update_component_data(component_name, row_idx, col_idx, most_similar_image, best_score)
+    else:
+        return {"message": "No suitable image found"}
 
     return {"message": "Data received successfully"}
-
 
 @app.get("/getArray")
 def get_array(component_name: str):
@@ -451,6 +452,9 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
     return array_2d
 
 
+# Add this dictionary at the top of your file to store excluded images for each slot
+excluded_images_per_slot = {}
+
 def select_and_update_image(component_name: str, row_idx: int, col_idx: int, exclude_image: str = None, prompt: str = None):
     """
     Common logic to select and update an image based on similarity, style, and available neighbors.
@@ -472,6 +476,13 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int, exc
         print("No valid neighbors found.")
         return None
 
+    slot_key = f"{component_name}_{row_idx}_{col_idx}"
+    if slot_key not in excluded_images_per_slot:
+        excluded_images_per_slot[slot_key] = set()
+
+    if exclude_image:
+        excluded_images_per_slot[slot_key].add(exclude_image)
+
     if prompt:
         filename = find_image_according_to_prompt(already_selected_images=find_already_placed_images(component_name), prompt=prompt)
         row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
@@ -486,7 +497,7 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int, exc
         print(f"Invalid image selection mode '{image_selection_mode}' for {component_name}.")
         return None
 
-    if not most_similar_image:
+    if not most_similar_image or most_similar_image in excluded_images_per_slot[slot_key]:
         print("No suitable image found.")
         return None
 
