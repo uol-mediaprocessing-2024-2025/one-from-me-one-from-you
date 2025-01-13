@@ -171,12 +171,17 @@ async def new_selection(component_name: str = Form(...), target_id: int = Form(.
     data = components_data[component_name]
     row_idx, col_idx, _ = find_tuple_by_id(data, target_id)
 
+    # Get the previously selected image
+    previous_image = components_data[component_name][row_idx][col_idx][1]
+
+    # Mark the current position as empty
     components_data[component_name][row_idx][col_idx] = (
         components_data[component_name][row_idx][col_idx][0],
         '[]',
     )
 
-    result = select_and_update_image(component_name, row_idx, col_idx)
+    # Select a new image, excluding the previous one
+    result = select_and_update_image(component_name, row_idx, col_idx, exclude_image=previous_image)
     if result:
         most_similar_image, best_score = result
         update_component_data(component_name, row_idx, col_idx, most_similar_image, best_score)
@@ -446,7 +451,7 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
     return array_2d
 
 
-def select_and_update_image(component_name: str, row_idx: int, col_idx: int, target_id: int = None, prompt: str = None):
+def select_and_update_image(component_name: str, row_idx: int, col_idx: int, exclude_image: str = None, prompt: str = None):
     """
     Common logic to select and update an image based on similarity, style, and available neighbors.
     """
@@ -467,17 +472,16 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int, tar
         print("No valid neighbors found.")
         return None
 
-    if target_id is not None and prompt is None:
-        # Find row and col position based on the target_id
-        row_idx, col_idx, _ = find_tuple_by_id(components_data[component_name], target_id)
-        ai_insert_image(component_name, row_idx, col_idx)  # AI insert function
+    if prompt:
+        filename = find_image_according_to_prompt(already_selected_images=find_already_placed_images(component_name), prompt=prompt)
+        row_idx, col_idx = find_free_neighbor(component_name, row_idx, col_idx)
+        update_component_data(component_name=component_name, row_idx=row_idx, col_idx=col_idx, image_name=filename, score=1)
+        return filename, 1
 
     if image_selection_mode == "faceDetection":
-        most_similar_image, best_score = find_most_similar_face(available_images, neighbor_tensors, encoded_tensors, component_name)
-    elif image_selection_mode == "similarity":
-        most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors, component_name)
-    elif image_selection_mode == "style":
-        most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors, component_name)
+        most_similar_image, best_score = find_most_similar_face(available_images, neighbor_tensors, encoded_tensors, component_name, exclude_image)
+    elif image_selection_mode == "similarity" or image_selection_mode == "style":
+        most_similar_image, best_score = find_most_similar_image(available_images, neighbor_tensors, encoded_tensors, component_name, exclude_image)
     else:
         print(f"Invalid image selection mode '{image_selection_mode}' for {component_name}.")
         return None
@@ -491,7 +495,6 @@ def select_and_update_image(component_name: str, row_idx: int, col_idx: int, tar
     print(f"Execution time: {elapsed_time:.4f} seconds")
 
     return most_similar_image, best_score
-
 
 def insert_image(component_name: str, row_idx: int, col_idx: int):
     """Insert the most similar image filename into the components_data dictionary."""
@@ -599,8 +602,7 @@ def get_neighbor_tensors(component_name: str, row_idx: int, col_idx: int, encode
     return torch.stack(tensor_list) if tensor_list else torch.empty(0)
 
 
-def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict,
-                            component_name: str):
+def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict, component_name: str, exclude_image: str = None):
     """Find the most similar image based on cosine similarity."""
     placed_images = {
         item[1]
@@ -613,7 +615,7 @@ def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tens
     best_image = None
 
     for image_name in available_images:
-        if image_name in placed_images or image_name not in encoded_tensors:
+        if image_name in placed_images or image_name == exclude_image or image_name not in encoded_tensors:
             continue
         score = torch.cosine_similarity(encoded_tensors[image_name], neighbor_features, dim=0).mean().item()
         if score > best_score:
@@ -621,9 +623,7 @@ def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tens
             best_image = image_name
     return best_image, best_score
 
-
-def find_most_similar_face(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict,
-                           component_name: str):
+def find_most_similar_face(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict, component_name: str, exclude_image: str = None):
     placed_images = {
         item[1]
         for row in components_data[component_name]
@@ -635,7 +635,7 @@ def find_most_similar_face(available_images: list, neighbor_tensors: torch.Tenso
     best_image = None
 
     for image_name in available_images:
-        if image_name in placed_images or image_name not in encoded_tensors:
+        if image_name in placed_images or image_name == exclude_image or image_name not in encoded_tensors:
             continue
 
         image_path = os.path.join(UPLOAD_DIR, image_name)
