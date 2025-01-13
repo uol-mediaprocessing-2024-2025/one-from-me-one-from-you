@@ -271,7 +271,7 @@ const removeImages = async () => {
   <section class="sorting-options horizontal-layout">
     <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
       <div class="option">
-        <v-radio label="Face Detection" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
+        <v-radio label="Face Recognition" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
       </div>
       <div class="option">
         <v-radio label="Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort" color="indigo"></v-radio>
@@ -290,7 +290,7 @@ const removeImages = async () => {
         label="What should your next image be?"
         type="text"
         clearable
-    ></v-text-field>
+                  :disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"      ></v-text-field>
   </section>
   <br>
 
