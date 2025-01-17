@@ -18,6 +18,10 @@
                 <v-list-item class="d-flex" prepend-icon="mdi-image" link to="/gallery">
                     <v-list-item-title>Gallery</v-list-item-title>
                 </v-list-item>
+
+                <v-list-item class="d-flex" prepend-icon="mdi-file-upload" link to="/uploadImage">
+                    <v-list-item-title>Upload Image</v-list-item-title>
+                </v-list-item>
             </v-list>
         </v-navigation-drawer>
 
@@ -37,6 +41,7 @@ import {
 
 export default {
     components: {
+      // eslint-disable-next-line vue/no-unused-components
         RouterLink, // Register RouterLink for navigation
         RouterView, // Register RouterView for dynamic component rendering
     },

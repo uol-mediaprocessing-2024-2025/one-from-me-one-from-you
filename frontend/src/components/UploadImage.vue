@@ -2,10 +2,11 @@
 import axios from 'axios';
 import { store } from '../store';
 import { ref } from 'vue';
-import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
+import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
 
 const successMessage = ref('');
 const previewImages = ref([]);
+const messageStyle = ref({});
 
 const handleImageUpload = (event) => {
   const files = event.target.files;
@@ -14,8 +15,6 @@ const handleImageUpload = (event) => {
     for (const file of files) {
       const imageUrl = URL.createObjectURL(file);
       previewImages.value.push({ url: imageUrl, blob: file });
-      store.photoUrls.push(imageUrl);
-      store.photoBlobs.push(file);
     }
   }
 };
@@ -43,45 +42,40 @@ const uploadImage = async () => {
     });
 
     if (response.status === 200) {
-      response.data;
-
-      //const { message, file_paths } = response.data;
-      //console.log('Images uploaded successfully:', message);
-      //console.log('Saved at:', file_paths);
-
       successMessage.value = 'Images uploaded successfully!';
+      messageStyle.value = { backgroundColor: '#d4edda', color: '#155724', border: '1px solid #c3e6cb' }; // Green success style
       previewImages.value = [];
-
       await fetchAndStoreImages();
     } else {
+      successMessage.value = 'Something went wrong while uploading. Please try again later.';
+      messageStyle.value = { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' }; // Red error style
       console.error('Unexpected response:', response);
     }
   } catch (error) {
+    successMessage.value = 'Failed to upload images. Please check your connection or try again later.';
+    messageStyle.value = { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' }; // Red error style
     console.error('Failed to upload images:', error);
   }
 };
 </script>
 
 <template>
-  <div class="upload-container">
-    <!-- Success Message -->
-    <div v-if="successMessage" class="success-message">
+  <div class="upload-page">
+    <!-- Page Header -->
+    <header class="page-header">
+      <h1 class="page-title">Upload Your Images</h1>
+      <p class="page-description">
+        Select images to preview them below. Remove any unwanted images before uploading them to the server.
+      </p>
+    </header>
+
+    <!-- Feedback Messages -->
+    <div v-if="successMessage" class="feedback-message" :style="messageStyle">
       <p>{{ successMessage }}</p>
     </div>
 
-    <!-- Image Preview -->
-    <div v-if="previewImages.length" class="image-preview-gallery">
-      <h3>Preview Images:</h3>
-      <div class="gallery">
-        <div v-for="(item, index) in previewImages" :key="index" class="gallery-item">
-          <img :src="item.url" alt="Preview Image" />
-          <button class="remove-button" @click="removePreviewImage(index)">X</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- File Upload and Buttons -->
-    <div class="upload-actions">
+    <!-- Upload Actions -->
+    <div class="upload-header">
       <button @click="() => $refs.fileInput.click()" class="choose-image-button">
         Choose Images
       </button>
@@ -100,80 +94,167 @@ const uploadImage = async () => {
         Upload Images
       </button>
     </div>
+
+    <!-- Preview Gallery -->
+    <div v-if="previewImages.length" class="preview-gallery">
+      <h3 class="preview-title">Preview Selected Images</h3>
+      <div class="gallery-grid">
+        <div v-for="(item, index) in previewImages" :key="index" class="gallery-item">
+          <img :src="item.url" alt="Preview Image" />
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
+/* General Layout */
+.upload-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+  width: 100%;
+  height: 100vh;
+  box-sizing: border-box;
+  background: #f7f9fc;
+}
 
-.success-message {
-  color: green;
-  font-size: 18px;
+/* Page Header */
+.page-header {
+  text-align: center;
   margin-bottom: 20px;
 }
 
-.upload-container {
-  margin: 20px auto;
+.page-title {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+}
+
+.page-description {
+  font-size: 18px;
+  color: #555;
+  margin-top: 10px;
+}
+
+.feedback-message {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 5px;
   text-align: center;
 }
 
-.upload-actions {
-  margin: 20px;
+.feedback-message p {
+  margin: 0;
+}
+
+.feedback-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+/* Upload Header */
+.upload-header {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .choose-image-button, .upload-image-button {
-  margin: 5px;
-  padding: 10px 20px;
-  background-color: #007BFF;
-  color: #fff;
+  padding: 12px 30px;
+  font-size: 18px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
+  transition: all 0.3s ease;
+  color: white;
 }
 
-.choose-image-button:hover, .upload-image-button:hover {
+.choose-image-button {
+  background-color: #007bff;
+}
+.choose-image-button:hover {
   background-color: #0056b3;
 }
 
+.upload-image-button {
+  background-color: #28a745;
+}
+.upload-image-button:hover {
+  background-color: #218838;
+}
 .upload-image-button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
 
-.gallery {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 10px;
-  overflow-x: auto;
+/* Preview Gallery */
+.preview-gallery {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.preview-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #333;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+  justify-items: center;
 }
 
 .gallery-item {
-  flex: 0 0 auto;
   position: relative;
+  width: 150px;
+  height: 150px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .remove-button {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: red;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(255, 0, 0, 0.8);
   color: white;
   border: none;
-  border-radius: 3px;
-  padding: 5px;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
   cursor: pointer;
-  font-size: 12px;
+  transition: all 0.2s ease;
 }
 
 .remove-button:hover {
-  background-color: darkred;
-}
-
-.gallery-item img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  background-color: rgba(255, 0, 0, 1);
 }
 </style>

@@ -11,7 +11,6 @@ import FishGridComponent from "@/components/gridComponents/FishGridComponent.vue
 import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue";
 import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
-import UploadImage from "@/components/UploadImage.vue";
 import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
 import {clearCollage, updateImageSelectionMode} from "@/controller/GridComponentHelper.js";
 import {removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons} from "@/controller/FinishCollage.js";
@@ -290,7 +289,7 @@ const removeImages = async () => {
         label="What should your next image be?"
         type="text"
         clearable
-                  :disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"      ></v-text-field>
+        :disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"      ></v-text-field>
   </section>
   <br>
 
@@ -328,10 +327,6 @@ const removeImages = async () => {
 
     </div>
   </div>
-
-  <div>
-    <UploadImage/>
-  </div>
 </template>
 
 <style scoped>
@@ -350,6 +345,65 @@ header h1 {
   display: flex;
   gap: 20px;
   padding: 20px;
+  flex-direction: row; /* Ensures horizontal alignment */
+}
+
+.collage-preview {
+  flex: 3; /* Gives more room to the collage preview */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.settings-panel {
+  flex: 1;
+  max-height: 70%; /* Restricts the height of the settings panel */
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Reduced the space between elements */
+  padding: 15px; /* Reduced overall padding */
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  background-color: #fefefe;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; /* Adds scrolling if the content exceeds the height */
+}
+
+.settings-panel h2 {
+  font-size: 18px; /* Reduced heading font size */
+  margin-bottom: 10px; /* Reduced margin below headings */
+}
+
+.settings-panel section {
+  margin-bottom: 10px; /* Reduced spacing between sections */
+}
+
+.settings-panel .horizontal-layout {
+  gap: 10px; /* Reduced spacing between radio buttons */
+}
+
+.settings-panel .button {
+  margin: 5px 0; /* Reduced button margin */
+}
+
+.settings-panel .shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px; /* Reduced spacing between shape images */
+  justify-content: flex-start;
+}
+
+.shapes img {
+  width: 45px; /* Slightly smaller images */
+  height: 45px;
+  cursor: pointer;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  object-fit: cover;
 }
 
 .collage-preview img {
@@ -375,15 +429,6 @@ header h1 {
   border-radius: 5px;
 }
 
-#collage-container {
-  position: relative;
-  width: 100%;
-  height: auto;
-  overflow: hidden;
-  border: 2px solid #ccc;
-  border-radius: 5px;
-}
-
 .button {
   font-family: 'Arial', sans-serif;
   font-size: 16px;
@@ -392,7 +437,7 @@ header h1 {
   border: none;
   cursor: pointer;
   color: #fff;
-  margin: 10px;
+  margin: 10px 0;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -433,19 +478,6 @@ header h1 {
   cursor: pointer;
 }
 
-.popup {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
 .shapes img.selected-shape {
   border-color: blue;
 }
@@ -458,11 +490,6 @@ header h1 {
 
 .horizontal-layout .option {
   margin-right: 20px;
-}
-
-.grid-item:not(:has(img)) {
-  background-color: transparent !important; /* Entferne die Hintergrundfarbe */
-  border: none; /* Optional: Entferne die Umrandung */
 }
 
 .success-message{
