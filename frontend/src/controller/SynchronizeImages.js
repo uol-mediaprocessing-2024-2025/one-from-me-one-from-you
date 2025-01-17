@@ -3,6 +3,9 @@ import { store } from '@/store.js';
 import { scaleImage } from "@/controller/GridComponentHelper.js";
 
 export async function fetchAndStoreImages() {
+  store.photoUrls = [];
+  store.photoBlobs = [];
+
   try {
     const response = await axios.get(`${store.apiUrl}/getImages`, {
       headers: {
@@ -12,9 +15,6 @@ export async function fetchAndStoreImages() {
 
     // Check if the response status is OK and image_files exist
     if (response.status === 200 && Array.isArray(response.data.image_files)) {
-      store.photoUrls = [];
-      store.photoBlobs = [];
-
       for (const image of response.data.image_files) {
         const fullUrl = `${store.apiUrl}/uploaded_images/${image}`;
         store.photoUrls.push(fullUrl);

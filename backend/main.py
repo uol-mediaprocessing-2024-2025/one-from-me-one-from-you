@@ -61,6 +61,58 @@ class Base64Image(BaseModel):
     content: str
 
 
+def create_collage_from_components(component_name: str, target_size: Tuple[int, int] = (200, 200)) -> Image:
+    """
+    Creates a collage image from the components data based on the specified component name.
+    Ensures all images are resized to the target size before placing them in the collage.
+    Empty slots will be filled with a placeholder image.
+
+    Args:
+        component_name: The name of the component to generate the collage for.
+        target_size: The desired size (width, height) to which all images will be resized.
+
+    Returns:
+        A PIL Image object representing the collage.
+    """
+    # Check if the component exists in components_data
+    if component_name not in components_data:
+        raise ValueError(f"Component {component_name} not found.")
+
+    # Retrieve the 2D array of data (this contains the image file paths)
+    component_data = components_data[component_name]
+
+    # Determine the size of the collage
+    rows = len(component_data)
+    cols = len(component_data[0]) if rows > 0 else 0
+
+    # Create a new blank image for the collage (white background)
+    collage_width = cols * target_size[0]
+    collage_height = rows * target_size[1]
+    collage = Image.new("RGB", (collage_width, collage_height), color=(255, 255, 255))
+
+    # Create a placeholder image (empty slot), e.g., a white square
+    placeholder = Image.new("RGB", target_size, color=(230, 230, 230))  # Light gray placeholder
+
+    # Paste the resized images or placeholder images onto the collage
+    y_offset = 0
+    for row in component_data:
+        x_offset = 0
+        for item in row:
+            if item != "_" and item != "[]":  # Non-empty image slot
+                image_path = os.path.join(UPLOAD_DIR, item[1])  # item[1] is the file name
+                if os.path.exists(image_path):
+                    img = Image.open(image_path)
+                    img = img.resize(target_size)  # Resize image to the target size
+                    collage.paste(img, (x_offset, y_offset))  # Paste the image onto the collage
+            else:  # Empty slot, place a placeholder
+                collage.paste(placeholder, (x_offset, y_offset))
+
+            x_offset += target_size[0]  # Move to the next column
+        y_offset += target_size[1]  # Move to the next row
+
+    return collage
+
+
 @app.post("/saveImages")
 async def saveImages(files: List[UploadFile] = File(...)):
     """
@@ -141,7 +193,9 @@ async def get_images():
 
 @app.get("/ping")
 def ping():
-    print("ping")
+    collage = create_collage_from_components("rectangleComponent", target_size=(200, 200))  # Specify desired size
+    collage.show()  # Show the generated collage
+    collage.save("collage_output.jpg")  # Save the collage to a file
     return {"message": "pong"}
 
 

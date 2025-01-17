@@ -34,7 +34,7 @@ const removePreviewImage = async (index) => {
   isAITurn.value = true;
   isDisabled.value = true;
 
-  await wait(2000);
+  await wait(500);
   await newSelection(componentName, index);
   await updateCollageItems(componentName, items);
 

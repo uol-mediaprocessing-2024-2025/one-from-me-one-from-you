@@ -173,34 +173,13 @@ const safeCollageToGallery = async () => {
   const resetPlaceholders = await removeEmptyPlaceholders(gridContainer);
   const resetRemoveButtons = await removeRemoveButtons(gridContainer);
 
-  try {
-    // Scaling collage
-    const scaledBlob = await scaleCollageImages(gridContainer, 2);
-
-    // Saving in backend
-    const formData = new FormData();
-    formData.append("files", scaledBlob, "collage-upscaled.png");
-
-    const response = await axios.post(`${store.apiUrl}/saveImages`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    if (response.status === 200) {
-      console.log("Upscaled collage saved to gallery.");
-      displaySuccess(saveToGallerySuccess)
-      await fetchAndStoreImages();
-    } else {
-      console.error("Unexpected response:", response);
-    }
-  } catch (error) {
-    console.error("Couldn't upscale or save collage:", error);
-  } finally {
-    resetPlaceholders();
-    resetRemoveButtons();
-    gridContainer.style.cssText = originalStyle;
-  }
+  const scaledBlob = await scaleCollageImages(gridContainer, 2);
+  store.galleryBlobs.push(scaledBlob)
+  displaySuccess(saveToGallerySuccess)
+  await fetchAndStoreImages();
+  resetPlaceholders();
+  resetRemoveButtons();
+  gridContainer.style.cssText = originalStyle;
 };
 
 const displaySuccess = (popup, duration = 2000) => {

@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import {onMounted, ref} from 'vue';
 import { store } from '../store';
-import { useRouter } from 'vue-router'; // To navigate programmatically
+import { useRouter } from 'vue-router';
+import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js"; // To navigate programmatically
 
 const router = useRouter(); // Initialize the router
 
@@ -13,6 +14,10 @@ const handleImageClick = (index) => {
   selectedImageIndex.value = index;
   selectedImage.value = store.photoUrls[index];
   isModalOpen.value = true;
+};
+
+const handleImageError = (index) => {
+  console.error(`Image at index ${index} failed to load, replaced with fallback.`);
 };
 
 const closeModal = () => {
@@ -35,13 +40,9 @@ const previousImage = () => {
   }
 };
 
-const handleKeydown = (event) => {
-  if (event.key === 'ArrowLeft') {
-    previousImage();
-  } else if (event.key === 'ArrowRight') {
-    nextImage();
-  }
-};
+onMounted(() => {
+  fetchAndStoreImages();
+});
 
 const goToUploadPage = () => {
   router.push('/uploadImage'); // Navigate to the upload image page
@@ -77,17 +78,23 @@ const goToUploadPage = () => {
           md="4"
           lg="3"
           xl="2">
-          <v-img
-            :src="imgSrc"
-            aspect-ratio="1.67"
-            class="gallery-image"
-            @click="handleImageClick(index)">
-            <template v-slot:placeholder>
-              <v-row align="center" class="fill-height ma-0" justify="center">
-                <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
-              </v-row>
-            </template>
-          </v-img>
+        <v-img
+          :src="imgSrc"
+          aspect-ratio="1.67"
+          class="gallery-image"
+          @click="handleImageClick(index)"
+          @error="handleImageError(index)">
+          <template v-slot:placeholder>
+            <v-row align="center" class="fill-height ma-0" justify="center">
+              <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
+            </v-row>
+          </template>
+          <template v-slot:error>
+            <v-row align="center" justify="center" class="fill-height ma-0">
+              <v-icon color="red">mdi-alert-circle</v-icon>
+            </v-row>
+          </template>
+        </v-img>
         </v-col>
       </v-row>
     </div>
