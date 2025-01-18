@@ -4,21 +4,21 @@ import {useAttrs} from "vue";
 import {updateCollageItems, extractGridPositions, wait} from "@/controller/GridComponentHelper.js";
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
 
-const props = defineProps({
-  userPrompt: {
-    type: String,
-    required: true,
-  },
-});
 
 const attrs = useAttrs();
-
 const items = reactive(Array(34).fill({src: null, fileName: null}));
 const showModal = ref(false);
 const selectedIndex = ref(null);
 const componentName = "heartComponent";
 const isAITurn = ref(false);
 const isDisabled = ref(false);
+
+const props = defineProps({
+  userPrompt: {
+    type: String,
+    required: true,
+  },
+});
 
 onMounted(async () => {
   await updateCollageItems(componentName, items);
@@ -40,7 +40,7 @@ async function removePreviewImage(index) {
   isDisabled.value = true;
 
   await wait(500);
-  await updateCollageItems("rectangleComponent", items);
+  await updateCollageItems(componentName, items);
 
   isAITurn.value = false;
   isDisabled.value = false;

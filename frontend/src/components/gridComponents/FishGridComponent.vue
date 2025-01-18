@@ -1,8 +1,16 @@
 <script setup>
 import {ref, reactive, onMounted, defineProps} from "vue";
 import { useAttrs } from "vue";
-import { updateCollageItems, scaleImage, extractGridPositions, wait } from "@/controller/GridComponentHelper.js";
+import { updateCollageItems, extractGridPositions, wait } from "@/controller/GridComponentHelper.js";
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
+
+const attrs = useAttrs();
+const items = reactive(Array(35).fill({ src: null, fileName: null }));
+const showModal = ref(false);
+const selectedIndex = ref(null);
+const componentName = "fishComponent";
+const isAITurn = ref(false);
+const isDisabled = ref(false);
 
 const props = defineProps({
   userPrompt: {
@@ -10,15 +18,6 @@ const props = defineProps({
     required: true,
   },
 });
-
-const attrs = useAttrs();
-
-const items = reactive(Array(35).fill({ src: null, fileName: null }));
-const showModal = ref(false);
-const selectedIndex = ref(null);
-const componentName = "fishComponent";
-const isAITurn = ref(false);
-const isDisabled = ref(false);
 
 onMounted(async () => {
   await updateCollageItems(componentName, items);
@@ -34,17 +33,21 @@ function closeModal() {
   selectedIndex.value = null;
 }
 
-async function selectImage(image) {
+async function removePreviewImage(index) {
+  items[index] = { src: null, fileName: null };
+  isAITurn.value = true;
+  isDisabled.value = true;
+
+  await wait(500);
+  await updateCollageItems(componentName, items);
+
+  isAITurn.value = false;
+  isDisabled.value = false;
+}
+
+async function selectImage({ src, fileName }) {
   if (selectedIndex.value !== null) {
-    const scaledImage = await scaleImage(image);
-    const fileName = image.split("/").pop();
-
-    items[selectedIndex.value] = {
-      src: scaledImage,
-      fileName: fileName,
-    };
-
-    closeModal();
+    items[selectedIndex.value] = {src, fileName};
 
     isAITurn.value = true;
     isDisabled.value = true;
@@ -64,39 +67,41 @@ async function selectImage(image) {
 </script>
 
 <template>
-<div class="rectangle-grid-container">
-  <div v-if="isAITurn" class="popup">
-    <v-progress-linear
-      color="teal"
-      indeterminate
-      rounded
-      buffer-value="10000"
-      stream
-    ></v-progress-linear>
-    <br>
-    AI is thinking...
-  </div>
+  <div class="rectangle-grid-container">
+    <!-- Popup AI thinking -->
+    <div v-if="isAITurn" class="popup">
+      <v-progress-linear
+          color="teal"
+          indeterminate
+          rounded
+          buffer-value="10000"
+          stream
+      ></v-progress-linear>
+      <br>
+      AI is thinking...
+    </div>
 
-  <div class="rectangle-grid" v-bind="attrs">
-    <div
-      v-for="(item, index) in items"
-      :key="index"
-      class="grid-item"
-      :class="{ disabled: isDisabled }"
-    >
-      <!-- Show image if selected -->
-      <label
-        v-if="!item.src"
-        class="upload-label"
-        @click="!isDisabled && openImageSelection(index)"
-      >
-        + Select Image
-      </label>
-      <img v-else :src="item.src" alt="Bild" />
+    <div class="rectangle-grid" v-bind="attrs">
+      <div
+          v-for="(item, index) in items"
+          :key="index"
+          class="grid-item"
+          :class="{ disabled: isDisabled }">
+        <!-- Show image if selected -->
+        <label
+            v-if="!item.src"
+            class="upload-label"
+            @click="!isDisabled && openImageSelection(index)"
+        >
+          + Select Image
+        </label>
+        <div v-else class="image-container">
+          <img :src="item.src" alt="Bild"/>
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-
 
   <ImageSelectionModal
       :showModal="showModal"
@@ -104,10 +109,31 @@ async function selectImage(image) {
       @close-modal="closeModal"
       @select-image="selectImage"
   />
-
 </template>
 
 <style scoped>
+.remove-button {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 18px;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.remove-button:hover {
+  background-color: darkred;
+}
+
 .rectangle-grid-container {
   display: flex;
   justify-content: center;

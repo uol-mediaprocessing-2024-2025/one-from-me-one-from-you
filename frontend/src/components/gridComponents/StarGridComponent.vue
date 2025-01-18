@@ -35,7 +35,7 @@ async function removePreviewImage(index) {
   isDisabled.value = true;
 
   await wait(500);
-  await updateCollageItems("rectangleComponent", items);
+  await updateCollageItems(componentName, items);
 
   isAITurn.value = false;
   isDisabled.value = false;
@@ -100,7 +100,6 @@ async function selectImage({ src, fileName }) {
     </div>
   </div>
 
-  <!-- Modal for image selection -->
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"
@@ -110,6 +109,28 @@ async function selectImage({ src, fileName }) {
 </template>
 
 <style scoped>
+.remove-button {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 18px;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.remove-button:hover {
+  background-color: darkred;
+}
+
 .rectangle-grid-container {
   display: flex;
   justify-content: center;

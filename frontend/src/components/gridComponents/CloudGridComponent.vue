@@ -24,6 +24,18 @@ onMounted(async () => {
   await updateCollageItems(componentName, items);
 });
 
+async function removePreviewImage(index) {
+  items[index] = { src: null, fileName: null };
+  isAITurn.value = true;
+  isDisabled.value = true;
+
+  await wait(500);
+  await updateCollageItems(componentName, items);
+
+  isAITurn.value = false;
+  isDisabled.value = false;
+}
+
 function openImageSelection(index) {
   selectedIndex.value = index;
   showModal.value = true;
@@ -64,50 +76,73 @@ async function selectImage(image) {
 </script>
 
 <template>
-<div class="rectangle-grid-container">
-  <div v-if="isAITurn" class="popup">
-    <v-progress-linear
-      color="teal"
-      indeterminate
-      rounded
-      buffer-value="10000"
-      stream
-    ></v-progress-linear>
-    <br>
-    AI is thinking...
-  </div>
+  <div class="rectangle-grid-container">
+    <!-- Popup AI thinking -->
+    <div v-if="isAITurn" class="popup">
+      <v-progress-linear
+          color="teal"
+          indeterminate
+          rounded
+          buffer-value="10000"
+          stream
+      ></v-progress-linear>
+      <br>
+      AI is thinking...
+    </div>
 
-  <div class="rectangle-grid" v-bind="attrs">
-    <div
-      v-for="(item, index) in items"
-      :key="index"
-      class="grid-item"
-      :class="{ disabled: isDisabled }"
-    >
-      <!-- Show image if selected -->
-      <label
-        v-if="!item.src"
-        class="upload-label"
-        @click="!isDisabled && openImageSelection(index)"
-      >
-        + Select Image
-      </label>
-      <img v-else :src="item.src" alt="Bild" />
+    <div class="rectangle-grid" v-bind="attrs">
+      <div
+          v-for="(item, index) in items"
+          :key="index"
+          class="grid-item"
+          :class="{ disabled: isDisabled }">
+        <!-- Show image if selected -->
+        <label
+            v-if="!item.src"
+            class="upload-label"
+            @click="!isDisabled && openImageSelection(index)"
+        >
+          + Select Image
+        </label>
+        <div v-else class="image-container">
+          <img :src="item.src" alt="Bild"/>
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-    <!-- Modal for image picking -->
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"
       @close-modal="closeModal"
       @select-image="selectImage"
   />
-
 </template>
 
 <style scoped>
+.remove-button {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 18px;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.remove-button:hover {
+  background-color: darkred;
+}
+
 .rectangle-grid-container {
   display: flex;
   justify-content: center;
