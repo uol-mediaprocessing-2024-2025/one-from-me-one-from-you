@@ -97,7 +97,6 @@ async function selectImage(image) {
   </div>
 </div>
 
-
     <!-- Modal for image picking -->
     <div v-if="showModal" class="image-selection-modal">
       <div class="modal-content">

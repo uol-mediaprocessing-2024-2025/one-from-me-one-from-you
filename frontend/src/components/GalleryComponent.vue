@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 import { store } from '../store'; // Assuming this is a reactive store
 import { useRouter } from 'vue-router';
 import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
@@ -16,6 +16,10 @@ const handleImageClick = (index, type) => {
   isModalOpen.value = true;
 };
 
+const getTotalImageCount = () => {
+  return store.photoUrls.length + store.galleryBlobs.length;
+};
+
 const handleImageError = (index) => {
   console.error(`Image at index ${index} failed to load.`);
 };
@@ -26,13 +30,9 @@ const closeModal = () => {
   selectedImageIndex.value = null;
 };
 
-const getTotalImageCount = () => {
-  return store.photoUrls.length + store.galleryBlobs.length;
-};
-
 const nextImage = () => {
   if (selectedImageIndex.value !== null) {
-    if (selectedImageIndex.value < getTotalImageCount() - 1) {
+    if (selectedImageIndex.value < store.photoUrls.length - 1 || selectedImageIndex.value < store.galleryBlobs.length - 1) {
       selectedImageIndex.value += 1;
       selectedImage.value = getSelectedImage();
     }
@@ -55,31 +55,19 @@ const getSelectedImage = () => {
   }
 };
 
-const loadFromLocalStorage = () => {
-  const galleryBlobs = JSON.parse(localStorage.getItem('galleryBlobs'));
-
-  if (galleryBlobs) {
-    store.galleryBlobs = galleryBlobs.map(blob => {
-      const byteArray = new Uint8Array(blob.data);
-      return new Blob([byteArray], { type: blob.type });
-    });
-  }
-};
-
 const getObjectUrl = (blob) => {
-  // Check if it's already a base64 string
+  // If blob is a base64 string, return it directly as a data URL
   if (typeof blob === 'string' && blob.startsWith('data:')) {
     return blob; // It's already in data URL format
   }
 
-  // Otherwise, convert it to a Blob URL
+  // Otherwise, convert it to a Blob URL (for actual Blob objects)
   const objectUrl = URL.createObjectURL(blob);
   return objectUrl;
 };
 
 // Ensure images are loaded on page load
 onMounted(() => {
-  loadFromLocalStorage(); // Load persisted data from localStorage
   fetchAndStoreImages(); // Optionally fetch additional images if needed
 });
 
@@ -87,7 +75,6 @@ const goToUploadPage = () => {
   router.push('/uploadImage'); // Navigate to the upload image page
 };
 </script>
-
 
 <template>
   <div class="gallery-container">
@@ -110,9 +97,9 @@ const goToUploadPage = () => {
     <!-- Section for photoUrls -->
     <div v-if="store.photoUrls.length > 0" class="gallery-section">
       <h3 class="section-title url-title">Photo URLs</h3>
-        <div class="gallery-grid">
-          <v-row dense>
-            <v-col
+      <div class="gallery-grid">
+        <v-row dense>
+          <v-col
               v-for="(imgSrc, index) in store.photoUrls"
               :key="'url-' + index"
               cols="6"
@@ -120,46 +107,12 @@ const goToUploadPage = () => {
               md="3"
               lg="2"
               xl="2">
-              <v-img
+            <v-img
                 :src="imgSrc"
                 aspect-ratio="1.8"
                 class="gallery-image"
                 @click="handleImageClick(index, 'url')"
                 @error="handleImageError(index)">
-                <template v-slot:placeholder>
-                  <v-row align="center" class="fill-height ma-0" justify="center">
-                    <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
-                  </v-row>
-                </template>
-                <template v-slot:error>
-                  <v-row align="center" justify="center" class="fill-height ma-0">
-                    <v-icon color="red">mdi-alert-circle</v-icon>
-                  </v-row>
-                </template>
-              </v-img>
-            </v-col>
-          </v-row>
-        </div>
-      </div>
-
-    <div v-if="store.galleryBlobs.length > 0" class="gallery-section">
-      <h3 class="section-title blob-title">Uploaded Blob Files</h3>
-      <div class="gallery-grid">
-        <v-row dense>
-          <v-col
-            v-for="(blob, index) in store.galleryBlobs"
-            :key="'blob-' + index"
-            cols="6"
-            sm="4"
-            md="3"
-            lg="2"
-            xl="2">
-            <v-img
-              :src="getObjectUrl(blob)"
-              aspect-ratio="1.3"
-              class="gallery-image"
-              @click="handleImageClick(index, 'blob')"
-              @error="handleImageError(index)">
               <template v-slot:placeholder>
                 <v-row align="center" class="fill-height ma-0" justify="center">
                   <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
@@ -171,7 +124,40 @@ const goToUploadPage = () => {
                 </v-row>
               </template>
             </v-img>
+          </v-col>
+        </v-row>
+      </div>
+    </div>
 
+    <div v-if="store.galleryBlobs.length > 0" class="gallery-section">
+      <h3 class="section-title blob-title">Uploaded Blob Files</h3>
+      <div class="gallery-grid">
+        <v-row dense>
+          <v-col
+              v-for="(blob, index) in store.galleryBlobs"
+              :key="'blob-' + index"
+              cols="6"
+              sm="4"
+              md="3"
+              lg="2"
+              xl="2">
+            <v-img
+                :src="getObjectUrl(blob)"
+                aspect-ratio="1.3"
+                class="gallery-image"
+                @click="handleImageClick(index, 'blob')"
+                @error="handleImageError(index)">
+              <template v-slot:placeholder>
+                <v-row align="center" class="fill-height ma-0" justify="center">
+                  <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
+                </v-row>
+              </template>
+              <template v-slot:error>
+                <v-row align="center" justify="center" class="fill-height ma-0">
+                  <v-icon color="red">mdi-alert-circle</v-icon>
+                </v-row>
+              </template>
+            </v-img>
           </v-col>
         </v-row>
       </div>
@@ -180,7 +166,7 @@ const goToUploadPage = () => {
     <!-- Modal for Enlarged Image -->
     <v-dialog v-model="isModalOpen" max-width="80vw">
       <v-card class="modal-card">
-        <v-img :src="selectedImage" class="enlarged-image" contain />
+        <v-img :src="selectedImage" class="enlarged-image" contain/>
         <div class="modal-navigation">
           <v-btn icon @click="previousImage" :disabled="selectedImageIndex === 0">
             <v-icon>mdi-chevron-left</v-icon>
@@ -196,7 +182,6 @@ const goToUploadPage = () => {
     </v-dialog>
   </div>
 </template>
-
 
 <style scoped>
 /* Styling for the header section */

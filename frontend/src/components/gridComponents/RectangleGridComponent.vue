@@ -1,63 +1,42 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
-import { useAttrs, defineProps } from "vue";
-import { updateCollageItems, scaleImage, extractGridPositions, wait, newSelection } from "@/controller/GridComponentHelper.js";
-import { store } from "@/store.js";
+import { useAttrs } from "vue";
+import { updateCollageItems, wait, extractGridPositions } from "@/controller/GridComponentHelper.js";
+import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
 
 const attrs = useAttrs();
-
-const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
-const componentName = "rectangleComponent";
 const isAITurn = ref(false);
 const isDisabled = ref(false);
-
-onMounted(async () => {
-  await updateCollageItems(componentName, items);
-});
+const items = reactive(Array(35).fill({ src: null, fileName: null }));
 
 function openImageSelection(index) {
   selectedIndex.value = index;
   showModal.value = true;
 }
 
-const props = defineProps({
-  userPrompt: {
-    type: String,
-    required: true,
-  },
-});
-
-const removePreviewImage = async (index) => {
-  //items[index] = { src: null, fileName: null };
-  isAITurn.value = true;
-  isDisabled.value = true;
-
-  await wait(500);
-  await newSelection(componentName, index);
-  await updateCollageItems(componentName, items);
-
-  isAITurn.value = false;
-  isDisabled.value = false;
-};
-
 function closeModal() {
   showModal.value = false;
   selectedIndex.value = null;
 }
 
-async function selectImage(image) {
+async function removePreviewImage(index) {
+  items[index] = { src: null, fileName: null };
+  isAITurn.value = true;
+  isDisabled.value = true;
+
+  await wait(500);
+  await updateCollageItems("rectangleComponent", items);
+
+  isAITurn.value = false;
+  isDisabled.value = false;
+}
+
+async function selectImage({ src, fileName }) {
   if (selectedIndex.value !== null) {
-    const scaledImage = await scaleImage(image);
-    const fileName = image.split("/").pop();
+    items[selectedIndex.value] = {src, fileName};
 
-    items[selectedIndex.value] = {
-      src: scaledImage,
-      fileName: fileName,
-    };
-
-    closeModal();
     isAITurn.value = true;
     isDisabled.value = true;
 
@@ -65,70 +44,64 @@ async function selectImage(image) {
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
-    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
+    await extractGridPositions(gridContainer, gridItems, items, "rectangleComponent", "userPrompt");
 
-    await updateCollageItems(componentName, items);
+    await updateCollageItems("rectangleComponent", items);
 
     isAITurn.value = false;
     isDisabled.value = false;
   }
 }
+
+onMounted(() => {
+  updateCollageItems("rectangleComponent", items);
+});
 </script>
 
 <template>
-<div class="rectangle-grid-container">
-  <div v-if="isAITurn" class="popup">
-    <v-progress-linear
-      color="teal"
-      indeterminate
-      rounded
-      buffer-value="10000"
-      stream
-    ></v-progress-linear>
-    <br>
-    AI is thinking...
-  </div>
-  <div class="rectangle-grid" v-bind="attrs">
-    <div
-      v-for="(item, index) in items"
-      :key="index"
-      class="grid-item"
-      :class="{ disabled: isDisabled }">
-      <!-- Show image if selected -->
-      <label
-        v-if="!item.src"
-        class="upload-label"
-        @click="!isDisabled && openImageSelection(index)"
-      >
-        + Select Image
-      </label>
-      <div v-else class="image-container">
-        <img :src="item.src" alt="Bild" />
-        <button class="remove-button" @click="removePreviewImage(index)">X</button>
+  <div class="rectangle-grid-container">
+    <!-- Popup AI thinking -->
+    <div v-if="isAITurn" class="popup">
+      <v-progress-linear
+          color="teal"
+          indeterminate
+          rounded
+          buffer-value="10000"
+          stream
+      ></v-progress-linear>
+      <br>
+      AI is thinking...
+    </div>
+
+    <div class="rectangle-grid" v-bind="attrs">
+      <div
+          v-for="(item, index) in items"
+          :key="index"
+          class="grid-item"
+          :class="{ disabled: isDisabled }">
+        <!-- Show image if selected -->
+        <label
+            v-if="!item.src"
+            class="upload-label"
+            @click="!isDisabled && openImageSelection(index)"
+        >
+          + Select Image
+        </label>
+        <div v-else class="image-container">
+          <img :src="item.src" alt="Bild"/>
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-
-    <!-- Modal for image picking -->
-    <div v-if="showModal" class="image-selection-modal">
-      <div class="modal-content">
-        <h3>Select an Image</h3>
-        <div class="image-list">
-          <div
-            v-for="(image, i) in store.photoUrls"
-            :key="i"
-            class="image-item"
-            @click="selectImage(image)"
-            >
-            <img :src="image" alt="Uploaded Image" />
-          </div>
-        </div>
-        <button @click="closeModal">Cancel</button>
-      </div>
-  </div>
-
+  <!-- Modal for image selection -->
+  <ImageSelectionModal
+      :showModal="showModal"
+      :selectedIndex="selectedIndex"
+      @close-modal="closeModal"
+      @select-image="selectImage"
+  />
 </template>
 
 <style scoped>
@@ -192,11 +165,6 @@ async function selectImage(image) {
   cursor: not-allowed;
 }
 
-.grid-item.dragover{
-  -webkit-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
-}
-
 .grid-item img {
   transform: scale(1.05);
   transform-origin: center center;
@@ -238,7 +206,6 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .grid-item:nth-child(34) { top: 50%; left: 70%; }
 .grid-item:nth-child(35) { top: 60%; left: 70%; }
 
-
 .upload-label {
   display: flex;
   align-items: center;
@@ -252,65 +219,6 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .upload-label input {
   visibility: hidden;
   display: none;
-}
-
-.image-selection-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  width: 300px;
-}
-
-.image-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-  justify-content: center;
-}
-
-.image-item {
-  width: 50px;
-  height: 50px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.image-item img {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.modal-content button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.modal-content button:hover {
-  background-color: #0056b3;
 }
 
 .popup {
@@ -332,5 +240,4 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 10px;
 }
-
 </style>
