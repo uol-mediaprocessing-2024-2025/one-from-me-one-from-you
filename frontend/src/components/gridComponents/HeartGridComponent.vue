@@ -2,7 +2,7 @@
 import {ref, reactive, onMounted, defineProps} from "vue";
 import {useAttrs} from "vue";
 import {updateCollageItems, scaleImage, extractGridPositions, wait} from "@/controller/GridComponentHelper.js";
-import {store} from "@/store.js";
+import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
 
 const props = defineProps({
   userPrompt: {
@@ -98,23 +98,12 @@ async function selectImage(image) {
   </div>
 
 
-  <!-- Modal for image picking -->
-  <div v-if="showModal" class="image-selection-modal">
-    <div class="modal-content">
-      <h3>Select an Image</h3>
-      <div class="image-list">
-        <div
-            v-for="(image, i) in store.photoUrls"
-            :key="i"
-            class="image-item"
-            @click="selectImage(image)"
-        >
-          <img :src="image" alt="Uploaded Image"/>
-        </div>
-      </div>
-      <button @click="closeModal">Cancel</button>
-    </div>
-  </div>
+  <ImageSelectionModal
+      :showModal="showModal"
+      :selectedIndex="selectedIndex"
+      @close-modal="closeModal"
+      @select-image="selectImage"
+  />
 
 </template>
 

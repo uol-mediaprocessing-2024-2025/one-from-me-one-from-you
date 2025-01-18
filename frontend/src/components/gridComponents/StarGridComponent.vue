@@ -1,5 +1,5 @@
 <script setup>
-import { store } from "@/store.js";
+import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
 import {ref, reactive, defineProps} from "vue";
 import {useAttrs} from 'vue';
 
@@ -129,24 +129,12 @@ async function extractGridPositions() {
         </div>
       </div>
 
-    <!-- Modal for image picking -->
-    <div v-if="showModal" class="image-selection-modal">
-      <div class="modal-content">
-        <h3>Select an Image</h3>
-        <div class="image-list">
-          <div
-            v-for="(image, i) in store.photoUrls"
-            :key="i"
-            class="image-item"
-            @click="selectImage(image)"
-            >
-            <img :src="image" alt="Uploaded Image" />
-          </div>
-        </div>
-        <button @click="closeModal">Cancel</button>
-      </div>
-    </div>
-  </div>
+  <ImageSelectionModal
+      :showModal="showModal"
+      :selectedIndex="selectedIndex"
+      @close-modal="closeModal"
+      @select-image="selectImage"
+  />
 
 </template>
 
