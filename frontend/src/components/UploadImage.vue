@@ -13,20 +13,95 @@ const handleImageUpload = (event) => {
   if (files && files.length > 0) {
     successMessage.value = '';
     for (const file of files) {
-      const imageUrl = URL.createObjectURL(file);
-      previewImages.value.push({ url: imageUrl, blob: file });
+      downscaleImage(file, 300, 300) // Downscale to max 300x300 (or any size you prefer)
+        .then(({ url, blob }) => {
+          previewImages.value.push({ url, blob });
+        })
+        .catch((error) => {
+          console.error('Error downsizing image:', error);
+        });
     }
   }
+};
+
+/**
+ * Downscales an image to the specified width and height using a canvas.
+ * @param {File} file - The original image file.
+ * @param {number} maxWidth - The maximum width of the output image.
+ * @param {number} maxHeight - The maximum height of the output image.
+ * @returns {Promise<{url: string, blob: Blob}>} - A Promise that resolves with the downscaled image's URL and blob.
+ */
+const downscaleImage = (file, maxWidth, maxHeight) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    // Load the image file as a data URL
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+
+    reader.onerror = (err) => reject(err);
+
+    // Once the image is loaded, resize it
+    img.onload = () => {
+      // Calculate the target dimensions while maintaining the aspect ratio
+      const aspectRatio = img.width / img.height;
+      let targetWidth = maxWidth;
+      let targetHeight = maxHeight;
+
+      if (aspectRatio > 1) {
+        // Landscape
+        targetHeight = maxWidth / aspectRatio;
+      } else {
+        // Portrait or square
+        targetWidth = maxHeight * aspectRatio;
+      }
+
+      // Create a canvas to draw the resized image
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+      // Convert the canvas back to a blob and create an object URL
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            resolve({ url, blob });
+          } else {
+            reject(new Error('Canvas conversion to Blob failed.'));
+          }
+        },
+        file.type,
+        0.8 // Quality factor (optional, between 0 and 1)
+      );
+    };
+
+    img.onerror = (err) => reject(err);
+
+    // Read the file as a data URL
+    reader.readAsDataURL(file);
+  });
 };
 
 const removePreviewImage = (index) => {
   previewImages.value.splice(index, 1);
 };
 
+const isUploading = ref(false); // Status variable for the upload
+const statusMessage = ref(''); // Message for the user
+
 const uploadImage = async () => {
   if (!previewImages.value.length) return;
 
   try {
+    // Set status to "Uploading" and notify the user
+    isUploading.value = true;
+    statusMessage.value = 'Uploading images...';
+
     const formData = new FormData();
 
     previewImages.value.forEach((item, index) => {
@@ -43,18 +118,23 @@ const uploadImage = async () => {
 
     if (response.status === 200) {
       successMessage.value = 'Images uploaded successfully!';
-      messageStyle.value = { backgroundColor: '#d4edda', color: '#155724', border: '1px solid #c3e6cb' }; // Green success style
+      statusMessage.value = ''; // Reset status message
+      messageStyle.value = { backgroundColor: '#d4edda', color: '#155724', border: '1px solid #c3e6cb' }; // Green for success
       previewImages.value = [];
       await fetchAndStoreImages();
     } else {
-      successMessage.value = 'Something went wrong while uploading. Please try again later.';
-      messageStyle.value = { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' }; // Red error style
+      successMessage.value = 'An error occurred while uploading. Please try again.';
+      statusMessage.value = ''; // Show error message and reset status
+      messageStyle.value = { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' }; // Red for error
       console.error('Unexpected response:', response);
     }
   } catch (error) {
     successMessage.value = 'Failed to upload images. Please check your connection or try again later.';
-    messageStyle.value = { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' }; // Red error style
+    statusMessage.value = ''; // Show error message and reset status
+    messageStyle.value = { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' }; // Red for error
     console.error('Failed to upload images:', error);
+  } finally {
+    isUploading.value = false; // Upload finished
   }
 };
 </script>
@@ -90,8 +170,8 @@ const uploadImage = async () => {
       <button
         @click="uploadImage"
         class="upload-image-button"
-        :disabled="!previewImages.length">
-        Upload Images
+        :disabled="!previewImages.length || isUploading">
+        {{ isUploading ? 'Uploading...' : 'Upload Images' }}
       </button>
     </div>
 

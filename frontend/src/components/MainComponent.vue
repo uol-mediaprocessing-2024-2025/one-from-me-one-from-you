@@ -15,6 +15,7 @@ import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
 import {clearCollage, updateImageSelectionMode} from "@/controller/GridComponentHelper.js";
 import {removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons} from "@/controller/FinishCollage.js";
 
+
 import {store} from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
@@ -174,12 +175,26 @@ const safeCollageToGallery = async () => {
   const resetRemoveButtons = await removeRemoveButtons(gridContainer);
 
   const scaledBlob = await scaleCollageImages(gridContainer, 2);
-  store.galleryBlobs.push(scaledBlob)
-  displaySuccess(saveToGallerySuccess)
+  store.galleryBlobs.push(scaledBlob);
+
+  // Save the new galleryBlob to localStorage
+  saveToLocalStorage(); // Ensure localStorage is updated with the new blob
+
+  displaySuccess(saveToGallerySuccess);
+
   await fetchAndStoreImages();
+
   resetPlaceholders();
   resetRemoveButtons();
   gridContainer.style.cssText = originalStyle;
+};
+
+const saveToLocalStorage = () => {
+  const blobArray = store.galleryBlobs.map(blob => ({
+    type: blob.type,
+    data: Array.from(new Uint8Array(blob))
+  }));
+  localStorage.setItem('galleryBlobs', JSON.stringify(blobArray));
 };
 
 const displaySuccess = (popup, duration = 2000) => {

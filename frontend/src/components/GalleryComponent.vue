@@ -1,23 +1,23 @@
 <script setup>
-import {onMounted, ref} from 'vue';
-import { store } from '../store';
+import { onMounted, ref, watch } from 'vue';
+import { store } from '../store'; // Assuming this is a reactive store
 import { useRouter } from 'vue-router';
-import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js"; // To navigate programmatically
+import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
 
-const router = useRouter(); // Initialize the router
+const router = useRouter();
 
 const selectedImage = ref(null);
 const isModalOpen = ref(false);
 const selectedImageIndex = ref(null);
 
-const handleImageClick = (index) => {
+const handleImageClick = (index, type) => {
   selectedImageIndex.value = index;
-  selectedImage.value = store.photoUrls[index];
+  selectedImage.value = type === 'url' ? store.photoUrls[index] : getObjectUrl(store.galleryBlobs[index]);
   isModalOpen.value = true;
 };
 
 const handleImageError = (index) => {
-  console.error(`Image at index ${index} failed to load, replaced with fallback.`);
+  console.error(`Image at index ${index} failed to load.`);
 };
 
 const closeModal = () => {
@@ -26,28 +26,68 @@ const closeModal = () => {
   selectedImageIndex.value = null;
 };
 
+const getTotalImageCount = () => {
+  return store.photoUrls.length + store.galleryBlobs.length;
+};
+
 const nextImage = () => {
-  if (selectedImageIndex.value !== null && selectedImageIndex.value < store.photoUrls.length - 1) {
-    selectedImageIndex.value += 1;
-    selectedImage.value = store.photoUrls[selectedImageIndex.value];
+  if (selectedImageIndex.value !== null) {
+    if (selectedImageIndex.value < getTotalImageCount() - 1) {
+      selectedImageIndex.value += 1;
+      selectedImage.value = getSelectedImage();
+    }
   }
 };
 
 const previousImage = () => {
   if (selectedImageIndex.value !== null && selectedImageIndex.value > 0) {
     selectedImageIndex.value -= 1;
-    selectedImage.value = store.photoUrls[selectedImageIndex.value];
+    selectedImage.value = getSelectedImage();
   }
 };
 
+const getSelectedImage = () => {
+  if (selectedImageIndex.value < store.photoUrls.length) {
+    return store.photoUrls[selectedImageIndex.value];
+  } else {
+    const blobIndex = selectedImageIndex.value - store.photoUrls.length;
+    return getObjectUrl(store.galleryBlobs[blobIndex]);
+  }
+};
+
+const loadFromLocalStorage = () => {
+  const galleryBlobs = JSON.parse(localStorage.getItem('galleryBlobs'));
+
+  if (galleryBlobs) {
+    store.galleryBlobs = galleryBlobs.map(blob => {
+      const byteArray = new Uint8Array(blob.data);
+      return new Blob([byteArray], { type: blob.type });
+    });
+  }
+};
+
+const getObjectUrl = (blob) => {
+  // Check if it's already a base64 string
+  if (typeof blob === 'string' && blob.startsWith('data:')) {
+    return blob; // It's already in data URL format
+  }
+
+  // Otherwise, convert it to a Blob URL
+  const objectUrl = URL.createObjectURL(blob);
+  return objectUrl;
+};
+
+// Ensure images are loaded on page load
 onMounted(() => {
-  fetchAndStoreImages();
+  loadFromLocalStorage(); // Load persisted data from localStorage
+  fetchAndStoreImages(); // Optionally fetch additional images if needed
 });
 
 const goToUploadPage = () => {
   router.push('/uploadImage'); // Navigate to the upload image page
 };
 </script>
+
 
 <template>
   <div class="gallery-container">
@@ -60,43 +100,81 @@ const goToUploadPage = () => {
     </header>
 
     <!-- If there are no images to display, show the upload button -->
-    <div v-if="store.photoUrls.length === 0" class="no-images-container">
+    <div v-if="store.photoUrls.length === 0 && store.galleryBlobs.length === 0" class="no-images-container">
       <p>No images to display. Please upload some images.</p>
       <v-btn @click="goToUploadPage" color="primary" class="upload-button">
         Upload Images
       </v-btn>
     </div>
 
-    <!-- Image Grid -->
-    <div v-else class="gallery-grid">
-      <v-row dense>
-        <v-col
-          v-for="(imgSrc, index) in store.photoUrls"
-          :key="index"
-          cols="12"
-          sm="6"
-          md="4"
-          lg="3"
-          xl="2">
-        <v-img
-          :src="imgSrc"
-          aspect-ratio="1.67"
-          class="gallery-image"
-          @click="handleImageClick(index)"
-          @error="handleImageError(index)">
-          <template v-slot:placeholder>
-            <v-row align="center" class="fill-height ma-0" justify="center">
-              <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
-            </v-row>
-          </template>
-          <template v-slot:error>
-            <v-row align="center" justify="center" class="fill-height ma-0">
-              <v-icon color="red">mdi-alert-circle</v-icon>
-            </v-row>
-          </template>
-        </v-img>
-        </v-col>
-      </v-row>
+    <!-- Section for photoUrls -->
+    <div v-if="store.photoUrls.length > 0" class="gallery-section">
+      <h3 class="section-title url-title">Photo URLs</h3>
+        <div class="gallery-grid">
+          <v-row dense>
+            <v-col
+              v-for="(imgSrc, index) in store.photoUrls"
+              :key="'url-' + index"
+              cols="6"
+              sm="4"
+              md="3"
+              lg="2"
+              xl="2">
+              <v-img
+                :src="imgSrc"
+                aspect-ratio="1.8"
+                class="gallery-image"
+                @click="handleImageClick(index, 'url')"
+                @error="handleImageError(index)">
+                <template v-slot:placeholder>
+                  <v-row align="center" class="fill-height ma-0" justify="center">
+                    <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
+                  </v-row>
+                </template>
+                <template v-slot:error>
+                  <v-row align="center" justify="center" class="fill-height ma-0">
+                    <v-icon color="red">mdi-alert-circle</v-icon>
+                  </v-row>
+                </template>
+              </v-img>
+            </v-col>
+          </v-row>
+        </div>
+      </div>
+
+    <div v-if="store.galleryBlobs.length > 0" class="gallery-section">
+      <h3 class="section-title blob-title">Uploaded Blob Files</h3>
+      <div class="gallery-grid">
+        <v-row dense>
+          <v-col
+            v-for="(blob, index) in store.galleryBlobs"
+            :key="'blob-' + index"
+            cols="6"
+            sm="4"
+            md="3"
+            lg="2"
+            xl="2">
+            <v-img
+              :src="getObjectUrl(blob)"
+              aspect-ratio="1.3"
+              class="gallery-image"
+              @click="handleImageClick(index, 'blob')"
+              @error="handleImageError(index)">
+              <template v-slot:placeholder>
+                <v-row align="center" class="fill-height ma-0" justify="center">
+                  <v-progress-circular color="grey-lighten-5" indeterminate></v-progress-circular>
+                </v-row>
+              </template>
+              <template v-slot:error>
+                <v-row align="center" justify="center" class="fill-height ma-0">
+                  <v-icon color="red">mdi-alert-circle</v-icon>
+                </v-row>
+              </template>
+            </v-img>
+
+          </v-col>
+        </v-row>
+      </div>
     </div>
 
     <!-- Modal for Enlarged Image -->
@@ -107,7 +185,7 @@ const goToUploadPage = () => {
           <v-btn icon @click="previousImage" :disabled="selectedImageIndex === 0">
             <v-icon>mdi-chevron-left</v-icon>
           </v-btn>
-          <v-btn icon @click="nextImage" :disabled="selectedImageIndex === store.photoUrls.length - 1">
+          <v-btn icon @click="nextImage" :disabled="selectedImageIndex === getTotalImageCount() - 1">
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
         </div>
@@ -118,6 +196,7 @@ const goToUploadPage = () => {
     </v-dialog>
   </div>
 </template>
+
 
 <style scoped>
 /* Styling for the header section */
@@ -178,7 +257,40 @@ const goToUploadPage = () => {
   border-radius: 50%;
 }
 
-.clickable-image {
-  border: 1px dotted;
+.section-title {
+  font-size: 1.8rem; /* Larger font size */
+  font-weight: 600; /* Bold font */
+  text-align: center; /* Center alignment */
+  padding: 10px; /* Add some padding */
+  margin-bottom: 20px; /* Add space below the title */
+  border-bottom: 2px solid #ddd; /* Decorative underline */
+  color: #444; /* Darker text color */
+}
+
+/* URL Section Specific Title Styling */
+.url-title {
+  background-color: #e3f2fd; /* Light blue background */
+  border-color: #90caf9; /* Light blue border */
+  color: #1976d2; /* Dark blue text */
+}
+
+.gallery-section {
+  margin: 30px 0;
+}
+
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px; /* Adds spacing between images */
+}
+
+.gallery-image {
+  border-radius: 8px; /* Slightly rounded corners */
+  transition: transform 0.2s ease; /* Smooth scaling effect */
+}
+
+.gallery-image:hover {
+  transform: scale(1.05); /* Scale up slightly on hover */
 }
 </style>
