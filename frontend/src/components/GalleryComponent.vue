@@ -130,7 +130,7 @@ const goToUploadPage = () => {
     </div>
 
     <div v-if="store.galleryBlobs.length > 0" class="gallery-section">
-      <h3 class="section-title blob-title">Uploaded Blob Files</h3>
+      <h3 class="section-title url-title">Created Collages</h3>
       <div class="gallery-grid">
         <v-row dense>
           <v-col
