@@ -1,6 +1,6 @@
 <script setup>
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
-import {ref, reactive, defineProps} from "vue";
+import {ref, reactive, defineProps, onMounted} from "vue";
 import {useAttrs} from 'vue';
 import {extractGridPositions, updateCollageItems, wait} from "@/controller/GridComponentHelper.js";
 
@@ -61,6 +61,9 @@ async function selectImage({ src, fileName }) {
   }
 }
 
+onMounted(() => {
+  updateCollageItems(componentName, items);
+});
 </script>
 
 <template>

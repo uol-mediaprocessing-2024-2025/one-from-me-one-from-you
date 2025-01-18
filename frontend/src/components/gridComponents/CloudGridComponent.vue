@@ -1,8 +1,16 @@
 <script setup>
 import {ref, reactive, onMounted, defineProps} from "vue";
 import { useAttrs } from "vue";
-import { updateCollageItems, scaleImage, extractGridPositions, wait } from "@/controller/GridComponentHelper.js";
+import { updateCollageItems, extractGridPositions, wait } from "@/controller/GridComponentHelper.js";
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
+
+const attrs = useAttrs();
+const items = reactive(Array(35).fill({ src: null, fileName: null }));
+const showModal = ref(false);
+const selectedIndex = ref(null);
+const componentName = "cloudComponent";
+const isAITurn = ref(false);
+const isDisabled = ref(false);
 
 const props = defineProps({
   userPrompt: {
@@ -11,18 +19,19 @@ const props = defineProps({
   },
 });
 
-const attrs = useAttrs();
-
-const items = reactive(Array(35).fill({ src: null, fileName: null }));
-const showModal = ref(false);
-const selectedIndex = ref(null);
-const componentName = "cloudComponent";
-const isAITurn = ref(false);
-const isDisabled = ref(false);
-
 onMounted(async () => {
   await updateCollageItems(componentName, items);
 });
+
+function openImageSelection(index) {
+  selectedIndex.value = index;
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  selectedIndex.value = null;
+}
 
 async function removePreviewImage(index) {
   items[index] = { src: null, fileName: null };
@@ -36,27 +45,9 @@ async function removePreviewImage(index) {
   isDisabled.value = false;
 }
 
-function openImageSelection(index) {
-  selectedIndex.value = index;
-  showModal.value = true;
-}
-
-function closeModal() {
-  showModal.value = false;
-  selectedIndex.value = null;
-}
-
-async function selectImage(image) {
+async function selectImage({ src, fileName }) {
   if (selectedIndex.value !== null) {
-    const scaledImage = await scaleImage(image);
-    const fileName = image.split("/").pop();
-
-    items[selectedIndex.value] = {
-      src: scaledImage,
-      fileName: fileName,
-    };
-
-    closeModal();
+    items[selectedIndex.value] = {src, fileName};
 
     isAITurn.value = true;
     isDisabled.value = true;
