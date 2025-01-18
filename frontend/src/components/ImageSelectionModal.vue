@@ -2,6 +2,9 @@
 import { defineProps, defineEmits } from "vue";
 import { store } from "@/store.js";
 import { scaleImage } from "@/controller/GridComponentHelper.js";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const props = defineProps({
   showModal: {
@@ -34,6 +37,10 @@ async function selectImage(image) {
     emit("close-modal");
   }
 }
+
+const goToUploadPage = () => {
+  router.push('/uploadImage'); // Navigate to the upload image page
+};
 </script>
 
 <template>
@@ -41,7 +48,17 @@ async function selectImage(image) {
     <div class="modal-content">
       <button class="close-button" @click="closeModal">×</button>
       <h3>Select an Image</h3>
-      <div class="image-list">
+
+      <!-- Message when no images are available -->
+      <div v-if="store.photoUrls.length === 0 && store.galleryBlobs.length === 0" class="no-images-container">
+        <p>No images to display. Please upload some images.</p>
+        <v-btn @click="goToUploadPage" color="primary" class="upload-button">
+          Upload Images
+        </v-btn>
+      </div>
+
+      <!-- Image list if images are available -->
+      <div v-else class="image-list">
         <div
           v-for="(image, i) in store.photoUrls"
           :key="i"
@@ -56,6 +73,21 @@ async function selectImage(image) {
 </template>
 
 <style scoped>
+.no-images-container {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.upload-button {
+  margin-top: 15px;
+}
+
+.upload-button:hover {
+  background-color: #0056b3;
+}
+
 .image-selection-modal {
   position: fixed;
   top: 0;
@@ -81,14 +113,14 @@ async function selectImage(image) {
 }
 
 h3 {
-  font-family: 'Arial', sans-serif; /* Clean, simple font */
+  font-family: 'Arial', sans-serif;
   font-size: 2rem;
   font-weight: bold;
-  color: black; /* Solid black color */
+  color: black;
   text-align: center;
   margin-bottom: 30px;
-  text-transform: uppercase; /* Optional: Adds emphasis with uppercase letters */
-  letter-spacing: 2px; /* Optional: Adds a bit more space between letters */
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .image-list {
@@ -125,7 +157,7 @@ h3 {
   position: absolute;
   top: 15px;
   right: 15px;
-  background-color: #ff3b30; /* Red background */
+  background-color: #ff3b30;
   border: none;
   color: white;
   font-size: 2rem;
@@ -142,7 +174,7 @@ h3 {
 }
 
 .close-button:hover {
-  background-color: #d22a1e; /* Darker red when hovered */
+  background-color: #d22a1e;
   transform: scale(1.2);
 }
 
