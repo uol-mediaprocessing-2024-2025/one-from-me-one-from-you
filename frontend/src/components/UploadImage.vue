@@ -13,7 +13,7 @@ const handleImageUpload = (event) => {
   if (files && files.length > 0) {
     successMessage.value = '';
     for (const file of files) {
-      downscaleImage(file, 300, 300) // Downscale to max 300x300 (or any size you prefer)
+      downscaleImage(file, 600, 600) // Downscale to max 300x300 (or any size you prefer)
         .then(({ url, blob }) => {
           previewImages.value.push({ url, blob });
         })
@@ -24,13 +24,6 @@ const handleImageUpload = (event) => {
   }
 };
 
-/**
- * Downscales an image to the specified width and height using a canvas.
- * @param {File} file - The original image file.
- * @param {number} maxWidth - The maximum width of the output image.
- * @param {number} maxHeight - The maximum height of the output image.
- * @returns {Promise<{url: string, blob: Blob}>} - A Promise that resolves with the downscaled image's URL and blob.
- */
 const downscaleImage = (file, maxWidth, maxHeight) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -58,6 +51,16 @@ const downscaleImage = (file, maxWidth, maxHeight) => {
         targetWidth = maxHeight * aspectRatio;
       }
 
+      // Ensure the target dimensions do not exceed the max dimensions
+      if (targetWidth > maxWidth) {
+        targetWidth = maxWidth;
+        targetHeight = targetWidth / aspectRatio;
+      }
+      if (targetHeight > maxHeight) {
+        targetHeight = maxHeight;
+        targetWidth = targetHeight * aspectRatio;
+      }
+
       // Create a canvas to draw the resized image
       const canvas = document.createElement('canvas');
       canvas.width = targetWidth;
@@ -76,7 +79,7 @@ const downscaleImage = (file, maxWidth, maxHeight) => {
           }
         },
         file.type,
-        0.8 // Quality factor (optional, between 0 and 1)
+        0.9 // Quality factor set to 0.9 for better image retention, can be adjusted
       );
     };
 
