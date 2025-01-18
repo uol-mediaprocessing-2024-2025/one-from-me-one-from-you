@@ -1,7 +1,7 @@
 <script setup>
 import {ref, reactive, onMounted, defineProps} from "vue";
 import {useAttrs} from "vue";
-import {updateCollageItems, scaleImage, extractGridPositions, wait} from "@/controller/GridComponentHelper.js";
+import {updateCollageItems, extractGridPositions, wait} from "@/controller/GridComponentHelper.js";
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
 
 const props = defineProps({
@@ -34,17 +34,21 @@ function closeModal() {
   selectedIndex.value = null;
 }
 
-async function selectImage(image) {
+async function removePreviewImage(index) {
+  items[index] = { src: null, fileName: null };
+  isAITurn.value = true;
+  isDisabled.value = true;
+
+  await wait(500);
+  await updateCollageItems("rectangleComponent", items);
+
+  isAITurn.value = false;
+  isDisabled.value = false;
+}
+
+async function selectImage({ src, fileName }) {
   if (selectedIndex.value !== null) {
-    const scaledImage = await scaleImage(image);
-    const fileName = image.split("/").pop();
-
-    items[selectedIndex.value] = {
-      src: scaledImage,
-      fileName: fileName,
-    };
-
-    closeModal();
+    items[selectedIndex.value] = {src, fileName};
 
     isAITurn.value = true;
     isDisabled.value = true;
@@ -65,6 +69,7 @@ async function selectImage(image) {
 
 <template>
   <div class="rectangle-grid-container">
+    <!-- Popup AI thinking -->
     <div v-if="isAITurn" class="popup">
       <v-progress-linear
           color="teal"
@@ -82,8 +87,7 @@ async function selectImage(image) {
           v-for="(item, index) in items"
           :key="index"
           class="grid-item"
-          :class="{ disabled: isDisabled }"
-      >
+          :class="{ disabled: isDisabled }">
         <!-- Show image if selected -->
         <label
             v-if="!item.src"
@@ -92,19 +96,21 @@ async function selectImage(image) {
         >
           + Select Image
         </label>
-        <img v-else :src="item.src" alt="Bild"/>
+        <div v-else class="image-container">
+          <img :src="item.src" alt="Bild"/>
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
+        </div>
       </div>
     </div>
   </div>
 
-
+  <!-- Modal for image selection -->
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"
       @close-modal="closeModal"
       @select-image="selectImage"
   />
-
 </template>
 
 <style scoped>
@@ -214,46 +220,6 @@ async function selectImage(image) {
   display: none;
 }
 
-.image-selection-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  width: 300px;
-}
-
-.image-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-  justify-content: center;
-}
-
-.image-item {
-  width: 50px;
-  height: 50px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
 .image-item img {
   max-width: 100%;
   max-height: 100%;
@@ -291,6 +257,28 @@ async function selectImage(image) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 10px;
+}
+
+.remove-button {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 18px;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.remove-button:hover {
+  background-color: darkred;
 }
 
 </style>

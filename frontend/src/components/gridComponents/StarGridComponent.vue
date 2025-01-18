@@ -2,23 +2,22 @@
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
 import {ref, reactive, defineProps} from "vue";
 import {useAttrs} from 'vue';
-
-defineProps({
-  userPrompt: {
-    type: String,
-    required: true,
-  },
-});
+import {extractGridPositions, updateCollageItems, wait} from "@/controller/GridComponentHelper.js";
 
 const attrs = useAttrs();
-
-// Reactive variables
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
 const showModal = ref(false);
 const selectedIndex = ref(null);
 const componentName = "starComponent"
 const isAITurn = ref(false);
 const isDisabled = ref(false);
+
+const props = defineProps({
+  userPrompt: {
+    type: String,
+    required: true,
+  },
+});
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -30,112 +29,84 @@ function closeModal() {
   selectedIndex.value = null;
 }
 
-async function selectImage(image) {
-  console.log("selectImage");
+async function removePreviewImage(index) {
+  items[index] = { src: null, fileName: null };
+  isAITurn.value = true;
+  isDisabled.value = true;
+
+  await wait(500);
+  await updateCollageItems("rectangleComponent", items);
+
+  isAITurn.value = false;
+  isDisabled.value = false;
+}
+
+async function selectImage({ src, fileName }) {
   if (selectedIndex.value !== null) {
-    const scaledImage = await scaleImage(image);
-    const fileName = image.split("/").pop();
-    items[selectedIndex.value] = {
-      src: scaledImage,
-      fileName: fileName,
-    };
-  closeModal();
-  this.isAITurn = true;
-  this.isDisabled = true;
-  await extractGridPositions();
-  }
-}
+    items[selectedIndex.value] = {src, fileName};
 
-function scaleImage(imageUrl) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 50;
-      canvas.height = 50;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, 50, 50);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
-    };
-    img.onerror = (err) => {
-      reject(new Error(`Failed to load image: ${err.message}`));
-    };
-    img.src = imageUrl;
-  });
-}
+    isAITurn.value = true;
+    isDisabled.value = true;
 
+    await wait(2000);
 
-async function extractGridPositions() {
-  const gridContainer = document.querySelector(".rectangle-grid");
-  const gridItems = document.querySelectorAll(".grid-item");
-  const containerRect = gridContainer.getBoundingClientRect();
-  let positions = [];
+    const gridContainer = document.querySelector(".rectangle-grid");
+    const gridItems = document.querySelectorAll(".grid-item");
+    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
 
-  gridItems.forEach((item, index) => {
-    const itemRect = item.getBoundingClientRect();
-    const positionData = {
-      id: index + 1,
-      top: itemRect.top - containerRect.top,
-      left: itemRect.left - containerRect.left,
-      fileName: items[index].fileName || null,
-    };
+    await updateCollageItems(componentName, items);
 
-    positions.push(positionData);
-  });
-
-    // Sorting, starting at top left
-  positions.sort((a, b) => {
-    if (a.left === b.left) {
-      return a.top - b.top;
-    }
-    return a.left - b.left;
-  });
-
-  const formData = new FormData();
-  formData.append("positions", JSON.stringify(positions));
-  formData.append("componentName", componentName);
-
-  try {
-    const response = await fetch(`${store.apiUrl}/positions`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await response.json();
-    console.log("Response from backend:", result);
-  } catch (error) {
-    console.error("Error sending grid with file names:", error);
+    isAITurn.value = false;
+    isDisabled.value = false;
   }
 }
 
 </script>
 
 <template>
-  <div v-if="isAITurn" class="popup">AI is thinking...</div>
-    <div class="rectangle-grid-container">
-      <div class="rectangle-grid" v-bind="attrs">
-        <div
+  <div class="rectangle-grid-container">
+    <!-- Popup AI thinking -->
+    <div v-if="isAITurn" class="popup">
+      <v-progress-linear
+          color="teal"
+          indeterminate
+          rounded
+          buffer-value="10000"
+          stream
+      ></v-progress-linear>
+      <br>
+      AI is thinking...
+    </div>
+
+    <div class="rectangle-grid" v-bind="attrs">
+      <div
           v-for="(item, index) in items"
           :key="index"
           class="grid-item"
-          :class="{ disabled: isDisabled }"
-          >
-          <!-- Show image if selected -->
-          <label v-if="!item.src" class="upload-label" @click="!isDisabled && openImageSelection(index)">
-            + Select Image
-          </label>
-          <img v-else :src="item.src" alt="Bild" />
+          :class="{ disabled: isDisabled }">
+        <!-- Show image if selected -->
+        <label
+            v-if="!item.src"
+            class="upload-label"
+            @click="!isDisabled && openImageSelection(index)"
+        >
+          + Select Image
+        </label>
+        <div v-else class="image-container">
+          <img :src="item.src" alt="Bild"/>
+          <button class="remove-button" @click="removePreviewImage(index)">X</button>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- Modal for image selection -->
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"
       @close-modal="closeModal"
       @select-image="selectImage"
   />
-
 </template>
 
 <style scoped>

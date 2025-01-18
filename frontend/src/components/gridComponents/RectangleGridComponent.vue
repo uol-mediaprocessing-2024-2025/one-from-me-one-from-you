@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import {ref, reactive, onMounted, defineProps} from "vue";
 import { useAttrs } from "vue";
 import { updateCollageItems, wait, extractGridPositions } from "@/controller/GridComponentHelper.js";
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
@@ -9,7 +9,15 @@ const showModal = ref(false);
 const selectedIndex = ref(null);
 const isAITurn = ref(false);
 const isDisabled = ref(false);
+const componentName = "rectangleComponent";
 const items = reactive(Array(35).fill({ src: null, fileName: null }));
+
+const props = defineProps({
+  userPrompt: {
+    type: String,
+    required: true,
+  },
+});
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -27,7 +35,7 @@ async function removePreviewImage(index) {
   isDisabled.value = true;
 
   await wait(500);
-  await updateCollageItems("rectangleComponent", items);
+  await updateCollageItems(componentName, items);
 
   isAITurn.value = false;
   isDisabled.value = false;
@@ -44,9 +52,9 @@ async function selectImage({ src, fileName }) {
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
-    await extractGridPositions(gridContainer, gridItems, items, "rectangleComponent", "userPrompt");
+    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
 
-    await updateCollageItems("rectangleComponent", items);
+    await updateCollageItems(componentName, items);
 
     isAITurn.value = false;
     isDisabled.value = false;
@@ -54,7 +62,7 @@ async function selectImage({ src, fileName }) {
 }
 
 onMounted(() => {
-  updateCollageItems("rectangleComponent", items);
+  updateCollageItems(componentName, items);
 });
 </script>
 
@@ -95,7 +103,6 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- Modal for image selection -->
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"

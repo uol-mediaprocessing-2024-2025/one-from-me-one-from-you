@@ -163,9 +163,6 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .grid-item:nth-child(6) { top: 55%; left: 50%; }
 .grid-item:nth-child(7) { top: 65%; left: 50%; }
 
-
-
-
 .grid-item:nth-child(9) { top: 15%; left: 40%; }
 .grid-item:nth-child(10) { top: 25%; left: 40%; }
 .grid-item:nth-child(11) { top: 35%; left: 40%; }
@@ -224,46 +221,6 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .upload-label input {
   visibility: hidden;
   display: none;
-}
-
-.image-selection-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  width: 300px;
-}
-
-.image-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-  justify-content: center;
-}
-
-.image-item {
-  width: 50px;
-  height: 50px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ccc;
-  border-radius: 5px;
 }
 
 .image-item img {
