@@ -21,10 +21,10 @@ export function scaleImage(imageUrl) {
     img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = 50;
-      canvas.height = 50;
+      canvas.width = 100;
+      canvas.height = 100;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, 50, 50);
+      ctx.drawImage(img, 0, 0, 100, 100);
       resolve(canvas.toDataURL("image/jpeg", 0.8));
     };
     img.onerror = (err) => {
