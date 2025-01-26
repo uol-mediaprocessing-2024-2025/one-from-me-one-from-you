@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import { defineProps, defineEmits } from "vue";
 import { store } from "@/store.js";
 import { scaleImage } from "@/controller/GridComponentHelper.js";
@@ -15,9 +16,18 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  imageSelectionMode: {
+    type: String,
+    required: true,
+  },
+    userPrompt: {
+    type: String,
+    required: true,
+  },
 });
 
 const emit = defineEmits(["close-modal", "select-image"]);
+const isDone = ref(false);
 
 function closeModal() {
   emit("close-modal");
@@ -34,8 +44,17 @@ async function selectImage(image) {
       fileName: fileName,
     });
 
-    emit("close-modal");
+    if (props.imageSelectionMode !== 'style') {
+      closeModal();
+    } else {
+      isDone.value = true;
+    }
   }
+}
+
+function handleDone() {
+  isDone.value = false;
+  closeModal();
 }
 
 const goToUploadPage = () => {
@@ -47,26 +66,46 @@ const goToUploadPage = () => {
   <div v-if="showModal" class="image-selection-modal">
     <div class="modal-content">
       <button class="close-button" @click="closeModal">×</button>
-      <h3>Select an Image</h3>
 
-      <!-- Message when no images are available -->
-      <div v-if="store.photoUrls.length === 0 && store.galleryBlobs.length === 0" class="no-images-container">
-        <p>No images to display. Please upload some images.</p>
-        <v-btn @click="goToUploadPage" color="primary" class="upload-button">
-          Upload Images
-        </v-btn>
+      <div v-if="!isDone">
+        <h3>Select an Image</h3>
+
+        <!-- Message when no images are available -->
+        <div v-if="store.photoUrls.length === 0 && store.galleryBlobs.length === 0" class="no-images-container">
+          <p>No images to display. Please upload some images.</p>
+          <v-btn @click="goToUploadPage" color="primary" class="upload-button">
+            Upload Images
+          </v-btn>
+        </div>
+
+        <!-- Image list if images are available -->
+        <div v-else class="image-list">
+          <div
+            v-for="(image, i) in store.photoUrls"
+            :key="i"
+            class="image-item"
+            @click="selectImage(image)"
+          >
+            <img :src="image" alt="Uploaded Image" />
+          </div>
+        </div>
       </div>
 
-      <!-- Image list if images are available -->
-      <div v-else class="image-list">
-        <div
-          v-for="(image, i) in store.photoUrls"
-          :key="i"
-          class="image-item"
-          @click="selectImage(image)"
-        >
-          <img :src="image" alt="Uploaded Image" />
-        </div>
+      <div v-else-if="imageSelectionMode === 'style'">
+        <v-btn @click="handleDone" color="primary" class="done-button">
+          Done
+        </v-btn>
+
+
+              <section>
+        <h2>Textual Prompt</h2>
+        <v-text-field class="next-image-prompt"
+                      v-bind="userPrompt"
+                      clear-icon="mdi-close-circle"
+                      label="Type in a prompt for the next image!"
+                      type="text"
+                      clearable></v-text-field>
+      </section>
       </div>
     </div>
   </div>
@@ -180,5 +219,13 @@ h3 {
 
 .close-button:focus {
   outline: none;
+}
+
+.done-button {
+  margin-top: 15px;
+}
+
+.done-button:hover {
+  background-color: #0056b3;
 }
 </style>
