@@ -29,46 +29,38 @@ const downscaleImage = (file, maxWidth, maxHeight) => {
     const img = new Image();
     const reader = new FileReader();
 
-    // Load the image file as a data URL
     reader.onload = (e) => {
       img.src = e.target.result;
     };
 
     reader.onerror = (err) => reject(err);
 
-    // Once the image is loaded, resize it
     img.onload = () => {
-      // Calculate the target dimensions while maintaining the aspect ratio
       const aspectRatio = img.width / img.height;
-      let targetWidth = maxWidth;
-      let targetHeight = maxHeight;
+      let targetWidth, targetHeight;
 
       if (aspectRatio > 1) {
         // Landscape
-        targetHeight = maxWidth / aspectRatio;
+        targetHeight = maxHeight;
+        targetWidth = maxHeight * aspectRatio;
       } else {
         // Portrait or square
-        targetWidth = maxHeight * aspectRatio;
-      }
-
-      // Ensure the target dimensions do not exceed the max dimensions
-      if (targetWidth > maxWidth) {
         targetWidth = maxWidth;
-        targetHeight = targetWidth / aspectRatio;
-      }
-      if (targetHeight > maxHeight) {
-        targetHeight = maxHeight;
-        targetWidth = targetHeight * aspectRatio;
+        targetHeight = maxWidth / aspectRatio;
       }
 
       // Create a canvas to draw the resized image
       const canvas = document.createElement('canvas');
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
+      canvas.width = maxWidth;
+      canvas.height = maxHeight;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-      // Convert the canvas back to a blob and create an object URL
+      // Calculate the cropping area
+      const offsetX = (targetWidth - maxWidth) / 2;
+      const offsetY = (targetHeight - maxHeight) / 2;
+
+      ctx.drawImage(img, -offsetX, -offsetY, targetWidth, targetHeight);
+
       canvas.toBlob(
         (blob) => {
           if (blob) {
@@ -79,13 +71,12 @@ const downscaleImage = (file, maxWidth, maxHeight) => {
           }
         },
         file.type,
-        0.9 // Quality factor set to 0.9 for better image retention, can be adjusted
+        0.9
       );
     };
 
     img.onerror = (err) => reject(err);
 
-    // Read the file as a data URL
     reader.readAsDataURL(file);
   });
 };

@@ -102,7 +102,7 @@ onMounted(() => {
 
 const captureAndDownload = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
-    (key) => shapeVisibility[key].value
+      (key) => shapeVisibility[key].value
   );
 
   if (!activeGrid) {
@@ -111,7 +111,7 @@ const captureAndDownload = async () => {
   }
 
   const gridContainer = document.querySelector(
-    `.${activeGrid.split('.')[0]}-grid-container`
+      `.${activeGrid.split('.')[0]}-grid-container`
   );
 
   if (!gridContainer) {
@@ -148,7 +148,7 @@ const captureAndDownload = async () => {
 
 const safeCollageToGallery = async () => {
   const activeGrid = Object.keys(shapeVisibility).find(
-    (key) => shapeVisibility[key].value
+      (key) => shapeVisibility[key].value
   );
 
   if (!activeGrid) {
@@ -157,7 +157,7 @@ const safeCollageToGallery = async () => {
   }
 
   const gridContainer = document.querySelector(
-    `.${activeGrid.split('.')[0]}-grid-container`
+      `.${activeGrid.split('.')[0]}-grid-container`
   );
 
   if (!gridContainer) {
@@ -199,7 +199,8 @@ const saveToLocalStorage = () => {
 
 const displaySuccess = (popup, duration = 2000) => {
   popup.value = true;
-  setTimeout(() => {popup.value = false;
+  setTimeout(() => {
+    popup.value = false;
   }, duration);
 };
 
@@ -249,7 +250,8 @@ const removeImages = async () => {
     <div class="collage-preview">
       <div class="collage-shape">
         <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container" :userPrompt="userPrompt"/>
-        <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container" :userPrompt="userPrompt"/>
+        <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container"
+                                :userPrompt="userPrompt"/>
         <StarGridComponent v-if="isStarGridVisible" class="star-grid-container" :userPrompt="userPrompt"/>
         <CloudGridComponent v-if="isCloudGridVisible" class="cloud-grid-container" :userPrompt="userPrompt"/>
         <HexagonGridComponent v-if="isHexagonGridVisible" class="hexagon-grid-container" :userPrompt="userPrompt"/>
@@ -259,33 +261,35 @@ const removeImages = async () => {
       </div>
     </div>
 
-<div class="settings-panel">
-  <h2>Image Selection Mode</h2>
-  <section class="sorting-options horizontal-layout">
-    <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
-      <div class="option">
-        <v-radio label="Face Recognition" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
-      </div>
-      <div class="option">
-        <v-radio label="Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort" color="indigo"></v-radio>
-      </div>
-      <div class="option">
-        <v-radio label="Prompt" :value="ImageSelectionModes.STYLE" name="sort" color="indigo"></v-radio>
-      </div>
-    </v-radio-group>
-  </section>
-  <br>
-  <section>
-    <h2>Custom image selection</h2>
-    <v-text-field class="next-image-prompt"
-        v-model="userPrompt"
-        clear-icon="mdi-close-circle"
-        label="What should your next image be?"
-        type="text"
-        clearable
-        :disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"      ></v-text-field>
-  </section>
-  <br>
+    <div class="settings-panel">
+      <h2>Image Selection Mode</h2>
+      <section class="sorting-options horizontal-layout">
+        <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
+          <div class="option">
+            <v-radio label="Face Similarity" :value="ImageSelectionModes.FACE_DETECTION" name="sort"
+                     color="indigo"></v-radio>
+          </div>
+          <div class="option">
+            <v-radio label="Visual Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort"
+                     color="indigo"></v-radio>
+          </div>
+          <div class="option">
+            <v-radio label="Textual Prompt" :value="ImageSelectionModes.STYLE" name="sort" color="indigo"></v-radio>
+          </div>
+        </v-radio-group>
+      </section>
+      <br>
+      <section>
+        <h2>Textual Prompt</h2>
+        <v-text-field class="next-image-prompt"
+                      v-model="userPrompt"
+                      clear-icon="mdi-close-circle"
+                      label="Type in a prompt for the next image!"
+                      type="text"
+                      clearable
+                      :disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"></v-text-field>
+      </section>
+      <br>
 
       <section class="collage-shapes">
         <h2>Collage Shape</h2>
@@ -304,18 +308,18 @@ const removeImages = async () => {
       <p v-if="downloadSuccess" class="success-message">Collage Downloaded successfully!</p>
       <p v-if="saveToGallerySuccess" class="success-message">Collage saved to gallery!</p>
       <button
-        @click="captureAndDownload"
-        class="button download-button">
+          @click="captureAndDownload"
+          class="button download-button">
         Download
       </button>
       <button
-        @click="safeCollageToGallery"
-        class="button save-button">
+          @click="safeCollageToGallery"
+          class="button save-button">
         Save to Gallery
       </button>
       <button
-        @click="removeImages"
-        class="button clear-button">
+          @click="removeImages"
+          class="button clear-button">
         Clear Collage
       </button>
 
@@ -438,6 +442,7 @@ header h1 {
 .download-button {
   background-color: #28a745;
 }
+
 .download-button:hover {
   background-color: #218838;
   transform: scale(1.05);
@@ -447,6 +452,7 @@ header h1 {
 .save-button {
   background-color: #007bff;
 }
+
 .save-button:hover {
   background-color: #0056b3;
   transform: scale(1.05);
@@ -456,6 +462,7 @@ header h1 {
 .clear-button {
   background-color: #dc3545;
 }
+
 .clear-button:hover {
   background-color: #c82333;
   transform: scale(1.05);
@@ -486,7 +493,7 @@ header h1 {
   margin-right: 20px;
 }
 
-.success-message{
+.success-message {
   color: green;
 }
 
