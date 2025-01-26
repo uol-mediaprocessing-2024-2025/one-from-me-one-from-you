@@ -1,5 +1,5 @@
 <script setup>
-import {ref, reactive, onMounted, defineProps} from "vue";
+import { ref, reactive, onMounted, defineProps, watch } from "vue";
 import { useAttrs } from "vue";
 import { updateCollageItems, wait, extractGridPositions } from "@/controller/GridComponentHelper.js";
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
@@ -23,7 +23,7 @@ const props = defineProps({
   },
 });
 
-
+const localUserPrompt = ref(props.userPrompt);
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -47,9 +47,14 @@ async function removePreviewImage(index) {
   isDisabled.value = false;
 }
 
+watch(() => props.userPrompt, (newValue) => { // Debug, can be removed
+  console.log("userPrompt changed:", newValue);
+  localUserPrompt.value = newValue;
+});
+
 async function selectImage({ src, fileName }) {
   if (selectedIndex.value !== null) {
-    items[selectedIndex.value] = {src, fileName};
+    items[selectedIndex.value] = { src, fileName };
 
     isAITurn.value = true;
     isDisabled.value = true;
@@ -58,13 +63,18 @@ async function selectImage({ src, fileName }) {
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
-    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
+    await extractGridPositions(gridContainer, gridItems, items, componentName, localUserPrompt.value);
 
     await updateCollageItems(componentName, items);
 
     isAITurn.value = false;
     isDisabled.value = false;
   }
+}
+
+function updateUserPrompt(newPrompt) {
+  localUserPrompt.value = newPrompt;
+  console.log("Updated userPrompt in parent:", newPrompt);
 }
 
 onMounted(() => {
@@ -113,10 +123,10 @@ onMounted(() => {
       :showModal="showModal"
       :selectedIndex="selectedIndex"
       :imageSelectionMode="imageSelectionMode"
-
+      :userPrompt="localUserPrompt"
       @close-modal="closeModal"
       @select-image="selectImage"
-      :user-prompt="props.userPrompt"/>
+      @update:userPrompt="updateUserPrompt"/>
 </template>
 
 <style scoped>
