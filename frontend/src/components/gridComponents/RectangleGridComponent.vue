@@ -17,6 +17,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  imageSelectionMode: {
+    type: String,
+    required: true,
+  },
 });
 
 function openImageSelection(index) {
@@ -106,6 +110,7 @@ onMounted(() => {
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"
+      :imageSelectionMode="imageSelectionMode"
       @close-modal="closeModal"
       @select-image="selectImage"
   />

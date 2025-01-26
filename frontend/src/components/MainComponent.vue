@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted} from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from "axios";
 import html2canvas from "html2canvas";
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
@@ -11,12 +11,11 @@ import FishGridComponent from "@/components/gridComponents/FishGridComponent.vue
 import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue";
 import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
-import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
-import {clearCollage, updateImageSelectionMode} from "@/controller/GridComponentHelper.js";
-import {removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons} from "@/controller/FinishCollage.js";
+import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
+import { clearCollage, updateImageSelectionMode } from "@/controller/GridComponentHelper.js";
+import { removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons } from "@/controller/FinishCollage.js";
 
-
-import {store} from "@/store.js";
+import { store } from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
@@ -52,12 +51,12 @@ const ImageSelectionModes = {
 };
 
 const imageSelectionMode = ref(ImageSelectionModes.SIMILARITY);
-const userPrompt = ref("")
 
 const onImageSelectionModeChange = (event) => {
   const newMode = event.target.value;
   imageSelectionMode.value = newMode;
   updateImageSelectionMode(newMode);
+  console.log(imageSelectionMode.value);
 };
 
 const componentNameMap = {
@@ -225,7 +224,6 @@ const setOtherGridsInvisible = (shape) => {
   }
 };
 
-
 const removeImages = async () => {
   const fileName = selectedCollageShape.value.split('/').pop();
   const componentName = componentNameMap[fileName];
@@ -242,7 +240,6 @@ const removeImages = async () => {
   }
   location.reload();
 };
-
 </script>
 
 <template>
@@ -250,9 +247,7 @@ const removeImages = async () => {
     <div class="collage-preview">
       <div class="collage-shape">
         <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container" :userPrompt="userPrompt"/>
-        <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container"
-                                :userPrompt="userPrompt"/>
-        <StarGridComponent v-if="isStarGridVisible" class="star-grid-container" :userPrompt="userPrompt"/>
+<RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container" :userPrompt="userPrompt" :imageSelectionMode="imageSelectionMode"/>        <StarGridComponent v-if="isStarGridVisible" class="star-grid-container" :userPrompt="userPrompt"/>
         <CloudGridComponent v-if="isCloudGridVisible" class="cloud-grid-container" :userPrompt="userPrompt"/>
         <HexagonGridComponent v-if="isHexagonGridVisible" class="hexagon-grid-container" :userPrompt="userPrompt"/>
         <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container" :userPrompt="userPrompt"/>
@@ -266,12 +261,10 @@ const removeImages = async () => {
       <section class="sorting-options horizontal-layout">
         <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
           <div class="option">
-            <v-radio label="Face Similarity" :value="ImageSelectionModes.FACE_DETECTION" name="sort"
-                     color="indigo"></v-radio>
+            <v-radio label="Face Similarity" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
           </div>
           <div class="option">
-            <v-radio label="Visual Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort"
-                     color="indigo"></v-radio>
+            <v-radio label="Visual Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort" color="indigo"></v-radio>
           </div>
           <div class="option">
             <v-radio label="Textual Prompt" :value="ImageSelectionModes.STYLE" name="sort" color="indigo"></v-radio>
@@ -322,7 +315,6 @@ const removeImages = async () => {
           class="button clear-button">
         Clear Collage
       </button>
-
     </div>
   </div>
 </template>
