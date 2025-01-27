@@ -1,4 +1,5 @@
 <script setup>
+import { ref, watch } from 'vue';
 import { defineProps, defineEmits } from "vue";
 import { store } from "@/store.js";
 import { scaleImage } from "@/controller/GridComponentHelper.js";
@@ -15,9 +16,25 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  imageSelectionMode: {
+    type: String,
+    required: true,
+  },
+  userPrompt: {
+    type: String,
+    required: true,
+  },
 });
 
-const emit = defineEmits(["close-modal", "select-image"]);
+const emit = defineEmits(["close-modal", "select-image", "update:userPrompt"]);
+const isDone = ref(false);
+const localUserPrompt = ref(props.userPrompt);
+const selectedImage = ref(null);
+
+watch(props.userPrompt, (newValue) => {
+  localUserPrompt.value = newValue;
+  console.log('userPrompt changed:', newValue);
+});
 
 function closeModal() {
   emit("close-modal");
@@ -34,8 +51,31 @@ async function selectImage(image) {
       fileName: fileName,
     });
 
-    emit("close-modal");
+    if (props.imageSelectionMode !== 'style') {
+      closeModal();
+    } else {
+      isDone.value = true;
+    }
   }
+}
+
+function handleImageClick(image) {
+  if (props.imageSelectionMode !== 'style') {
+    selectImage(image);
+  } else {
+    selectedImage.value = image;
+    isDone.value = true; // Set isDone to true to show the text field and button
+  }
+}
+
+function handleDone() {
+  if (props.imageSelectionMode === 'style' && selectedImage.value) {
+    selectImage(selectedImage.value);
+  }
+  emit("update:userPrompt", localUserPrompt.value);
+  isDone.value = false;
+  closeModal();
+  console.log('userPrompt on button click:', localUserPrompt.value);
 }
 
 const goToUploadPage = () => {
@@ -47,26 +87,40 @@ const goToUploadPage = () => {
   <div v-if="showModal" class="image-selection-modal">
     <div class="modal-content">
       <button class="close-button" @click="closeModal">×</button>
-      <h3>Select an Image</h3>
 
-      <!-- Message when no images are available -->
-      <div v-if="store.photoUrls.length === 0 && store.galleryBlobs.length === 0" class="no-images-container">
-        <p>No images to display. Please upload some images.</p>
-        <v-btn @click="goToUploadPage" color="primary" class="upload-button">
-          Upload Images
-        </v-btn>
+      <div v-if="!isDone">
+        <h3>Select an Image</h3>
+
+        <!-- Message when no images are available -->
+        <div v-if="store.photoUrls.length === 0 && store.galleryBlobs.length === 0" class="no-images-container">
+          <p>No images to display. Please upload some images.</p>
+          <v-btn @click="goToUploadPage" color="primary" class="upload-button">
+            Upload Images
+          </v-btn>
+        </div>
+
+        <!-- Image list if images are available -->
+        <div v-else class="image-list">
+          <div
+              v-for="(image, i) in store.photoUrls"
+              :key="i"
+              class="image-item"
+              @click="handleImageClick(image)"
+          >
+            <img :src="image" alt="Uploaded Image"/>
+          </div>
+        </div>
       </div>
 
-      <!-- Image list if images are available -->
-      <div v-else class="image-list">
-        <div
-          v-for="(image, i) in store.photoUrls"
-          :key="i"
-          class="image-item"
-          @click="selectImage(image)"
-        >
-          <img :src="image" alt="Uploaded Image" />
-        </div>
+      <div v-else-if="imageSelectionMode === 'style'">
+        <v-text-field
+          v-model="localUserPrompt"
+          label="Enter your prompt"
+          clearable
+        ></v-text-field>
+        <v-btn @click="handleDone" color="primary" class="done-button">
+          Confirm
+        </v-btn>
       </div>
     </div>
   </div>
@@ -180,5 +234,13 @@ h3 {
 
 .close-button:focus {
   outline: none;
+}
+
+.done-button {
+  margin-top: 15px;
+}
+
+.done-button:hover {
+  background-color: #0056b3;
 }
 </style>
