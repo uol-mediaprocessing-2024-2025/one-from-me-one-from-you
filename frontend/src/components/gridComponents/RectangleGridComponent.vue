@@ -129,7 +129,6 @@ onMounted(() => {
 }
 
 .rectangle-grid {
-  border: 1px solid black;
   display: block;
   position: relative;
   width: 900px;
