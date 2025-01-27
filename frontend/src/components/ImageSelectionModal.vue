@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { defineProps, defineEmits } from "vue";
 import { store } from "@/store.js";
 import { scaleImage } from "@/controller/GridComponentHelper.js";
@@ -20,14 +20,21 @@ const props = defineProps({
     type: String,
     required: true,
   },
-    userPrompt: {
+  userPrompt: {
     type: String,
     required: true,
   },
 });
 
-const emit = defineEmits(["close-modal", "select-image"]);
+const emit = defineEmits(["close-modal", "select-image", "update:userPrompt"]);
 const isDone = ref(false);
+const localUserPrompt = ref(props.userPrompt);
+const selectedImage = ref(null);
+
+watch(props.userPrompt, (newValue) => {
+  localUserPrompt.value = newValue;
+  console.log('userPrompt changed:', newValue);
+});
 
 function closeModal() {
   emit("close-modal");
@@ -52,9 +59,23 @@ async function selectImage(image) {
   }
 }
 
+function handleImageClick(image) {
+  if (props.imageSelectionMode !== 'style') {
+    selectImage(image);
+  } else {
+    selectedImage.value = image;
+    isDone.value = true; // Set isDone to true to show the text field and button
+  }
+}
+
 function handleDone() {
+  if (props.imageSelectionMode === 'style' && selectedImage.value) {
+    selectImage(selectedImage.value);
+  }
+  emit("update:userPrompt", localUserPrompt.value);
   isDone.value = false;
   closeModal();
+  console.log('userPrompt on button click:', localUserPrompt.value);
 }
 
 const goToUploadPage = () => {
@@ -81,31 +102,25 @@ const goToUploadPage = () => {
         <!-- Image list if images are available -->
         <div v-else class="image-list">
           <div
-            v-for="(image, i) in store.photoUrls"
-            :key="i"
-            class="image-item"
-            @click="selectImage(image)"
+              v-for="(image, i) in store.photoUrls"
+              :key="i"
+              class="image-item"
+              @click="handleImageClick(image)"
           >
-            <img :src="image" alt="Uploaded Image" />
+            <img :src="image" alt="Uploaded Image"/>
           </div>
         </div>
       </div>
 
       <div v-else-if="imageSelectionMode === 'style'">
+        <v-text-field
+          v-model="localUserPrompt"
+          label="Enter your prompt"
+          clearable
+        ></v-text-field>
         <v-btn @click="handleDone" color="primary" class="done-button">
-          Done
+          Confirm
         </v-btn>
-
-
-              <section>
-        <h2>Textual Prompt</h2>
-        <v-text-field class="next-image-prompt"
-                      v-bind="userPrompt"
-                      clear-icon="mdi-close-circle"
-                      label="Type in a prompt for the next image!"
-                      type="text"
-                      clearable></v-text-field>
-      </section>
       </div>
     </div>
   </div>
