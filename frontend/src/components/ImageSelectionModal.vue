@@ -52,6 +52,25 @@ async function selectImage(image) {
       fileName: fileName,
     });
 
+
+    closeModal();
+  }
+}
+
+function handleImageClick(image) {
+  if (props.imageSelectionMode !== 'style') {
+    selectImage(image);
+  } else {
+    selectedImage.value = image;
+    isDone.value = true; // Set isDone to true to show the text field and button
+  }
+}
+
+function handleDone() {
+  if (props.imageSelectionMode === 'style' && selectedImage.value) {
+    emit("update:userPrompt", localUserPrompt.value);
+    selectImage(selectedImage.value);
+    console.log('User prompt updated:', localUserPrompt.value); // Debug to see if value is set correctly
     if (props.imageSelectionMode !== 'style') {
       closeModal();
     } else {
