@@ -37,6 +37,7 @@ watch(props.userPrompt, (newValue) => {
 });
 
 function closeModal() {
+  isDone.value = false;
   emit("close-modal");
 }
 
@@ -112,16 +113,19 @@ const goToUploadPage = () => {
         </div>
       </div>
 
-      <div v-else-if="imageSelectionMode === 'style'">
-        <v-text-field
-          v-model="localUserPrompt"
-          label="Enter your prompt"
-          clearable
-        ></v-text-field>
-        <v-btn @click="handleDone" color="primary" class="done-button">
-          Confirm
-        </v-btn>
-      </div>
+<div v-else-if="imageSelectionMode === 'style'" class="style-mode-container">
+  <div class="horizontal-layout">
+    <img src="../assets/whatsnext.png" alt="Selected Image" class="robot"/>
+    <v-text-field class="prompt-text-field"
+      v-model="localUserPrompt"
+      label="What image should I place next?"
+      clearable
+    ></v-text-field>
+  </div>
+  <v-btn @click="handleDone" color="primary" class="done-button">
+    Confirm
+  </v-btn>
+</div>
     </div>
   </div>
 </template>
@@ -242,5 +246,49 @@ h3 {
 
 .done-button:hover {
   background-color: #0056b3;
+}
+
+.style-mode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.robot {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.prompt-text-field {
+  width: 400px;
+}
+
+<style scoped>
+.style-mode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.horizontal-layout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.robot {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.prompt-text-field {
+  width: 300px;
+  height: 50px;
 }
 </style>
