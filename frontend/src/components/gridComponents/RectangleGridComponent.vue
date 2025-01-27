@@ -85,7 +85,10 @@ onMounted(() => {
 <template>
   <div class="rectangle-grid-container">
     <!-- Popup AI thinking -->
+
     <div v-if="isAITurn" class="popup">
+
+      <img src="../../assets/whatsnext.png" height="100" width="100"/>
       <v-progress-linear
           color="teal"
           indeterminate
@@ -94,7 +97,7 @@ onMounted(() => {
           stream
       ></v-progress-linear>
       <br>
-      AI is thinking...
+      Let me think about that...
     </div>
 
     <div class="rectangle-grid" v-bind="attrs">
@@ -248,16 +251,17 @@ onMounted(() => {
 
 .popup {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: calc(50% + 222px); /* Offset to the bottom by 222px */
+  left: calc(50% + 300px);
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 20px;
+  padding: 40px; /* Increased padding */
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 2;
+  width: 300px; /* Added width */
 }
 
 .rectangle-grid {
