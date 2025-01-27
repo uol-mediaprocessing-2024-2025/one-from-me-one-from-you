@@ -51,6 +51,7 @@ const ImageSelectionModes = {
 };
 
 const imageSelectionMode = ref(ImageSelectionModes.SIMILARITY);
+const userPrompt = ref("");
 
 const onImageSelectionModeChange = (event) => {
   const newMode = event.target.value;
@@ -271,7 +272,8 @@ const removeImages = async () => {
           </div>
         </v-radio-group>
       </section>
-      <br>
+
+      <!--
       <section>
         <h2>Textual Prompt</h2>
         <v-text-field class="next-image-prompt"
@@ -283,6 +285,7 @@ const removeImages = async () => {
                       :disabled="imageSelectionMode === ImageSelectionModes.FACE_DETECTION || imageSelectionMode === ImageSelectionModes.SIMILARITY"></v-text-field>
       </section>
       <br>
+      -->
 
       <section class="collage-shapes">
         <h2>Collage Shape</h2>

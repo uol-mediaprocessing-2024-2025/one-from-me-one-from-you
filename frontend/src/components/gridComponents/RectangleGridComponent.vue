@@ -23,6 +23,8 @@ const props = defineProps({
   },
 });
 
+
+
 function openImageSelection(index) {
   selectedIndex.value = index;
   showModal.value = true;
@@ -111,9 +113,10 @@ onMounted(() => {
       :showModal="showModal"
       :selectedIndex="selectedIndex"
       :imageSelectionMode="imageSelectionMode"
+
       @close-modal="closeModal"
       @select-image="selectImage"
-  />
+      :user-prompt="props.userPrompt"/>
 </template>
 
 <style scoped>
