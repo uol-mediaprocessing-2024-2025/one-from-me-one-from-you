@@ -116,15 +116,16 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   position: relative;
-  width: 800px;
-  height: 600px;
+  width: 900px;
+  height: 750px;
 }
 
 .rectangle-grid {
+  border: 1px solid black;
   display: block;
   position: relative;
-  width: 800px;
-  height: 600px;
+  width: 900px;
+  height: 750px;
 }
 
 .remove-button {
