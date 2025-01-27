@@ -52,11 +52,7 @@ async function selectImage(image) {
       fileName: fileName,
     });
 
-    if (props.imageSelectionMode !== 'style') {
-      closeModal();
-    } else {
-      isDone.value = true;
-    }
+    closeModal();
   }
 }
 
@@ -71,12 +67,10 @@ function handleImageClick(image) {
 
 function handleDone() {
   if (props.imageSelectionMode === 'style' && selectedImage.value) {
+    emit("update:userPrompt", localUserPrompt.value);
     selectImage(selectedImage.value);
+    console.log('User prompt updated:', localUserPrompt.value); // Debug to see if value is set correctly
   }
-  emit("update:userPrompt", localUserPrompt.value);
-  isDone.value = false;
-  closeModal();
-  console.log('userPrompt on button click:', localUserPrompt.value);
 }
 
 const goToUploadPage = () => {
