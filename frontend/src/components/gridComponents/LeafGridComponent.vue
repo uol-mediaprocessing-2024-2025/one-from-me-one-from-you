@@ -140,25 +140,25 @@ async function selectImage({ src, fileName }) {
   justify-content: center;
   align-items: center;
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: 1000px;
+  height: 800px;
   margin: 0 auto;
 }
 
 .rectangle-grid {
-  border: 1px black;
+  border: 1px solid black;
   display: block;
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: 1000px;
+  height: 800px;
 }
 
 .grid-item {
   background-color: #f9f9f9;
   border: 1px dashed #ccc;
   border-radius: 8px;
-  width: 50px;
-  height: 50px;
+  width: 80px;
+  height: 80px;
   align-items: center;
   justify-content: center;
   position: absolute;
@@ -220,7 +220,7 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .grid-item:nth-child(26) { top: 60%; left: 50%; }
 .grid-item:nth-child(27) { top: 70%; left: 40%; }
-.grid-item:nth-child(28) { top: 80%; left: 30%; }
+.grid-item:nth-child(28) { top: 75%; left: 30%; }
 
 .grid-item:nth-child(29) { top: 70%; left: 50%; }
 
@@ -228,7 +228,7 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 .grid-item:nth-child(31) { top: 40%; left: 70%; }
 
 .grid-item:nth-child(32) { top: 50%; left: 60%; }
-.grid-item:nth-child(33) { top: 90%; left: 20%; }
+.grid-item:nth-child(33) { top: 85%; left: 20%; }
 .grid-item:nth-child(34) { top: 15%; left: 80%; }
 .grid-item:nth-child(35) { top: 35%; left: 80%; }
 

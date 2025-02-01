@@ -21,10 +21,10 @@ export function scaleImage(imageUrl) {
     img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = 50;
-      canvas.height = 50;
+      canvas.width = 78;
+      canvas.height = 78;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, 50, 50);
+      ctx.drawImage(img, 0, 0, 78, 78);
       resolve(canvas.toDataURL("image/jpeg", 0.8));
     };
     img.onerror = (err) => {
@@ -115,7 +115,7 @@ export async function extractGridPositions(gridContainer, gridItems, items, comp
   formData.append("positions", JSON.stringify(positions));
   formData.append("componentName", componentName);
   formData.append("user_prompt", userPrompt);
-
+  console.log(JSON.stringify(positions))
   try {
     const response = await fetch(`${store.apiUrl}/positions`, {
       method: "POST",

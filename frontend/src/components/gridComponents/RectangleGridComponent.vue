@@ -138,8 +138,8 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   position: relative;
-  width: 600px;
-  height: 600px;
+    width: 1000px;
+  height: 800px;
   margin: 0 auto;
 }
 
@@ -147,8 +147,8 @@ onMounted(() => {
   border: 1px black;
   display: block;
   position: relative;
-  width: 600px;
-  height: 600px;
+    width: 1000px;
+  height: 800px;
 }
 
 .remove-button {
@@ -177,8 +177,8 @@ onMounted(() => {
   background-color: #f9f9f9;
   border: 1px dashed #ccc;
   border-radius: 8px;
-  width: 50px;
-  height: 50px;
+  width: 80px;
+  height: 80px;
   align-items: center;
   justify-content: center;
   position: absolute;

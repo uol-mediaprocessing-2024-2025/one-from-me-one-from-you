@@ -274,12 +274,15 @@ def add_component(component_name: str, data: List[Dict[str, Any]], prompt):
     :param data: List of position data dictionaries.
     :param prompt: Prompt for CLIP model, is None if no prompt was set.
     """
+
+    print(f"DATA: {data}")
     # Check if the component already exists in components_data
     if component_name not in components_data or not components_data[component_name]:
         # Now, we try to find the target_id from the first tuple in the data
         target_id = None
         for row in data:
             for item in row:
+                print(f"ITEM: {item}")
                 if isinstance(item, tuple) and len(item) > 0 and isinstance(item[0], int):
                     # Only consider tuples where the second value is not '[]'
                     if item[1] != '[]':
@@ -368,9 +371,11 @@ def compare_and_get_new_id(existing_data, new_data):
     # Flatten the existing and new data for easier comparison
     flat_existing = [item for row in existing_data for item in row if isinstance(item, tuple)]
     flat_new = [item for row in new_data for item in row if isinstance(item, tuple)]
-
+    print(f"FLAT EXISITING: {flat_existing}")
+    print(f"FLAT NEW: {flat_new}")
     # Find the new element in flat_new that's not in flat_existing
     for item in flat_new:
+        print(item)
         if item not in flat_existing:
             print(f"New element found: {item}")
             return item[0]  # Assuming the id is the first element in the tuple
@@ -452,56 +457,55 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
     if not elements:
         return [["/" for _ in range(10)] for _ in range(10)]
 
-    all_tops = [el['top'] for el in elements]
-    all_lefts = [el['left'] for el in elements]
-    min_top, max_top = min(all_tops), max(all_tops)
-    min_left, max_left = min(all_lefts), max(all_lefts)
+    print(f"ELEMENTS: {elements}")
 
-    rows = 10
-    cols = 10
+    all_tops = sorted(set(el['top'] for el in elements))
+    all_lefts = sorted(set(el['left'] for el in elements))
+
+    rows = min(10, len(all_tops))  # Falls weniger als 10 Zeilen erkennbar sind
+    cols = min(10, len(all_lefts))  # Falls weniger als 10 Spalten erkennbar sind
+
+    top_index_map = {v: i for i, v in enumerate(all_tops[:rows])}
+    left_index_map = {v: i for i, v in enumerate(all_lefts[:cols])}
 
     if has_consistent_height:
-        top_positions = [min_top + 60 * i for i in range(rows)]
-        # print(f"Top positions: {top_positions}")
-        left_positions = [min_left + 60 * i for i in range(cols)]
-        # print(f"Left positions: {left_positions}")
         allowed_top_gap = 20
     else:
-        top_positions = [min_top + 57 * i for i in range(rows)]
-        # print(f"Top positions: {top_positions}")
-        left_positions = [min_left + 60 * i for i in range(cols)]
-        # print(f"Left positions: {left_positions}")
         allowed_top_gap = 40
 
     array_2d = [["_" for _ in range(cols)] for _ in range(rows)]
-
-    top_index_map = {v: i for i, v in enumerate(top_positions)}
-    left_index_map = {v: i for i, v in enumerate(left_positions)}
 
     for element in elements:
         t = element['top']
         l = element['left']
 
+        # Finde die nächste passende Zeilenposition mit Abstand <= allowed_top_gap
         closest_top = min(top_index_map.keys(), key=lambda x: abs(t - x))
+        if abs(closest_top - t) > allowed_top_gap:
+            continue  # Ignoriere Werte, die zu weit entfernt sind
 
-        if abs(closest_top - t) <= allowed_top_gap and l in left_index_map:
-            r = top_index_map[closest_top]
-            c = left_index_map[l]
-            file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (
-            element['id'], "[]")
-            array_2d[r][c] = file_name
-            if file_name[1] != "[]":
-                # print(f"Placed image {file_name} at position ({r}, {c})")
-                neighbors = {
-                    "top": array_2d[r - 1][c] if r > 0 else None,
-                    "bottom": array_2d[r + 1][c] if r < rows - 1 else None,
-                    "left": array_2d[r][c - 1] if c > 0 else None,
-                    "right": array_2d[r][c + 1] if c < cols - 1 else None
-                }
-                # print(f"Neighbors of image {file_name} at position ({r}, {c}): {neighbors}")
+        # Prüfe, ob der Left-Wert in der Map ist
+        if l not in left_index_map:
+            continue
 
-    # for row in array_2d:
-    # print(row)
+        r = top_index_map[closest_top]
+        c = left_index_map[l]
+
+        file_name = (element["id"], element['fileName']) if element['fileName'] is not None else (element['id'], "[]")
+        array_2d[r][c] = file_name
+
+        if file_name[1] != "[]":
+            neighbors = {
+                "top": array_2d[r - 1][c] if r > 0 else None,
+                "bottom": array_2d[r + 1][c] if r < rows - 1 else None,
+                "left": array_2d[r][c - 1] if c > 0 else None,
+                "right": array_2d[r][c + 1] if c < cols - 1 else None
+            }
+            print(f"Neighbors of image {file_name} at position ({r}, {c}): {neighbors}")
+
+    print("ARRAY2D:")
+    for row in array_2d:
+        print(row)
 
     return array_2d
 
