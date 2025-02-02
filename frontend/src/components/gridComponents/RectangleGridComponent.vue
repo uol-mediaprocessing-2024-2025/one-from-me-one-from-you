@@ -1,7 +1,7 @@
 <script setup>
-import { ref, reactive, onMounted, defineProps, watch } from "vue";
-import { useAttrs } from "vue";
-import { updateCollageItems, wait, extractGridPositions } from "@/controller/GridComponentHelper.js";
+import {ref, reactive, onMounted, defineProps, watch} from "vue";
+import {useAttrs} from "vue";
+import {updateCollageItems, wait, extractGridPositions} from "@/controller/GridComponentHelper.js";
 import ImageSelectionModal from "@/components/ImageSelectionModal.vue";
 
 const attrs = useAttrs();
@@ -10,7 +10,7 @@ const selectedIndex = ref(null);
 const isAITurn = ref(false);
 const isDisabled = ref(false);
 const componentName = "rectangleComponent";
-const items = reactive(Array(35).fill({ src: null, fileName: null }));
+const items = reactive(Array(35).fill({src: null, fileName: null}));
 
 const props = defineProps({
   userPrompt: {
@@ -36,7 +36,7 @@ function closeModal() {
 }
 
 async function removePreviewImage(index) {
-  items[index] = { src: null, fileName: null };
+  items[index] = {src: null, fileName: null};
   isAITurn.value = true;
   isDisabled.value = true;
 
@@ -47,14 +47,9 @@ async function removePreviewImage(index) {
   isDisabled.value = false;
 }
 
-watch(() => props.userPrompt, (newValue) => { // Debug, can be removed
-  console.log("userPrompt changed:", newValue);
-  localUserPrompt.value = newValue;
-});
-
-async function selectImage({ src, fileName }) {
+async function selectImage({src, fileName}) {
   if (selectedIndex.value !== null) {
-    items[selectedIndex.value] = { src, fileName };
+    items[selectedIndex.value] = {src, fileName};
 
     isAITurn.value = true;
     isDisabled.value = true;
@@ -138,7 +133,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   position: relative;
-    width: 1000px;
+  width: 1000px;
   height: 800px;
   margin: 0 auto;
 }
@@ -147,7 +142,7 @@ onMounted(() => {
   border: 1px black;
   display: block;
   position: relative;
-    width: 1000px;
+  width: 1000px;
   height: 800px;
 }
 
@@ -198,41 +193,180 @@ onMounted(() => {
   transform-origin: center center;
 }
 
-.grid-item:nth-child(1) { top: 20%; left: 10%; }
-.grid-item:nth-child(2) { top: 30%; left: 10%; }
-.grid-item:nth-child(3) { top: 40%; left: 10%; }
-.grid-item:nth-child(4) { top: 50%; left: 10%; }
-.grid-item:nth-child(5) { top: 60%; left: 10%; }
-.grid-item:nth-child(6) { top: 20%; left: 20%; }
-.grid-item:nth-child(7) { top: 30%; left: 20%; }
-.grid-item:nth-child(8) { top: 40%; left: 20%; }
-.grid-item:nth-child(9) { top: 50%; left: 20%; }
-.grid-item:nth-child(10) { top: 60%; left: 20%; }
-.grid-item:nth-child(11) { top: 20%; left: 30%; }
-.grid-item:nth-child(12) { top: 30%; left: 30%; }
-.grid-item:nth-child(13) { top: 40%; left: 30%; }
-.grid-item:nth-child(14) { top: 50%; left: 30%; }
-.grid-item:nth-child(15) { top: 60%; left: 30%; }
-.grid-item:nth-child(16) { top: 20%; left: 40%; }
-.grid-item:nth-child(17) { top: 30%; left: 40%; }
-.grid-item:nth-child(18) { top: 40%; left: 40%; }
-.grid-item:nth-child(19) { top: 50%; left: 40%; }
-.grid-item:nth-child(20) { top: 60%; left: 40%; }
-.grid-item:nth-child(21) { top: 20%; left: 50%; }
-.grid-item:nth-child(22) { top: 30%; left: 50%; }
-.grid-item:nth-child(23) { top: 40%; left: 50%; }
-.grid-item:nth-child(24) { top: 50%; left: 50%; }
-.grid-item:nth-child(25) { top: 60%; left: 50%; }
-.grid-item:nth-child(26) { top: 20%; left: 60%; }
-.grid-item:nth-child(27) { top: 30%; left: 60%; }
-.grid-item:nth-child(28) { top: 40%; left: 60%; }
-.grid-item:nth-child(29) { top: 50%; left: 60%; }
-.grid-item:nth-child(30) { top: 60%; left: 60%; }
-.grid-item:nth-child(31) { top: 20%; left: 70%; }
-.grid-item:nth-child(32) { top: 30%; left: 70%; }
-.grid-item:nth-child(33) { top: 40%; left: 70%; }
-.grid-item:nth-child(34) { top: 50%; left: 70%; }
-.grid-item:nth-child(35) { top: 60%; left: 70%; }
+.grid-item:nth-child(1) {
+  top: 20%;
+  left: 10%;
+}
+
+.grid-item:nth-child(2) {
+  top: 30%;
+  left: 10%;
+}
+
+.grid-item:nth-child(3) {
+  top: 40%;
+  left: 10%;
+}
+
+.grid-item:nth-child(4) {
+  top: 50%;
+  left: 10%;
+}
+
+.grid-item:nth-child(5) {
+  top: 60%;
+  left: 10%;
+}
+
+.grid-item:nth-child(6) {
+  top: 20%;
+  left: 20%;
+}
+
+.grid-item:nth-child(7) {
+  top: 30%;
+  left: 20%;
+}
+
+.grid-item:nth-child(8) {
+  top: 40%;
+  left: 20%;
+}
+
+.grid-item:nth-child(9) {
+  top: 50%;
+  left: 20%;
+}
+
+.grid-item:nth-child(10) {
+  top: 60%;
+  left: 20%;
+}
+
+.grid-item:nth-child(11) {
+  top: 20%;
+  left: 30%;
+}
+
+.grid-item:nth-child(12) {
+  top: 30%;
+  left: 30%;
+}
+
+.grid-item:nth-child(13) {
+  top: 40%;
+  left: 30%;
+}
+
+.grid-item:nth-child(14) {
+  top: 50%;
+  left: 30%;
+}
+
+.grid-item:nth-child(15) {
+  top: 60%;
+  left: 30%;
+}
+
+.grid-item:nth-child(16) {
+  top: 20%;
+  left: 40%;
+}
+
+.grid-item:nth-child(17) {
+  top: 30%;
+  left: 40%;
+}
+
+.grid-item:nth-child(18) {
+  top: 40%;
+  left: 40%;
+}
+
+.grid-item:nth-child(19) {
+  top: 50%;
+  left: 40%;
+}
+
+.grid-item:nth-child(20) {
+  top: 60%;
+  left: 40%;
+}
+
+.grid-item:nth-child(21) {
+  top: 20%;
+  left: 50%;
+}
+
+.grid-item:nth-child(22) {
+  top: 30%;
+  left: 50%;
+}
+
+.grid-item:nth-child(23) {
+  top: 40%;
+  left: 50%;
+}
+
+.grid-item:nth-child(24) {
+  top: 50%;
+  left: 50%;
+}
+
+.grid-item:nth-child(25) {
+  top: 60%;
+  left: 50%;
+}
+
+.grid-item:nth-child(26) {
+  top: 20%;
+  left: 60%;
+}
+
+.grid-item:nth-child(27) {
+  top: 30%;
+  left: 60%;
+}
+
+.grid-item:nth-child(28) {
+  top: 40%;
+  left: 60%;
+}
+
+.grid-item:nth-child(29) {
+  top: 50%;
+  left: 60%;
+}
+
+.grid-item:nth-child(30) {
+  top: 60%;
+  left: 60%;
+}
+
+.grid-item:nth-child(31) {
+  top: 20%;
+  left: 70%;
+}
+
+.grid-item:nth-child(32) {
+  top: 30%;
+  left: 70%;
+}
+
+.grid-item:nth-child(33) {
+  top: 40%;
+  left: 70%;
+}
+
+.grid-item:nth-child(34) {
+  top: 50%;
+  left: 70%;
+}
+
+.grid-item:nth-child(35) {
+  top: 60%;
+  left: 70%;
+}
 
 .upload-label {
   display: flex;

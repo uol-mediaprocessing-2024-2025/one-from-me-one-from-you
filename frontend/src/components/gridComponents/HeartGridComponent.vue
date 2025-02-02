@@ -18,7 +18,14 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  imageSelectionMode: {
+    type: String,
+    required: true,
+  },
 });
+
+const localUserPrompt = ref(props.userPrompt);
+
 
 onMounted(async () => {
   await updateCollageItems(componentName, items);
@@ -35,7 +42,7 @@ function closeModal() {
 }
 
 async function removePreviewImage(index) {
-  items[index] = { src: null, fileName: null };
+  items[index] = {src: null, fileName: null};
   isAITurn.value = true;
   isDisabled.value = true;
 
@@ -46,7 +53,7 @@ async function removePreviewImage(index) {
   isDisabled.value = false;
 }
 
-async function selectImage({ src, fileName }) {
+async function selectImage({src, fileName}) {
   if (selectedIndex.value !== null) {
     items[selectedIndex.value] = {src, fileName};
 
@@ -57,7 +64,7 @@ async function selectImage({ src, fileName }) {
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
-    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
+    await extractGridPositions(gridContainer, gridItems, items, componentName, localUserPrompt.value);
 
     await updateCollageItems(componentName, items);
 
@@ -65,12 +72,20 @@ async function selectImage({ src, fileName }) {
     isDisabled.value = false;
   }
 }
+
+function updateUserPrompt(newPrompt) {
+  localUserPrompt.value = newPrompt;
+  console.log("Updated userPrompt in parent:", newPrompt);
+}
 </script>
 
 <template>
   <div class="rectangle-grid-container">
     <!-- Popup AI thinking -->
+
     <div v-if="isAITurn" class="popup">
+
+      <img src="../../assets/whatsnext.png" height="100" width="100"/>
       <v-progress-linear
           color="teal"
           indeterminate
@@ -79,7 +94,7 @@ async function selectImage({ src, fileName }) {
           stream
       ></v-progress-linear>
       <br>
-      AI is thinking...
+      Let me think about that...
     </div>
 
     <div class="rectangle-grid" v-bind="attrs">
@@ -104,13 +119,14 @@ async function selectImage({ src, fileName }) {
     </div>
   </div>
 
-  <!-- Modal for image selection -->
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"
+      :imageSelectionMode="imageSelectionMode"
+      :userPrompt="localUserPrompt"
       @close-modal="closeModal"
       @select-image="selectImage"
-  />
+      @update:userPrompt="updateUserPrompt"/>
 </template>
 
 <style scoped>
@@ -119,7 +135,7 @@ async function selectImage({ src, fileName }) {
   justify-content: center;
   align-items: center;
   position: relative;
-   width: 1000px;
+  width: 1000px;
   height: 800px;
   margin: 0 auto;
 }
@@ -161,48 +177,176 @@ async function selectImage({ src, fileName }) {
   transform: scale(1.05);
   transform-origin: center center;
 }
-.grid-item:nth-child(1) { top: 70%; left: 50%; }
-.grid-item:nth-child(2) { top: 30%; left: 50%; }
-.grid-item:nth-child(3) { top: 40%; left: 50%; }
-.grid-item:nth-child(4) { top: 50%; left: 50%; }
-.grid-item:nth-child(5) { top: 60%; left: 50%; }
 
-.grid-item:nth-child(6) { top: 20%; left: 40%; }
-.grid-item:nth-child(7) { top: 30%; left: 40%; }
-.grid-item:nth-child(8) { top: 40%; left: 40%; }
-.grid-item:nth-child(9) { top: 50%; left: 40%; }
-.grid-item:nth-child(10){ top: 60%; left: 40%; }
+.grid-item:nth-child(1) {
+  top: 70%;
+  left: 50%;
+}
 
-.grid-item:nth-child(12) { top: 20%; left: 60%; }
-.grid-item:nth-child(13) { top: 30%; left: 60%; }
-.grid-item:nth-child(14) { top: 40%; left: 60%; }
-.grid-item:nth-child(15) { top: 50%; left: 60%; }
-.grid-item:nth-child(16) { top: 60%; left: 60%; }
+.grid-item:nth-child(2) {
+  top: 30%;
+  left: 50%;
+}
 
-.grid-item:nth-child(17) { top: 20%; left: 30%; }
-.grid-item:nth-child(18) { top: 30%; left: 30%; }
-.grid-item:nth-child(19) { top: 40%; left: 30%; }
-.grid-item:nth-child(20) { top: 50%; left: 30%; }
-.grid-item:nth-child(21) { top: 10%; left: 30%; }
+.grid-item:nth-child(3) {
+  top: 40%;
+  left: 50%;
+}
 
-.grid-item:nth-child(22) { top: 20%; left: 70%; }
-.grid-item:nth-child(23) { top: 30%; left: 70%; }
-.grid-item:nth-child(24) { top: 40%; left: 70%; }
-.grid-item:nth-child(25) { top: 50%; left: 70%; }
-.grid-item:nth-child(26) { top: 10%; left: 70%; }
+.grid-item:nth-child(4) {
+  top: 50%;
+  left: 50%;
+}
 
-.grid-item:nth-child(27) { top: 20%; left: 20%; }
-.grid-item:nth-child(28) { top: 30%; left: 20%; }
-.grid-item:nth-child(29) { top: 40%; left: 20%; }
+.grid-item:nth-child(5) {
+  top: 60%;
+  left: 50%;
+}
 
-.grid-item:nth-child(30) { top: 20%; left: 80%; }
-.grid-item:nth-child(31) { top: 30%; left: 80%; }
-.grid-item:nth-child(32) { top: 40%; left: 80%; }
+.grid-item:nth-child(6) {
+  top: 20%;
+  left: 40%;
+}
 
-.grid-item:nth-child(33) { top: 30%; left: 10%; }
-.grid-item:nth-child(11) { top: 30%; left: 90%; }
+.grid-item:nth-child(7) {
+  top: 30%;
+  left: 40%;
+}
 
-.grid-item:nth-child(34) { top: 80%; left: 50%; }
+.grid-item:nth-child(8) {
+  top: 40%;
+  left: 40%;
+}
+
+.grid-item:nth-child(9) {
+  top: 50%;
+  left: 40%;
+}
+
+.grid-item:nth-child(10) {
+  top: 60%;
+  left: 40%;
+}
+
+.grid-item:nth-child(12) {
+  top: 20%;
+  left: 60%;
+}
+
+.grid-item:nth-child(13) {
+  top: 30%;
+  left: 60%;
+}
+
+.grid-item:nth-child(14) {
+  top: 40%;
+  left: 60%;
+}
+
+.grid-item:nth-child(15) {
+  top: 50%;
+  left: 60%;
+}
+
+.grid-item:nth-child(16) {
+  top: 60%;
+  left: 60%;
+}
+
+.grid-item:nth-child(17) {
+  top: 20%;
+  left: 30%;
+}
+
+.grid-item:nth-child(18) {
+  top: 30%;
+  left: 30%;
+}
+
+.grid-item:nth-child(19) {
+  top: 40%;
+  left: 30%;
+}
+
+.grid-item:nth-child(20) {
+  top: 50%;
+  left: 30%;
+}
+
+.grid-item:nth-child(21) {
+  top: 10%;
+  left: 30%;
+}
+
+.grid-item:nth-child(22) {
+  top: 20%;
+  left: 70%;
+}
+
+.grid-item:nth-child(23) {
+  top: 30%;
+  left: 70%;
+}
+
+.grid-item:nth-child(24) {
+  top: 40%;
+  left: 70%;
+}
+
+.grid-item:nth-child(25) {
+  top: 50%;
+  left: 70%;
+}
+
+.grid-item:nth-child(26) {
+  top: 10%;
+  left: 70%;
+}
+
+.grid-item:nth-child(27) {
+  top: 20%;
+  left: 20%;
+}
+
+.grid-item:nth-child(28) {
+  top: 30%;
+  left: 20%;
+}
+
+.grid-item:nth-child(29) {
+  top: 40%;
+  left: 20%;
+}
+
+.grid-item:nth-child(30) {
+  top: 20%;
+  left: 80%;
+}
+
+.grid-item:nth-child(31) {
+  top: 30%;
+  left: 80%;
+}
+
+.grid-item:nth-child(32) {
+  top: 40%;
+  left: 80%;
+}
+
+.grid-item:nth-child(33) {
+  top: 30%;
+  left: 10%;
+}
+
+.grid-item:nth-child(11) {
+  top: 30%;
+  left: 90%;
+}
+
+.grid-item:nth-child(34) {
+  top: 80%;
+  left: 50%;
+}
 
 
 .upload-label {
@@ -241,16 +385,17 @@ async function selectImage({ src, fileName }) {
 
 .popup {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: calc(50% + 222px);
+  left: calc(50% + 300px);
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 20px;
+  padding: 40px;
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 2;
+  width: 300px;
 }
 
 .rectangle-grid {
