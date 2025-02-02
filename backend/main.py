@@ -3,7 +3,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
-from PIL import Image
+from PIL import Image, ImageOps, ImageEnhance
 from typing import Any, Dict, List, Tuple
 from fastapi.responses import JSONResponse
 from itertools import chain
@@ -19,6 +19,7 @@ import time
 import torch
 import json
 import uuid
+import cv2
 
 app = FastAPI()
 
@@ -113,6 +114,45 @@ def create_collage_from_components(component_name: str, target_size: Tuple[int, 
     return collage
 
 
+def resize_image_keep_aspect(image_path):
+    """
+    Sharpens images using laplace filter.
+    Applies sharpening with OpenCV and Floyd-Steinberg dithering (if PNG).
+
+    Parameters:
+        image_path (str): Path to the input image file (the file will be overwritten).
+    """
+    target_size = (600, 600)
+    upscale_factor = 8
+    highres_size = (target_size[0] * upscale_factor, target_size[1] * upscale_factor)
+
+    img = Image.open(image_path).convert("RGB")
+    img_large = img.resize(highres_size, Image.Resampling.LANCZOS)
+
+    # Using Laplacian filter to sharpen images
+    img_cv = np.array(img_large)
+    sharp = cv2.Laplacian(img_cv, cv2.CV_64F)
+    img_cv = cv2.convertScaleAbs(img_cv + sharp)
+
+    # Converting from cv2 array to PIL
+    img_sharp = Image.fromarray(img_cv)
+    enhancer = ImageEnhance.Sharpness(img_sharp)
+    img_sharp = enhancer.enhance(2.0)
+
+    # Downscaling image
+    img_final = img_sharp.resize(target_size, Image.Resampling.LANCZOS)
+
+    # Using dithering on pngs.
+    if image_path.lower().endswith(".png"):
+        img_final = img_final.convert("P", dither=Image.Dither.FLOYDSTEINBERG)
+
+    # Saving jpegs in RGB
+    if image_path.lower().endswith((".jpg", ".jpeg")):
+        img_final = img_final.convert("RGB")
+
+    img_final.save(image_path)
+
+
 @app.post("/saveImages")
 async def saveImages(files: List[UploadFile] = File(...)):
     """
@@ -132,6 +172,8 @@ async def saveImages(files: List[UploadFile] = File(...)):
 
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
+
+            resize_image_keep_aspect(file_path)
 
             # Load and preprocess the image
             image = Image.open(file_path)
@@ -201,7 +243,6 @@ def ping():
 
 @app.post("/positions")
 async def receive_positions(positions: str = Form(...), componentName: str = Form(...), user_prompt: str = Form(...)):
-    print(user_prompt)
     parsed_positions = json.loads(positions)
     if componentName in ("heartComponent", "cloudComponent", "rectangleComponent", "triangleComponent"):
         array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=True)
@@ -209,7 +250,7 @@ async def receive_positions(positions: str = Form(...), componentName: str = For
         array = group_elements_fixed_10x10(elements=parsed_positions, has_consistent_height=False)
 
     if user_prompt in ("", " ", None) or str(user_prompt) == "null":
-        print(f"No user prompt detected.: {user_prompt}")
+        print(f"No user prompt detected.")
         add_component(component_name=componentName, data=array, prompt=None)
     else:
         print(f"User prompt detected: {user_prompt}")
@@ -275,14 +316,12 @@ def add_component(component_name: str, data: List[Dict[str, Any]], prompt):
     :param prompt: Prompt for CLIP model, is None if no prompt was set.
     """
 
-    print(f"DATA: {data}")
     # Check if the component already exists in components_data
     if component_name not in components_data or not components_data[component_name]:
         # Now, we try to find the target_id from the first tuple in the data
         target_id = None
         for row in data:
             for item in row:
-                print(f"ITEM: {item}")
                 if isinstance(item, tuple) and len(item) > 0 and isinstance(item[0], int):
                     # Only consider tuples where the second value is not '[]'
                     if item[1] != '[]':
@@ -337,6 +376,7 @@ def ai_insert_image(component_name: str, row_idx: int, col_idx: int):
     else:
         print(f"Invalid image selection mode '{image_selection_mode}' for {component_name}.")
 
+
 def find_tuple_by_id(data: List[List[Any]], target_id: int) -> Tuple[int, int, Tuple[int, str]]:
     """
     Find the tuple with the specified id in the data structure.
@@ -371,11 +411,8 @@ def compare_and_get_new_id(existing_data, new_data):
     # Flatten the existing and new data for easier comparison
     flat_existing = [item for row in existing_data for item in row if isinstance(item, tuple)]
     flat_new = [item for row in new_data for item in row if isinstance(item, tuple)]
-    print(f"FLAT EXISITING: {flat_existing}")
-    print(f"FLAT NEW: {flat_new}")
     # Find the new element in flat_new that's not in flat_existing
     for item in flat_new:
-        print(item)
         if item not in flat_existing:
             print(f"New element found: {item}")
             return item[0]  # Assuming the id is the first element in the tuple
@@ -457,8 +494,6 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
     if not elements:
         return [["/" for _ in range(10)] for _ in range(10)]
 
-    print(f"ELEMENTS: {elements}")
-
     all_tops = sorted(set(el['top'] for el in elements))
     all_lefts = sorted(set(el['left'] for el in elements))
 
@@ -502,10 +537,6 @@ def group_elements_fixed_10x10(elements, has_consistent_height):
                 "right": array_2d[r][c + 1] if c < cols - 1 else None
             }
             print(f"Neighbors of image {file_name} at position ({r}, {c}): {neighbors}")
-
-    print("ARRAY2D:")
-    for row in array_2d:
-        print(row)
 
     return array_2d
 
@@ -691,6 +722,7 @@ def find_most_similar_image(available_images: list, neighbor_tensors: torch.Tens
             best_score = score
             best_image = image_name
     return best_image, best_score
+
 
 def find_most_similar_face(available_images: list, neighbor_tensors: torch.Tensor, encoded_tensors: dict, component_name: str, exclude_image: str = None):
     placed_images = {
