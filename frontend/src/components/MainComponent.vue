@@ -329,6 +329,11 @@ const removeImages = async () => {
           class="button clear-button">
         Clear Collage
       </button>
+      <button
+          onclick="window.open('https://youtu.be/zOwMHHnZ_78', '_blank')"
+          class="button watch-tutorial-button">
+        Watch Tutorial
+      </button>
     </div>
   </div>
 </template>
@@ -443,6 +448,16 @@ header h1 {
   color: #fff;
   margin: 10px 0;
   transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.watch-tutorial-button {
+  background-color: #FFB347;
+}
+
+.watch-tutorial-button:hover {
+  background-color: #FF8C00;
+  transform: scale(1.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .download-button {
