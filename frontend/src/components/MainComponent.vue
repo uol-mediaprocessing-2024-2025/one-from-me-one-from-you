@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import {ref, onMounted} from 'vue';
 import axios from "axios";
 import html2canvas from "html2canvas";
 import HeartGridComponent from './gridComponents/HeartGridComponent.vue';
@@ -11,11 +11,11 @@ import FishGridComponent from "@/components/gridComponents/FishGridComponent.vue
 import LeafGridComponent from "@/components/gridComponents/LeafGridComponent.vue";
 import TriangleGridComponent from "@/components/gridComponents/TriangleGridComponent.vue";
 
-import { fetchAndStoreImages } from "@/controller/SynchronizeImages.js";
-import { clearCollage, updateImageSelectionMode } from "@/controller/GridComponentHelper.js";
-import { removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons } from "@/controller/FinishCollage.js";
+import {fetchAndStoreImages} from "@/controller/SynchronizeImages.js";
+import {clearCollage, updateImageSelectionMode} from "@/controller/GridComponentHelper.js";
+import {removeEmptyPlaceholders, scaleCollageImages, removeRemoveButtons} from "@/controller/FinishCollage.js";
 
-import { store } from "@/store.js";
+import {store} from "@/store.js";
 
 const collageShapes = ref([]); // Stores collage shape options
 const selectedCollageShape = ref('placeholder-heart.png'); // Default collage shape
@@ -247,13 +247,22 @@ const removeImages = async () => {
   <div class="main-container">
     <div class="collage-preview">
       <div class="collage-shape">
-        <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container" :userPrompt="userPrompt"/>
-<RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container" :userPrompt="userPrompt" :imageSelectionMode="imageSelectionMode"/>        <StarGridComponent v-if="isStarGridVisible" class="star-grid-container" :userPrompt="userPrompt"/>
-        <CloudGridComponent v-if="isCloudGridVisible" class="cloud-grid-container" :userPrompt="userPrompt"/>
-        <HexagonGridComponent v-if="isHexagonGridVisible" class="hexagon-grid-container" :userPrompt="userPrompt"/>
-        <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container" :userPrompt="userPrompt"/>
-        <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container" :userPrompt="userPrompt"/>
-        <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container" :userPrompt="userPrompt"/>
+        <HeartGridComponent v-if="isHeartGridVisible" class="heart-grid-container" :userPrompt="userPrompt"
+                            :imageSelectionMode="imageSelectionMode"/>
+        <RectangleGridComponent v-if="isRectangleGridVisible" class="rectangle-grid-container" :userPrompt="userPrompt"
+                                :imageSelectionMode="imageSelectionMode"/>
+        <StarGridComponent v-if="isStarGridVisible" class="star-grid-container" :userPrompt="userPrompt"
+                           :imageSelectionMode="imageSelectionMode"/>
+        <CloudGridComponent v-if="isCloudGridVisible" class="cloud-grid-container" :userPrompt="userPrompt"
+                            :imageSelectionMode="imageSelectionMode"/>
+        <HexagonGridComponent v-if="isHexagonGridVisible" class="hexagon-grid-container" :userPrompt="userPrompt"
+                              :imageSelectionMode="imageSelectionMode"/>
+        <FishGridComponent v-if="isFishGridVisible" class="fish-grid-container" :userPrompt="userPrompt"
+                           :imageSelectionMode="imageSelectionMode"/>
+        <LeafGridComponent v-if="isLeafGridVisible" class="leaf-grid-container" :userPrompt="userPrompt"
+                           :imageSelectionMode="imageSelectionMode"/>
+        <TriangleGridComponent v-if="isTriangleGridVisible" class="triangle-grid-container" :userPrompt="userPrompt"
+                               :imageSelectionMode="imageSelectionMode"/>
       </div>
     </div>
 
@@ -262,10 +271,12 @@ const removeImages = async () => {
       <section class="sorting-options horizontal-layout">
         <v-radio-group v-model="imageSelectionMode" @change="onImageSelectionModeChange">
           <div class="option">
-            <v-radio label="Face Similarity" :value="ImageSelectionModes.FACE_DETECTION" name="sort" color="indigo"></v-radio>
+            <v-radio label="Face Similarity" :value="ImageSelectionModes.FACE_DETECTION" name="sort"
+                     color="indigo"></v-radio>
           </div>
           <div class="option">
-            <v-radio label="Visual Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort" color="indigo"></v-radio>
+            <v-radio label="Visual Similarity" :value="ImageSelectionModes.SIMILARITY" name="sort"
+                     color="indigo"></v-radio>
           </div>
           <div class="option">
             <v-radio label="Textual Prompt" :value="ImageSelectionModes.STYLE" name="sort" color="indigo"></v-radio>
@@ -317,6 +328,11 @@ const removeImages = async () => {
           @click="removeImages"
           class="button clear-button">
         Clear Collage
+      </button>
+      <button
+          onclick="window.open('https://youtu.be/zOwMHHnZ_78', '_blank')"
+          class="button watch-tutorial-button">
+        Watch Tutorial
       </button>
     </div>
   </div>
@@ -432,6 +448,16 @@ header h1 {
   color: #fff;
   margin: 10px 0;
   transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.watch-tutorial-button {
+  background-color: #FFB347;
+}
+
+.watch-tutorial-button:hover {
+  background-color: #FF8C00;
+  transform: scale(1.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .download-button {

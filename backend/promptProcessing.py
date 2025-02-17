@@ -9,6 +9,7 @@ import os
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("RN50", device=device)
 
+
 def get_image_filenames(folder_path: str):
     """
     Returns a list of image filenames (e.g., .jpg, .jpeg, .png, .bmp) from the given folder.
@@ -87,3 +88,5 @@ def find_image_according_to_prompt(already_selected_images: List[str], prompt: s
     best_image_filename = image_filenames[best_match_idx]
 
     return best_image_filename
+
+

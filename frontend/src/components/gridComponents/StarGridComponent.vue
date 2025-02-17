@@ -5,7 +5,7 @@ import {useAttrs} from 'vue';
 import {extractGridPositions, updateCollageItems, wait} from "@/controller/GridComponentHelper.js";
 
 const attrs = useAttrs();
-const items = reactive(Array(35).fill({ src: null, fileName: null }));
+const items = reactive(Array(35).fill({src: null, fileName: null}));
 const showModal = ref(false);
 const selectedIndex = ref(null);
 const componentName = "starComponent"
@@ -17,7 +17,14 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  imageSelectionMode: {
+    type: String,
+    required: true,
+  },
 });
+
+const localUserPrompt = ref(props.userPrompt);
+
 
 function openImageSelection(index) {
   selectedIndex.value = index;
@@ -30,7 +37,7 @@ function closeModal() {
 }
 
 async function removePreviewImage(index) {
-  items[index] = { src: null, fileName: null };
+  items[index] = {src: null, fileName: null};
   isAITurn.value = true;
   isDisabled.value = true;
 
@@ -41,7 +48,7 @@ async function removePreviewImage(index) {
   isDisabled.value = false;
 }
 
-async function selectImage({ src, fileName }) {
+async function selectImage({src, fileName}) {
   if (selectedIndex.value !== null) {
     items[selectedIndex.value] = {src, fileName};
 
@@ -52,13 +59,18 @@ async function selectImage({ src, fileName }) {
 
     const gridContainer = document.querySelector(".rectangle-grid");
     const gridItems = document.querySelectorAll(".grid-item");
-    await extractGridPositions(gridContainer, gridItems, items, componentName, props.userPrompt);
+    await extractGridPositions(gridContainer, gridItems, items, componentName, localUserPrompt.value);
 
     await updateCollageItems(componentName, items);
 
     isAITurn.value = false;
     isDisabled.value = false;
   }
+}
+
+function updateUserPrompt(newPrompt) {
+  localUserPrompt.value = newPrompt;
+  console.log("Updated userPrompt in parent:", newPrompt);
 }
 
 onMounted(() => {
@@ -69,7 +81,10 @@ onMounted(() => {
 <template>
   <div class="rectangle-grid-container">
     <!-- Popup AI thinking -->
+
     <div v-if="isAITurn" class="popup">
+
+      <img src="../../assets/whatsnext.png" height="100" width="100"/>
       <v-progress-linear
           color="teal"
           indeterminate
@@ -78,7 +93,7 @@ onMounted(() => {
           stream
       ></v-progress-linear>
       <br>
-      AI is thinking...
+      Let me think about that...
     </div>
 
     <div class="rectangle-grid" v-bind="attrs">
@@ -106,9 +121,11 @@ onMounted(() => {
   <ImageSelectionModal
       :showModal="showModal"
       :selectedIndex="selectedIndex"
+      :imageSelectionMode="imageSelectionMode"
+      :userPrompt="localUserPrompt"
       @close-modal="closeModal"
       @select-image="selectImage"
-  />
+      @update:userPrompt="updateUserPrompt"/>
 </template>
 
 <style scoped>
@@ -139,8 +156,8 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: 1000px;
+  height: 800px;
   margin: 0 auto;
 }
 
@@ -148,16 +165,16 @@ onMounted(() => {
   border: 1px black;
   display: block;
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: 1000px;
+  height: 800px;
 }
 
 .grid-item {
   background-color: #f9f9f9;
   border: 1px dashed #ccc;
   border-radius: 8px;
-  width: 50px;
-  height: 50px;
+  width: 80px;
+  height: 80px;
   align-items: center;
   justify-content: center;
   position: absolute;
@@ -177,56 +194,185 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-.grid-item.dragover{
-  -webkit-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0,0,0,0);
+.grid-item.dragover {
+  -webkit-box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0, 0, 0, 0);
+  box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 5px #8CFF85, 12px -5px 15px 5px #80C7FF, 12px 10px 15px 7px #E488FF, -10px 10px 15px 7px #FF616B, -10px -7px 27px 1px #8E5CFF, 5px 5px 15px 5px rgba(0, 0, 0, 0);
 }
 
-.grid-item:nth-child(1) { top: 60%; left: 50%; }
-.grid-item:nth-child(2) { top: 10%; left: 50%; }
-.grid-item:nth-child(3) { top: 20%; left: 50%; }
-.grid-item:nth-child(4) { top: 30%; left: 50%; }
-.grid-item:nth-child(5) { top: 40%; left: 50%; }
-.grid-item:nth-child(6) { top: 50%; left: 50%; }
+.grid-item:nth-child(1) {
+  top: 60%;
+  left: 50%;
+}
 
-.grid-item:nth-child(8) { top: 25%; left: 20%; }
-.grid-item:nth-child(9) { top: 25%; left: 40%; }
-.grid-item:nth-child(10) { top: 25%; left: 30%; }
-.grid-item:nth-child(11) { top: 25%; left: 80%; }
-.grid-item:nth-child(12) { top: 25%; left: 60%; }
-.grid-item:nth-child(13) { top: 25%; left: 70%; }
+.grid-item:nth-child(2) {
+  top: 10%;
+  left: 50%;
+}
 
-.grid-item:nth-child(14) { top: 35%; left: 30%; }
-.grid-item:nth-child(15) { top: 35%; left: 40%; }
-.grid-item:nth-child(16) { top: 45%; left: 40%; }
+.grid-item:nth-child(3) {
+  top: 20%;
+  left: 50%;
+}
 
-.grid-item:nth-child(17) { top: 35%; left: 70%; }
-.grid-item:nth-child(18) { top: 35%; left: 60%; }
-.grid-item:nth-child(19) { top: 45%; left: 60%; }
+.grid-item:nth-child(4) {
+  top: 30%;
+  left: 50%;
+}
 
-.grid-item:nth-child(20) { top: 55%; left: 40%; }
-.grid-item:nth-child(21) { top: 65%; left: 40%; }
+.grid-item:nth-child(5) {
+  top: 40%;
+  left: 50%;
+}
 
-.grid-item:nth-child(23) { top: 65%; left: 30%; }
-.grid-item:nth-child(24) { top: 65%; left: 80%; }
-.grid-item:nth-child(25) { top: 65%; left: 20%; }
-.grid-item:nth-child(26) { top: 55%; left: 30%; }
-.grid-item:nth-child(27) { top: 10%; left: 50%; }
+.grid-item:nth-child(6) {
+  top: 50%;
+  left: 50%;
+}
 
-.grid-item:nth-child(28) { top: 65%; left: 60%; }
-.grid-item:nth-child(29) { top: 55%; left: 60%; }
-.grid-item:nth-child(30) { top: 40%; left: 50%; }
+.grid-item:nth-child(8) {
+  top: 25%;
+  left: 20%;
+}
 
-.grid-item:nth-child(31) { top: 55%; left: 70%; }
-.grid-item:nth-child(32) { top: 65%; left: 70%; }
+.grid-item:nth-child(9) {
+  top: 25%;
+  left: 40%;
+}
 
-.grid-item:nth-child(33) { top: 15%; left: 40%; }
-.grid-item:nth-child(34) { top: 15%; left: 60%; }
+.grid-item:nth-child(10) {
+  top: 25%;
+  left: 30%;
+}
 
-.grid-item:nth-child(35) { top: 0; left: 50%; }
+.grid-item:nth-child(11) {
+  top: 25%;
+  left: 80%;
+}
 
-.grid-item:nth-child(7) { top: 15%; left: 30%; }
-.grid-item:nth-child(22) { top: 15%; left: 70%; }
+.grid-item:nth-child(12) {
+  top: 25%;
+  left: 60%;
+}
+
+.grid-item:nth-child(13) {
+  top: 25%;
+  left: 70%;
+}
+
+.grid-item:nth-child(14) {
+  top: 35%;
+  left: 30%;
+}
+
+.grid-item:nth-child(15) {
+  top: 35%;
+  left: 40%;
+}
+
+.grid-item:nth-child(16) {
+  top: 45%;
+  left: 40%;
+}
+
+.grid-item:nth-child(17) {
+  top: 35%;
+  left: 70%;
+}
+
+.grid-item:nth-child(18) {
+  top: 35%;
+  left: 60%;
+}
+
+.grid-item:nth-child(19) {
+  top: 45%;
+  left: 60%;
+}
+
+.grid-item:nth-child(20) {
+  top: 55%;
+  left: 40%;
+}
+
+.grid-item:nth-child(21) {
+  top: 65%;
+  left: 40%;
+}
+
+.grid-item:nth-child(23) {
+  top: 65%;
+  left: 30%;
+}
+
+.grid-item:nth-child(24) {
+  top: 65%;
+  left: 80%;
+}
+
+.grid-item:nth-child(25) {
+  top: 65%;
+  left: 20%;
+}
+
+.grid-item:nth-child(26) {
+  top: 55%;
+  left: 30%;
+}
+
+.grid-item:nth-child(27) {
+  top: 10%;
+  left: 50%;
+}
+
+.grid-item:nth-child(28) {
+  top: 65%;
+  left: 60%;
+}
+
+.grid-item:nth-child(29) {
+  top: 55%;
+  left: 60%;
+}
+
+.grid-item:nth-child(30) {
+  top: 40%;
+  left: 50%;
+}
+
+.grid-item:nth-child(31) {
+  top: 55%;
+  left: 70%;
+}
+
+.grid-item:nth-child(32) {
+  top: 65%;
+  left: 70%;
+}
+
+.grid-item:nth-child(33) {
+  top: 15%;
+  left: 40%;
+}
+
+.grid-item:nth-child(34) {
+  top: 15%;
+  left: 60%;
+}
+
+.grid-item:nth-child(35) {
+  top: 0;
+  left: 50%;
+}
+
+.grid-item:nth-child(7) {
+  top: 15%;
+  left: 30%;
+}
+
+.grid-item:nth-child(22) {
+  top: 15%;
+  left: 70%;
+}
 
 
 .upload-label {
@@ -305,16 +451,17 @@ box-shadow: 5px 5px 15px 5px #FF8080, -9px 5px 15px 5px #FFE488, -7px -5px 15px 
 
 .popup {
   position: absolute;
-  top: 30%;
-  left: 45%;
+  top: calc(50% + 222px);
+  left: calc(50% + 300px);
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 20px;
+  padding: 40px;
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 2;
+  width: 300px;
 }
 
 

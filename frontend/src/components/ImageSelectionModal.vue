@@ -134,7 +134,7 @@ const goToUploadPage = () => {
 
 <div v-else-if="imageSelectionMode === 'style'" class="style-mode-container">
   <div class="horizontal-layout">
-    <img src="../assets/whatsnext.png" alt="Selected Image" class="robot"/>
+    <img src="../assets/whatsnext2.png" alt="Selected Image" class="robot"/>
     <v-text-field class="prompt-text-field"
       v-model="localUserPrompt"
       label="What image should I place next?"
