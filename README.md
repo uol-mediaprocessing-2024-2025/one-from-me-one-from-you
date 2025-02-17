@@ -1,59 +1,104 @@
-# One-From-Me-One-From-You
+# **One-From-Me-One-From-You**
 
-## Project Overview
+## **Overview**
 
-This project allows separating shapes on a given 2D image from the background and adding white squares as placeholders for images. The image with white squares is displayed on a web server, where images can be placed on the white squares.
+**One-From-Me-One-From-You** is a web-based **AI-powered collage tool** that allows users to create visually appealing collages by selecting a shape, uploading images, and using AI-assisted image placement. Users can manually arrange images or let the AI intelligently choose based on different selection modes.
 
-## Current Functionality
+## **Features**
 
-- Separate the shape on a given 2D image (`static/collage_output.jpg`) from the background.
-- Add white squares to the image, which serve as placeholders for images to be placed in.
-- Display the image with white squares (`static/background.png`) on a web server (`app.py`), where images can be placed on the white squares.
+- **Collage Creation**
+  - Select from **predefined shapes**: Heart, Rectangle, Star, Hexagon, Cloud, Fish, Leaf, Triangle.
+  - **Grid-Based UI** for easy image placement.
+  - AI-assisted image selection with customizable **Image Selection Modes**:
+    - **Face Detection** – Prioritizes images with faces.
+    - **Visual Similarity** – Matches images based on colors and patterns.
+    - **Textual Prompt** – AI selects images based on text descriptions.
 
-## Technologies Used
+- **Image Management**
+  - Upload images and manage them in the **gallery**.
+  - Store **uploaded images and saved collages** for later use.
 
-- **Python**: Backend logic and image processing.
-- **JavaScript**: Frontend logic.
-- **Vue.js**: Frontend framework.
-- **npm**: Package manager for JavaScript.
-- **pip**: Package manager for Python.
-- **FastAPI**: Web framework for the backend.
+- **Customization & Export**
+  - Change collage **shape** and **image selection mode** dynamically.
+  - **Download final collages** or **save them to the gallery** for future editing.
+  - **Clear collage** option to start fresh.
 
-## Installation
+## **Tech Stack**
 
-1. **Install backend dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+### **Frontend**
+- Vue.js, Vuex, Vue Router, Vuetify
+- JavaScript, HTML, CSS
+- html2canvas, axios
 
-2. **Install frontend dependencies**:
-    ```bash
-    npm install
-    ```
+### **Backend**
+- Python, FastAPI
+- OpenCV, NumPy
+- Uvicorn
 
-## Running the Project
+## **Installation**
 
-1. **Start the backend**:
+### **1. Clone the Repository**
+```bash
+git clone https://github.com/your-username/one-from-me-one-from-you.git
+cd one-from-me-one-from-you
+ ```
+
+### **2. Install Backend Dependencies**
+```bash
+pip install -r requirements.txt 
+```
+
+### **3. Install Frontend Dependencies**
+```bash
+npm install
+```
+### **4. Install Frontend Dependencies**
+**Start the backend**:
     ```bash
     uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     ```
 
-2. **Start the frontend**:
+**Start the frontend**:
     ```bash
     npm run serve
     ```
 
 ## API Endpoints
 
-- **POST /update_image_selection_mode**: Updates the image selection mode.
-    - **Parameters**:
-        - `component_name` (str): Name of the component.
-        - `new_mode` (str): New image selection mode.
+### **POST /saveImages**  
+Saves the uploaded images to the server and encodes them using the CLIP model.
 
-## Important Files
+---
 
-- **main.py**: Main backend logic.
-- **GridComponentHelper.js**: Helper functions for the grid component in the frontend.
-- **static/collage_output.jpg**: Original image.
-- **static/background.png**: Image with white placeholder squares.
-- **app.py**: Web server logic.
+### **POST /update_image_selection_mode**  
+Updates the image selection mode.
+
+---
+
+### **GET /getImages**  
+Retrieves all image filenames in the `UPLOAD_DIR`.
+
+---
+
+### **GET /ping**  
+Pings the server and generates a collage from the components.
+
+---
+
+### **POST /positions**  
+Receives positions and component name, processes the data, and updates the component.
+
+---
+
+### **POST /new_selection**  
+Sets a new selection for the specified component and target ID.
+
+---
+
+### **GET /getArray**  
+Retrieves the array of data for a specific component.
+
+---
+
+### **POST /clearCollage**  
+Clears the collage for the specified component.
