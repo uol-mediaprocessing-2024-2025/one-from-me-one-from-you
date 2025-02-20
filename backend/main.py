@@ -630,8 +630,7 @@ def find_free_neighbor(component_name: str, row_idx: int, col_idx: int) -> Tuple
         return -1, -1
 
     # Define all possible neighbor offsets (top, bottom, left, right)
-    neighbor_offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
+    neighbor_offsets = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
     for offset in neighbor_offsets:
         neighbor_row = row_idx + offset[0]
         neighbor_col = col_idx + offset[1]
@@ -679,7 +678,7 @@ def get_neighbor_tensors(component_name: str, row_idx: int, col_idx: int, encode
     neighbors = []
 
     # Define all possible neighbor offsets (top, bottom, left, right)
-    neighbor_offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    neighbor_offsets = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 
     for offset in neighbor_offsets:
         neighbor_row = row_idx + offset[0]
