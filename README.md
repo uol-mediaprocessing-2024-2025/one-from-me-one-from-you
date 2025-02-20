@@ -1,5 +1,7 @@
 # **One-From-Me-One-From-You**
 
+Please use the detached3 branch.
+
 ## **Overview**
 
 **One-From-Me-One-From-You** is a web-based **AI-powered collage tool** that allows users to create visually appealing collages by selecting a shape, uploading images, and using AI-assisted image placement. Users can manually arrange images or let the AI intelligently choose based on different selection modes.
